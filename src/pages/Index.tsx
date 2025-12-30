@@ -1,15 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
+import WelcomeScreen from '@/components/onboarding/WelcomeScreen';
 import StatCard from '@/components/dashboard/StatCard';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import QuickActions from '@/components/dashboard/QuickActions';
+import CreateYearDialog from '@/components/years/CreateYearDialog';
 import { Calendar, Users, BookOpen, GraduationCap } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 
 const Index: React.FC = () => {
   const { schoolYears, classRooms, pedagogicalUnits } = useApp();
+  const [showYearDialog, setShowYearDialog] = useState(false);
   
-  const totalStudents = classRooms.reduce((sum, c) => sum + c.students.length, 0);
+  const totalStudents = classRooms.reduce((sum, c) => sum + c.students.filter(s => s.status === 'active').length, 0);
+
+  // Show onboarding if no school years exist
+  if (schoolYears.length === 0) {
+    return (
+      <>
+        <WelcomeScreen onGetStarted={() => setShowYearDialog(true)} />
+        <CreateYearDialog open={showYearDialog} onOpenChange={setShowYearDialog} />
+      </>
+    );
+  }
 
   const stats = [
     {
@@ -38,7 +51,6 @@ const Index: React.FC = () => {
     },
   ];
 
-  // Generate mock activities based on existing data
   const activities = [
     ...schoolYears.slice(-3).map(y => ({
       id: `year-${y.id}`,
@@ -59,7 +71,6 @@ const Index: React.FC = () => {
   return (
     <AppLayout>
       <div className="space-y-8">
-        {/* Header */}
         <div>
           <h1 className="font-display text-h1 text-foreground">
             Tableau de bord
@@ -69,7 +80,6 @@ const Index: React.FC = () => {
           </p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
             <div key={index} style={{ animationDelay: `${index * 100}ms` }}>
@@ -78,7 +88,6 @@ const Index: React.FC = () => {
           ))}
         </div>
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RecentActivity activities={activities} />

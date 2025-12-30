@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Users } from 'lucide-react';
+import { BookOpen, Users, Settings2 } from 'lucide-react';
 
 interface CreateUnitDialogProps {
   open: boolean;
@@ -34,8 +35,14 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [selectedClassId, setSelectedClassId] = useState(preselectedClassId || '');
+  const [coefficientEnabled, setCoefficientEnabled] = useState(true);
   const [coefficient, setCoefficient] = useState('1');
+  const [minInterros, setMinInterros] = useState('2');
+  const [minDevoirs, setMinDevoirs] = useState('2');
+  const [interroWeight, setInterroWeight] = useState('1');
+  const [devoirWeight, setDevoirWeight] = useState('2');
   const [displayMode, setDisplayMode] = useState<'numeric' | 'letter' | 'percentage'>('numeric');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   
   const { addPedagogicalUnit, activeYearId, schoolYears, getClassesByYear, getStudentsByClass } = useApp();
   const { toast } = useToast();
@@ -45,13 +52,16 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
   const selectedClass = classes.find(c => c.id === selectedClassId);
   const students = selectedClassId ? getStudentsByClass(selectedClassId) : [];
 
+  // Generate formula based on weights
+  const formula = `(MoyInterros * ${interroWeight} + MoyDevoirs * ${devoirWeight}) / ${parseInt(interroWeight) + parseInt(devoirWeight)}`;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!activeYearId) {
       toast({
         title: 'Erreur',
-        description: 'Veuillez d\'abord sélectionner une année scolaire active',
+        description: "Veuillez d'abord sélectionner une année scolaire active",
         variant: 'destructive',
       });
       return;
@@ -60,7 +70,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
     if (!name.trim()) {
       toast({
         title: 'Erreur',
-        description: 'Veuillez saisir un nom pour l\'unité pédagogique',
+        description: "Veuillez saisir un nom pour l'unité pédagogique",
         variant: 'destructive',
       });
       return;
@@ -81,8 +91,13 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
       schoolYearId: activeYearId,
       rules: {
         coefficient: parseFloat(coefficient) || 1,
-        formula: 'weighted_average',
+        coefficientEnabled,
+        minInterros: parseInt(minInterros) || 2,
+        minDevoirs: parseInt(minDevoirs) || 2,
+        formula,
         displayMode,
+        interroWeight: parseFloat(interroWeight) || 1,
+        devoirWeight: parseFloat(devoirWeight) || 2,
       },
     });
 
@@ -98,8 +113,14 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
   const resetForm = () => {
     setName('');
     setSelectedClassId(preselectedClassId || '');
+    setCoefficientEnabled(true);
     setCoefficient('1');
+    setMinInterros('2');
+    setMinDevoirs('2');
+    setInterroWeight('1');
+    setDevoirWeight('2');
     setDisplayMode('numeric');
+    setShowAdvanced(false);
   };
 
   if (!activeYear) {
@@ -140,7 +161,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 rounded-xl bg-primary/10">
@@ -199,35 +220,129 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
             </div>
           )}
 
+          {/* Coefficient settings */}
+          <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="coeffEnabled" className="cursor-pointer">Coefficient activé</Label>
+                <p className="text-small text-muted-foreground">
+                  Appliquer un coefficient global à cette unité
+                </p>
+              </div>
+              <Switch
+                id="coeffEnabled"
+                checked={coefficientEnabled}
+                onCheckedChange={setCoefficientEnabled}
+              />
+            </div>
+            {coefficientEnabled && (
+              <div className="space-y-2 animate-fade-in">
+                <Label htmlFor="coefficient">Valeur du coefficient</Label>
+                <Input
+                  id="coefficient"
+                  type="number"
+                  min="0.5"
+                  max="10"
+                  step="0.5"
+                  value={coefficient}
+                  onChange={(e) => setCoefficient(e.target.value)}
+                  className="h-12 w-32"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Minimum evaluations */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="coefficient">Coefficient global</Label>
+              <Label htmlFor="minInterros">Nombre min. d'interrogations</Label>
               <Input
-                id="coefficient"
+                id="minInterros"
                 type="number"
-                min="0.5"
-                max="10"
-                step="0.5"
-                value={coefficient}
-                onChange={(e) => setCoefficient(e.target.value)}
+                min="0"
+                max="20"
+                value={minInterros}
+                onChange={(e) => setMinInterros(e.target.value)}
                 className="h-12"
               />
             </div>
-
             <div className="space-y-2">
-              <Label>Mode d'affichage</Label>
-              <Select value={displayMode} onValueChange={(v: any) => setDisplayMode(v)}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="numeric">Note /20</SelectItem>
-                  <SelectItem value="percentage">Pourcentage</SelectItem>
-                  <SelectItem value="letter">Lettre (A-F)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="minDevoirs">Nombre min. de devoirs</Label>
+              <Input
+                id="minDevoirs"
+                type="number"
+                min="0"
+                max="20"
+                value={minDevoirs}
+                onChange={(e) => setMinDevoirs(e.target.value)}
+                className="h-12"
+              />
             </div>
           </div>
+
+          {/* Advanced settings toggle */}
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            <Settings2 size={18} className="mr-2" />
+            {showAdvanced ? 'Masquer' : 'Afficher'} les paramètres avancés
+          </Button>
+
+          {showAdvanced && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Formula weights */}
+              <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border">
+                <Label>Formule de moyenne</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="interroWeight" className="text-small">Poids des interrogations</Label>
+                    <Input
+                      id="interroWeight"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={interroWeight}
+                      onChange={(e) => setInterroWeight(e.target.value)}
+                      className="h-10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="devoirWeight" className="text-small">Poids des devoirs</Label>
+                    <Input
+                      id="devoirWeight"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={devoirWeight}
+                      onChange={(e) => setDevoirWeight(e.target.value)}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg bg-card border font-mono text-small text-muted-foreground">
+                  {formula}
+                </div>
+              </div>
+
+              {/* Display mode */}
+              <div className="space-y-2">
+                <Label>Mode d'affichage</Label>
+                <Select value={displayMode} onValueChange={(v: any) => setDisplayMode(v)}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="numeric">Note /20</SelectItem>
+                    <SelectItem value="percentage">Pourcentage</SelectItem>
+                    <SelectItem value="letter">Lettre (A-F)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

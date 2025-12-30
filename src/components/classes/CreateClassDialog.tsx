@@ -100,6 +100,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
         firstName: s.firstName.trim(),
         lastName: s.lastName.trim(),
         studentId: s.studentId.trim() || `STU-${Math.random().toString(36).substr(2, 6)}`,
+        status: 'active' as const,
       })),
     });
 

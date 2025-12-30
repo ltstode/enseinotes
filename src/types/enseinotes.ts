@@ -1,5 +1,9 @@
 export type SchoolYearMode = 'semester' | 'trimester';
 
+export type EvaluationType = 'interro' | 'devoir';
+
+export type StudentStatus = 'active' | 'archived';
+
 export interface SchoolYear {
   id: string;
   name: string;
@@ -13,6 +17,7 @@ export interface Student {
   firstName: string;
   lastName: string;
   studentId: string;
+  status: StudentStatus;
 }
 
 export interface ClassRoom {
@@ -25,8 +30,13 @@ export interface ClassRoom {
 
 export interface GradeRule {
   coefficient: number;
-  formula: string;
+  coefficientEnabled: boolean;
+  minInterros: number;
+  minDevoirs: number;
+  formula: string; // e.g., "(MoyInterros * 1 + MoyDevoirs * 2) / 3"
   displayMode: 'numeric' | 'letter' | 'percentage';
+  interroWeight: number; // Weight for interros in formula (default 1)
+  devoirWeight: number; // Weight for devoirs in formula (default 2)
 }
 
 export interface PedagogicalUnit {
@@ -42,6 +52,7 @@ export interface Evaluation {
   id: string;
   name: string;
   pedagogicalUnitId: string;
+  type: EvaluationType;
   coefficient: number;
   maxScore: number;
   date: Date;
