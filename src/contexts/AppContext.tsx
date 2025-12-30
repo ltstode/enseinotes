@@ -13,17 +13,24 @@ interface AppState {
 interface AppContextType extends AppState {
   addSchoolYear: (year: Omit<SchoolYear, 'id' | 'createdAt'>) => void;
   addClassRoom: (classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => void;
+  updateClassRoom: (classRoomId: string, updates: Partial<Pick<ClassRoom, 'name'>>) => void;
+  deleteClassRoom: (classRoomId: string) => void;
   addStudentToClass: (classRoomId: string, student: Omit<Student, 'id'>) => void;
+  updateStudentInClass: (classRoomId: string, studentId: string, updates: Partial<Student>) => void;
+  deleteStudentFromClass: (classRoomId: string, studentId: string) => void;
   addPedagogicalUnit: (unit: Omit<PedagogicalUnit, 'id' | 'createdAt'>) => void;
   addEvaluation: (evaluation: Omit<Evaluation, 'id'>) => void;
   addGrade: (grade: Omit<Grade, 'id' | 'createdAt' | 'history' | 'isLocked'>) => void;
   updateGrade: (gradeId: string, newValue: number, reason: string) => void;
+  saveGrades: (unitId: string) => void;
+  updateGradeValue: (gradeId: string, newValue: number) => void;
   setActiveYear: (yearId: string | null) => void;
   getClassesByYear: (yearId: string) => ClassRoom[];
   getUnitsByClass: (classId: string) => PedagogicalUnit[];
   getStudentsByClass: (classId: string) => Student[];
   getEvaluationsByUnit: (unitId: string) => Evaluation[];
   calculateAverage: (studentId: string, unitId: string) => number | null;
+  isUnitSaved: (unitId: string) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -39,6 +46,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     grades: [],
     activeYearId: null,
   });
+
+  // Track which units have been saved
+  const [savedUnits, setSavedUnits] = useState<Set<string>>(new Set());
 
   const addSchoolYear = (year: Omit<SchoolYear, 'id' | 'createdAt'>) => {
     const newYear: SchoolYear = {
@@ -65,6 +75,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   };
 
+  const updateClassRoom = (classRoomId: string, updates: Partial<Pick<ClassRoom, 'name'>>) => {
+    setState(prev => ({
+      ...prev,
+      classRooms: prev.classRooms.map(c =>
+        c.id === classRoomId ? { ...c, ...updates } : c
+      ),
+    }));
+  };
+
+  const deleteClassRoom = (classRoomId: string) => {
+    setState(prev => ({
+      ...prev,
+      classRooms: prev.classRooms.filter(c => c.id !== classRoomId),
+      // Also delete associated units, evaluations, and grades
+      pedagogicalUnits: prev.pedagogicalUnits.filter(u => u.classRoomId !== classRoomId),
+      evaluations: prev.evaluations.filter(e => {
+        const unit = prev.pedagogicalUnits.find(u => u.id === e.pedagogicalUnitId);
+        return unit?.classRoomId !== classRoomId;
+      }),
+    }));
+  };
+
   const addStudentToClass = (classRoomId: string, student: Omit<Student, 'id'>) => {
     const newStudent: Student = {
       ...student,
@@ -77,6 +109,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ? { ...c, students: [...c.students, newStudent] }
           : c
       ),
+    }));
+  };
+
+  const updateStudentInClass = (classRoomId: string, studentId: string, updates: Partial<Student>) => {
+    setState(prev => ({
+      ...prev,
+      classRooms: prev.classRooms.map(c =>
+        c.id === classRoomId
+          ? {
+              ...c,
+              students: c.students.map(s =>
+                s.id === studentId ? { ...s, ...updates } : s
+              ),
+            }
+          : c
+      ),
+    }));
+  };
+
+  const deleteStudentFromClass = (classRoomId: string, studentId: string) => {
+    setState(prev => ({
+      ...prev,
+      classRooms: prev.classRooms.map(c =>
+        c.id === classRoomId
+          ? { ...c, students: c.students.filter(s => s.id !== studentId) }
+          : c
+      ),
+      // Also delete associated grades
+      grades: prev.grades.filter(g => g.studentId !== studentId),
     }));
   };
 
@@ -117,11 +178,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   };
 
+  // Update grade value without locking (for free editing before save)
+  const updateGradeValue = (gradeId: string, newValue: number) => {
+    setState(prev => ({
+      ...prev,
+      grades: prev.grades.map(g =>
+        g.id === gradeId && !g.isLocked
+          ? { ...g, value: newValue }
+          : g
+      ),
+    }));
+  };
+
+  // Lock and save grades for a unit
+  const saveGrades = (unitId: string) => {
+    const unitEvaluations = state.evaluations.filter(e => e.pedagogicalUnitId === unitId);
+    const evaluationIds = unitEvaluations.map(e => e.id);
+    
+    setState(prev => ({
+      ...prev,
+      grades: prev.grades.map(g =>
+        evaluationIds.includes(g.evaluationId)
+          ? { ...g, isLocked: true }
+          : g
+      ),
+    }));
+    
+    setSavedUnits(prev => new Set([...prev, unitId]));
+  };
+
   const updateGrade = (gradeId: string, newValue: number, reason: string) => {
     setState(prev => ({
       ...prev,
       grades: prev.grades.map(g => {
-        if (g.id === gradeId && !g.isLocked) {
+        if (g.id === gradeId && g.isLocked) {
+          // Only allow one modification after lock
+          if (g.history.length > 0) {
+            return g; // Already modified once, cannot modify again
+          }
           const historyEntry = {
             value: g.value,
             modifiedAt: new Date(),
@@ -132,7 +226,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             value: newValue,
             history: [...g.history, historyEntry],
             modifiedAt: new Date(),
-            isLocked: true, // Lock after first modification
           };
         }
         return g;
@@ -184,23 +277,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return totalCoefficients > 0 ? Math.round((totalWeighted / totalCoefficients) * 100) / 100 : null;
   };
 
+  const isUnitSaved = (unitId: string) => savedUnits.has(unitId);
+
   return (
     <AppContext.Provider
       value={{
         ...state,
         addSchoolYear,
         addClassRoom,
+        updateClassRoom,
+        deleteClassRoom,
         addStudentToClass,
+        updateStudentInClass,
+        deleteStudentFromClass,
         addPedagogicalUnit,
         addEvaluation,
         addGrade,
         updateGrade,
+        updateGradeValue,
+        saveGrades,
         setActiveYear,
         getClassesByYear,
         getUnitsByClass,
         getStudentsByClass,
         getEvaluationsByUnit,
         calculateAverage,
+        isUnitSaved,
       }}
     >
       {children}

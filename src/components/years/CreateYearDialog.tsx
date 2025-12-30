@@ -8,13 +8,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Check } from 'lucide-react';
 import { SchoolYearMode } from '@/types/enseinotes';
+import YearInput from '@/components/ui/year-input';
 
 interface CreateYearDialogProps {
   open: boolean;
@@ -33,10 +32,12 @@ const CreateYearDialog: React.FC<CreateYearDialogProps> = ({ open, onOpenChange 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
+    // Validate the year format (YYYY-YYYY)
+    const yearRegex = /^\d{4}-\d{4}$/;
+    if (!yearRegex.test(name)) {
       toast({
         title: 'Erreur',
-        description: 'Veuillez saisir un nom pour l\'année scolaire',
+        description: 'Veuillez saisir une année scolaire valide (ex: 2024-2025)',
         variant: 'destructive',
       });
       return;
@@ -80,15 +81,14 @@ const CreateYearDialog: React.FC<CreateYearDialogProps> = ({ open, onOpenChange 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nom de l'année</Label>
-            <Input
-              id="name"
-              placeholder={suggestedName}
+            <YearInput
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={setName}
               className="h-12"
+              placeholder={suggestedName}
             />
             <p className="text-small text-muted-foreground">
-              Ex: {suggestedName}
+              Saisissez l'année de début (ex: 2024), le reste se complète automatiquement
             </p>
           </div>
 
