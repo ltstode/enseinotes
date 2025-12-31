@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -67,37 +68,47 @@ const StudentsPage: React.FC = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [editName, setEditName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
   
   // Form states
-  const [newStudentName, setNewStudentName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newFirstName, setNewFirstName] = useState('');
   const [importText, setImportText] = useState('');
 
   const classes = activeYearId ? getClassesByYear(activeYearId) : [];
   const selectedClass = classRooms.find(c => c.id === selectedClassId);
   
-  const filteredStudents = selectedClass?.students.filter(s => {
-    const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchTerm.toLowerCase());
-    const matchesArchived = showArchived ? true : s.status === 'active';
-    return matchesSearch && matchesArchived;
-  }) || [];
+  // Filter and sort students alphabetically
+  const filteredStudents = useMemo(() => {
+    if (!selectedClass) return [];
+    
+    return selectedClass.students
+      .filter(s => {
+        const fullName = `${s.lastName} ${s.firstName}`.toLowerCase();
+        const matchesSearch = fullName.includes(searchTerm.toLowerCase());
+        const matchesArchived = showArchived ? true : s.status === 'active';
+        return matchesSearch && matchesArchived;
+      })
+      .sort((a, b) => {
+        const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
+        if (lastNameCompare !== 0) return lastNameCompare;
+        return a.firstName.localeCompare(b.firstName, 'fr');
+      });
+  }, [selectedClass, searchTerm, showArchived]);
 
   const handleAddStudent = () => {
-    if (!selectedClassId || !newStudentName.trim()) return;
-    
-    const parts = newStudentName.trim().split(' ');
-    const lastName = parts[0] || '';
-    const firstName = parts.slice(1).join(' ') || '';
+    if (!selectedClassId || !newLastName.trim()) return;
     
     addStudentToClass(selectedClassId, {
-      firstName,
-      lastName,
+      firstName: newFirstName.trim(),
+      lastName: newLastName.trim().toUpperCase(),
       studentId: '',
       status: 'active'
     });
     
-    setNewStudentName('');
+    setNewLastName('');
+    setNewFirstName('');
     setIsAddDialogOpen(false);
     toast.success('Élève ajouté avec succès');
   };
@@ -111,8 +122,8 @@ const StudentsPage: React.FC = () => {
       .filter(n => n.length > 0);
     
     names.forEach(name => {
-      const parts = name.split(' ');
-      const lastName = parts[0] || '';
+      const parts = name.split(/\s+/);
+      const lastName = parts[0]?.toUpperCase() || '';
       const firstName = parts.slice(1).join(' ') || '';
       
       addStudentToClass(selectedClassId, {
@@ -160,22 +171,20 @@ const StudentsPage: React.FC = () => {
 
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student);
-    setEditName(`${student.lastName} ${student.firstName}`);
+    setEditLastName(student.lastName);
+    setEditFirstName(student.firstName);
   };
 
   const handleSaveEdit = () => {
-    if (!selectedClassId || !editingStudent || !editName.trim()) return;
-    
-    const parts = editName.trim().split(' ');
-    const lastName = parts[0] || '';
-    const firstName = parts.slice(1).join(' ') || '';
+    if (!selectedClassId || !editingStudent || !editLastName.trim()) return;
     
     updateStudentInClass(selectedClassId, editingStudent.id, { 
-      firstName, 
-      lastName 
+      firstName: editFirstName.trim(), 
+      lastName: editLastName.trim().toUpperCase() 
     });
     setEditingStudent(null);
-    setEditName('');
+    setEditLastName('');
+    setEditFirstName('');
     toast.success('Élève modifié');
   };
 
@@ -257,18 +266,32 @@ const StudentsPage: React.FC = () => {
                         <DialogTitle>Ajouter un élève</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
-                        <Input
-                          placeholder="Nom et prénom de l'élève"
-                          value={newStudentName}
-                          onChange={e => setNewStudentName(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleAddStudent()}
-                        />
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Nom *</Label>
+                          <Input
+                            id="lastName"
+                            placeholder="DUPONT"
+                            value={newLastName}
+                            onChange={e => setNewLastName(e.target.value)}
+                            className="uppercase"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">Prénoms</Label>
+                          <Input
+                            id="firstName"
+                            placeholder="Jean Pierre"
+                            value={newFirstName}
+                            onChange={e => setNewFirstName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAddStudent()}
+                          />
+                        </div>
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                           Annuler
                         </Button>
-                        <Button onClick={handleAddStudent} disabled={!newStudentName.trim()}>
+                        <Button onClick={handleAddStudent} disabled={!newLastName.trim()}>
                           Ajouter
                         </Button>
                       </DialogFooter>
@@ -289,10 +312,10 @@ const StudentsPage: React.FC = () => {
                       </DialogHeader>
                       <div className="space-y-4 py-4">
                         <p className="text-sm text-muted-foreground">
-                          Collez la liste des élèves (un nom par ligne)
+                          Collez la liste des élèves (un nom par ligne, format: NOM Prénom(s))
                         </p>
                         <Textarea
-                          placeholder="DUPONT Jean&#10;MARTIN Marie&#10;..."
+                          placeholder="DUPONT Jean&#10;MARTIN Marie Claire&#10;..."
                           value={importText}
                           onChange={e => setImportText(e.target.value)}
                           rows={10}
@@ -375,10 +398,17 @@ const StudentsPage: React.FC = () => {
                       {editingStudent?.id === student.id ? (
                         <div className="flex items-center gap-2 flex-1">
                           <Input
-                            value={editName}
-                            onChange={e => setEditName(e.target.value)}
-                            className="h-8"
+                            value={editLastName}
+                            onChange={e => setEditLastName(e.target.value)}
+                            className="h-8 w-32 uppercase"
+                            placeholder="Nom"
                             autoFocus
+                          />
+                          <Input
+                            value={editFirstName}
+                            onChange={e => setEditFirstName(e.target.value)}
+                            className="h-8 flex-1"
+                            placeholder="Prénoms"
                             onKeyDown={e => {
                               if (e.key === 'Enter') handleSaveEdit();
                               if (e.key === 'Escape') setEditingStudent(null);
@@ -468,15 +498,16 @@ const StudentsPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
             <AlertDialogDescription>
-              L'élève <strong>{studentToDelete?.lastName} {studentToDelete?.firstName}</strong> sera supprimé définitivement 
-              ainsi que toutes ses notes associées. Cette action est irréversible.
+              Cette action est irréversible. L'élève{' '}
+              <strong>{studentToDelete?.lastName} {studentToDelete?.firstName}</strong>{' '}
+              sera supprimé définitivement ainsi que toutes ses notes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteStudent}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Supprimer
             </AlertDialogAction>

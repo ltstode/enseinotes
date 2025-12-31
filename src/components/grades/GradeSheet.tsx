@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,10 @@ interface GradeSheetProps {
   unit: PedagogicalUnit;
 }
 
+interface LocalGradeState {
+  [key: string]: string; // key = `${studentId}-${evaluationId}`, value = grade as string
+}
+
 const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   const { 
     getStudentsByClass, 
@@ -35,7 +39,18 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   } = useApp();
   
   const { toast } = useToast();
-  const students = getStudentsByClass(unit.classRoomId).filter(s => s.status === 'active');
+  
+  // Get students and sort alphabetically by lastName then firstName
+  const students = useMemo(() => {
+    return getStudentsByClass(unit.classRoomId)
+      .filter(s => s.status === 'active')
+      .sort((a, b) => {
+        const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
+        if (lastNameCompare !== 0) return lastNameCompare;
+        return a.firstName.localeCompare(b.firstName, 'fr');
+      });
+  }, [getStudentsByClass, unit.classRoomId]);
+  
   const evaluations = getEvaluationsByUnit(unit.id);
   const isSaved = isUnitSaved(unit.id);
   
@@ -53,32 +68,41 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   } | null>(null);
   const [modifyReason, setModifyReason] = useState('');
   const [newGradeValue, setNewGradeValue] = useState('');
-  const [localGrades, setLocalGrades] = useState<Map<string, number>>(new Map());
+  
+  // Use an object instead of Map for local grades to avoid reference issues
+  const [localGrades, setLocalGrades] = useState<LocalGradeState>({});
   
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
-  const getGrade = (studentId: string, evaluationId: string) => {
+  const getGrade = useCallback((studentId: string, evaluationId: string) => {
     return grades.find(g => g.studentId === studentId && g.evaluationId === evaluationId);
-  };
+  }, [grades]);
 
-  const getLocalGradeValue = (studentId: string, evaluationId: string): string => {
+  const getLocalGradeValue = useCallback((studentId: string, evaluationId: string): string => {
     const key = `${studentId}-${evaluationId}`;
-    if (localGrades.has(key)) {
-      return localGrades.get(key)!.toString();
+    if (key in localGrades) {
+      return localGrades[key];
     }
     const grade = getGrade(studentId, evaluationId);
     return grade?.value?.toString() ?? '';
-  };
+  }, [localGrades, getGrade]);
 
   // Calculate average for a specific type of evaluation
-  const calculateTypeAverage = (studentId: string, evals: Evaluation[]): number | null => {
+  const calculateTypeAverage = useCallback((studentId: string, evals: Evaluation[]): number | null => {
     const studentGrades = evals
       .map(e => {
-        const grade = getGrade(studentId, e.id);
         const key = `${studentId}-${e.id}`;
-        const localValue = localGrades.get(key);
-        const value = localValue !== undefined ? localValue : grade?.value;
-        return value !== undefined ? { value, evaluation: e } : null;
+        const localValue = localGrades[key];
+        const grade = getGrade(studentId, e.id);
+        
+        let value: number | undefined;
+        if (localValue !== undefined && localValue !== '') {
+          value = parseFloat(localValue);
+        } else if (grade?.value !== undefined) {
+          value = grade.value;
+        }
+        
+        return value !== undefined && !isNaN(value) ? { value, evaluation: e } : null;
       })
       .filter(Boolean) as { value: number; evaluation: Evaluation }[];
 
@@ -94,10 +118,10 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     });
 
     return totalCoefficients > 0 ? Math.round((totalWeighted / totalCoefficients) * 100) / 100 : null;
-  };
+  }, [localGrades, getGrade]);
 
   // Calculate final average using the unit's formula
-  const calculateFinalAverage = (studentId: string): number | null => {
+  const calculateFinalAverage = useCallback((studentId: string): number | null => {
     const moyInterros = calculateTypeAverage(studentId, interros);
     const moyDevoirs = calculateTypeAverage(studentId, devoirs);
 
@@ -114,66 +138,80 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     const weighted = (moyInterros! * interroWeight + moyDevoirs! * devoirWeight) / totalWeight;
     
     return Math.round(weighted * 100) / 100;
-  };
+  }, [calculateTypeAverage, interros, devoirs, unit.rules]);
 
-  const handleLocalGradeInput = (studentId: string, evaluationId: string, value: string) => {
+  const handleLocalGradeInput = useCallback((studentId: string, evaluationId: string, value: string) => {
     const evaluation = evaluations.find(e => e.id === evaluationId);
+    const key = `${studentId}-${evaluationId}`;
     
+    // Allow empty value
     if (value === '') {
-      const key = `${studentId}-${evaluationId}`;
       setLocalGrades(prev => {
-        const next = new Map(prev);
-        next.delete(key);
+        const next = { ...prev };
+        next[key] = '';
         return next;
       });
       return;
     }
     
+    // Validate numeric input
     const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 0 || (evaluation && numValue > evaluation.maxScore)) {
+    if (isNaN(numValue) || numValue < 0) {
+      return;
+    }
+    
+    // Check max score if evaluation exists
+    if (evaluation && numValue > evaluation.maxScore) {
       return;
     }
 
-    const key = `${studentId}-${evaluationId}`;
-    setLocalGrades(prev => new Map(prev).set(key, numValue));
-  };
+    setLocalGrades(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }, [evaluations]);
 
-  const handleSaveGrades = () => {
+  const handleSaveGrades = useCallback(() => {
     // Save all local grades to the context
-    localGrades.forEach((value, key) => {
+    Object.entries(localGrades).forEach(([key, value]) => {
+      if (value === '') return;
+      
       const [studentId, evaluationId] = key.split('-');
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return;
+      
       const existingGrade = getGrade(studentId, evaluationId);
       
       if (existingGrade) {
-        updateGradeValue(existingGrade.id, value);
+        updateGradeValue(existingGrade.id, numValue);
       } else {
         addGrade({
           studentId,
           evaluationId,
-          value,
+          value: numValue,
         });
       }
     });
 
     // Lock all grades for this unit
     saveGrades(unit.id);
-    setLocalGrades(new Map());
+    setLocalGrades({});
     
     toast({
       title: 'Notes enregistrées',
       description: 'Toutes les notes ont été sauvegardées et verrouillées',
     });
-  };
+  }, [localGrades, getGrade, updateGradeValue, addGrade, saveGrades, unit.id, toast]);
 
-  const handleEditStudent = (studentId: string) => {
+  const handleEditStudent = useCallback((studentId: string) => {
     setEditingStudent(studentId);
-  };
+  }, []);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingStudent(null);
-  };
+  }, []);
 
-  const handleModifyGrade = (studentId: string, evaluationId: string, newValue: string) => {
+  const handleModifyGrade = useCallback((studentId: string, evaluationId: string, newValue: string) => {
     const existingGrade = getGrade(studentId, evaluationId);
     const evaluation = evaluations.find(e => e.id === evaluationId);
     const student = students.find(s => s.id === studentId);
@@ -198,9 +236,9 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     });
     setNewGradeValue(newValue);
     setShowModifyDialog(true);
-  };
+  }, [getGrade, evaluations, students, toast]);
 
-  const handleModifyConfirm = () => {
+  const handleModifyConfirm = useCallback(() => {
     if (!selectedGrade || !modifyReason.trim()) {
       toast({
         title: 'Erreur',
@@ -222,7 +260,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     setModifyReason('');
     setNewGradeValue('');
     setEditingStudent(null);
-  };
+  }, [selectedGrade, modifyReason, newGradeValue, updateGrade, toast]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback((
@@ -286,8 +324,8 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     const grade = getGrade(student.id, evaluation.id);
     const isEditing = editingStudent === student.id;
     const isLocked = isSaved && !isEditing;
-    const canModify = isEditing && grade?.isLocked && grade.history.length === 0;
     const alreadyModified = grade?.history && grade.history.length > 0;
+    const key = `${student.id}-${evaluation.id}`;
     
     return (
       <td key={evaluation.id} className="p-2 text-center">
@@ -375,13 +413,8 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     );
   }
 
-  // Check if all grades are complete
-  const allGradesComplete = students.every(student =>
-    evaluations.every(evaluation => {
-      const key = `${student.id}-${evaluation.id}`;
-      return localGrades.has(key) || getGrade(student.id, evaluation.id);
-    })
-  );
+  // Check if there are any grades to save
+  const hasGradesToSave = Object.keys(localGrades).some(key => localGrades[key] !== '');
 
   return (
     <>
@@ -402,7 +435,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               <Button 
                 onClick={handleSaveGrades}
                 variant="default"
-                disabled={localGrades.size === 0 && grades.filter(g => 
+                disabled={!hasGradesToSave && grades.filter(g => 
                   evaluations.some(e => e.id === g.evaluationId)
                 ).length === 0}
               >
@@ -479,76 +512,71 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                       </>
                     )}
                     {/* Final average */}
-                    <th className="p-2 text-center min-w-[80px] bg-primary/20">
+                    <th className="p-2 text-center min-w-[90px] bg-accent/30">
                       <div className="font-display font-semibold text-xs">Moyenne</div>
-                      {unit.rules.coefficientEnabled && (
-                        <div className="text-xs text-muted-foreground">(coef. {unit.rules.coefficient})</div>
-                      )}
+                      <div className="text-xs text-muted-foreground font-normal">
+                        (coef. {unit.rules.interroWeight + unit.rules.devoirWeight})
+                      </div>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student, studentIndex) => {
-                    const moyInterros = calculateTypeAverage(student.id, interros);
-                    const moyDevoirs = calculateTypeAverage(student.id, devoirs);
-                    const finalAverage = calculateFinalAverage(student.id);
-                    const isEditing = editingStudent === student.id;
-                    
-                    return (
-                      <tr 
-                        key={student.id} 
-                        className={`border-b hover:bg-secondary/10 transition-colors ${
-                          isEditing ? 'bg-warning/5' : ''
-                        }`}
-                      >
-                        <td className="p-3 font-medium sticky left-0 bg-card z-10 text-small">
-                          {student.lastName} {student.firstName}
-                        </td>
-                        {isSaved && (
-                          <td className="p-2 text-center">
-                            {isEditing ? (
+                  {students.map((student, studentIndex) => (
+                    <tr key={student.id} className="border-b hover:bg-muted/20 transition-colors">
+                      <td className="p-3 font-medium bg-secondary/10 sticky left-0 z-10">
+                        {student.lastName} {student.firstName}
+                      </td>
+                      {isSaved && (
+                        <td className="p-2 text-center">
+                          {editingStudent === student.id ? (
+                            <div className="flex justify-center gap-1">
                               <Button
+                                size="icon"
                                 variant="ghost"
-                                size="sm"
-                                onClick={handleCancelEdit}
-                                className="h-7 w-7 p-0"
+                                className="h-6 w-6"
+                                onClick={() => handleCancelEdit()}
                               >
-                                <X size={14} />
+                                <X size={12} />
                               </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditStudent(student.id)}
-                                className="h-7 w-7 p-0"
-                              >
-                                <Pencil size={14} />
-                              </Button>
-                            )}
-                          </td>
-                        )}
-                        {/* Interro cells */}
-                        {interros.map((evaluation, evalIndex) => 
-                          renderGradeCell(student, evaluation, studentIndex, evalIndex, interros)
-                        )}
-                        {interros.length > 0 && renderAverageCell(moyInterros, 'Moy. Interros')}
-                        {/* Devoir cells */}
-                        {devoirs.map((evaluation, evalIndex) => 
-                          renderGradeCell(student, evaluation, studentIndex, evalIndex, devoirs)
-                        )}
-                        {devoirs.length > 0 && renderAverageCell(moyDevoirs, 'Moy. Devoirs')}
-                        {/* Final average */}
-                        <td className="p-2 text-center bg-primary/10">
-                          <span className={`font-display font-bold ${
-                            finalAverage !== null && finalAverage >= 10 ? 'text-success' : 
-                            finalAverage !== null ? 'text-destructive' : 'text-muted-foreground'
-                          }`}>
-                            {finalAverage !== null ? finalAverage.toFixed(2) : '-'}
-                          </span>
+                            </div>
+                          ) : (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => handleEditStudent(student.id)}
+                            >
+                              <Pencil size={12} />
+                            </Button>
+                          )}
                         </td>
-                      </tr>
-                    );
-                  })}
+                      )}
+                      {/* Interro grades */}
+                      {interros.map((evaluation, evalIndex) => (
+                        renderGradeCell(student, evaluation, studentIndex, evalIndex, interros)
+                      ))}
+                      {interros.length > 0 && renderAverageCell(calculateTypeAverage(student.id, interros), 'interro')}
+                      
+                      {/* Devoir grades */}
+                      {devoirs.map((evaluation, evalIndex) => (
+                        renderGradeCell(student, evaluation, studentIndex, evalIndex, devoirs)
+                      ))}
+                      {devoirs.length > 0 && renderAverageCell(calculateTypeAverage(student.id, devoirs), 'devoir')}
+                      
+                      {/* Final average */}
+                      <td className="p-2 text-center bg-accent/10">
+                        <span className={`font-display font-bold text-base ${
+                          calculateFinalAverage(student.id) !== null && calculateFinalAverage(student.id)! >= 10 
+                            ? 'text-success' 
+                            : calculateFinalAverage(student.id) !== null 
+                              ? 'text-destructive' 
+                              : 'text-muted-foreground'
+                        }`}>
+                          {calculateFinalAverage(student.id)?.toFixed(2) ?? '-'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -562,37 +590,37 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
         unitId={unit.id}
       />
 
+      {/* Modify Grade Dialog */}
       <Dialog open={showModifyDialog} onOpenChange={setShowModifyDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-display">Modifier une note</DialogTitle>
+            <DialogTitle>Modifier une note</DialogTitle>
             <DialogDescription>
-              {selectedGrade && (
-                <>
-                  Élève : <strong>{selectedGrade.studentName}</strong><br />
-                  Évaluation : <strong>{selectedGrade.evalName}</strong><br />
-                  Note actuelle : <strong>{selectedGrade.currentValue}</strong> → Nouvelle note : <strong>{newGradeValue}</strong>
-                </>
-              )}
+              Cette modification sera définitive et tracée dans l'historique.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
-              <p className="text-small text-warning font-medium">
-                ⚠️ Cette note ne pourra plus être modifiée après validation.
-              </p>
+          
+          {selectedGrade && (
+            <div className="space-y-4 py-4">
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <p><strong>Élève:</strong> {selectedGrade.studentName}</p>
+                <p><strong>Évaluation:</strong> {selectedGrade.evalName}</p>
+                <p><strong>Note actuelle:</strong> {selectedGrade.currentValue}</p>
+                <p><strong>Nouvelle note:</strong> {newGradeValue}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reason">Motif de la modification *</Label>
+                <Textarea
+                  id="reason"
+                  placeholder="Expliquez la raison de cette modification..."
+                  value={modifyReason}
+                  onChange={(e) => setModifyReason(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="reason">Motif de modification (obligatoire)</Label>
-              <Textarea
-                id="reason"
-                placeholder="Ex: Erreur de saisie, rattrapage, recalcul après vérification..."
-                value={modifyReason}
-                onChange={(e) => setModifyReason(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
+          )}
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowModifyDialog(false)}>
               Annuler
