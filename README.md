@@ -1,163 +1,116 @@
 <div align="center">
-🎓 EnseiNotes
-La productivité pédagogique, enfin structurée.
-<br/>
+  <br />
+  <h1>🎓 EnseiNotes</h1>
+  <h3>La référence de la productivité pédagogique.</h3>
+  <p><i>Structurer la rigueur scolaire pour les enseignants exigeants.</i></p>
 
-🟦 Gestion intelligente des classes
-🟪 Règles de calcul verrouillées
-🟩 Traçabilité totale des notes
-
-<br/>
-
-EnseiNotes est une application professionnelle conçue pour les enseignants qui veulent
-travailler avec rigueur, rapidité et crédibilité numérique.
-
+  <p>
+    <img src="https://img.shields.io/badge/Status-In%20Development-blue?style=flat-square" alt="Status" />
+    <img src="https://img.shields.io/badge/Stack-React%20%7C%20TypeScript%20%7C%20Tailwind-black?style=flat-square" alt="Tech Stack" />
+    <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square" alt="License" />
+  </p>
+  <br /> 
 </div>
-✨ Pourquoi EnseiNotes ?
 
-Parce qu’un enseignant ne devrait jamais :
+---
 
-ressaisir deux fois la même liste d’élèves
+## ✨ Pourquoi EnseiNotes ?
 
-recalculer manuellement des moyennes
+Parce que l’enseignement ne devrait pas être synonyme de tâches administratives répétitives. **EnseiNotes** a été conçu pour éliminer l'approximation et la redondance.
 
-justifier une incohérence de notes
+Un enseignant ne devrait jamais :
+- ❌ **Ressaisir** deux fois la même liste d’élèves.
+- ❌ **Recalculer** manuellement des moyennes.
+- ❌ **Justifier** une incohérence de notes due à une erreur de calcul.
 
-EnseiNotes élimine tout ça par la structure.
+> **EnseiNotes remplace la charge mentale par une structure fiable.**
 
-🧠 Philosophie du produit
+---
 
-🟦 Une année scolaire = un univers fermé
-🟪 Une classe = une seule liste officielle d’élèves
-🟩 Une unité pédagogique = ses propres règles
+## 🧠 Philosophie du Produit
 
-Ici, rien n’est approximatif.
-Chaque donnée a une place, une logique et une durée de vie claire.
+Nous croyons en une hiérarchie stricte et logique des données :
 
-🗂️ Architecture fonctionnelle
-🟦 1. Année scolaire
+| Concept | Description |
+| :--- | :--- |
+| **🟦 Univers Fermé** | Une année scolaire est un conteneur hermétique. Rien ne fuite d'une année à l'autre sans action explicite. |
+| **🟪 Source Unique** | Une classe = **une seule** liste officielle d’élèves. Finis les doublons. |
+| **🟩 Unité Pédagogique** | Chaque matière a ses propres règles de jeu (coefficients, formules), indépendantes des autres. |
 
-Création d’une nouvelle année
+---
 
-Choix du découpage :
+## 🗂️ Architecture Fonctionnelle
 
-Semestres
+### 1. Structure Temporelle (L'Année)
+L'année scolaire est la fondation. À sa création, le découpage est gravé dans le marbre :
+- **Trimestres** ou **Semestres**.
+- Ce choix structure l'ensemble des calculs et ne peut être modifié en cours de route.
 
-Trimestres
+### 2. Structure Administrative (La Classe)
+La classe (ex: *Tle D*) est le conteneur administratif.
+- **Saisie unique** : On importe ou saisit les élèves une seule fois.
+- **Intégrité** : Un élève ne peut exister qu'une seule fois par classe.
 
-Ce choix structure toute l’année et devient définitif
+### 3. Structure Pédagogique (L'Unité)
+C'est ici que l'enseignement a lieu (ex: *Mathématiques - Analyse*).
+- Hérite automatiquement de la liste d'élèves de la classe.
+- Aucune ressaisie.
+- **Règles locales** : Deux unités d'une même classe peuvent avoir des règles de calcul totalement différentes.
 
-🟪 2. Classe administrative
+---
 
-Création d’une classe (ex. Tle D)
+## ⚙️ Puissance de Calcul & Traçabilité
 
-Saisie unique de la liste des élèves
+EnseiNotes se distingue par son moteur de règles et sa sécurité.
 
-Cette liste devient la référence officielle
+### Règles Avancées
+Chaque unité définit sa "loi" :
+- Coefficients personnalisés.
+- Formules de moyenne spécifiques.
+- Règles d’arrondi.
+- Mode d’affichage.
 
-🔒 Un élève ne peut pas exister deux fois dans la même classe et la même année.
+### 🛡️ Sécurité des Notes
+La crédibilité d'un bulletin repose sur la fiabilité des notes.
+- **Modification** : Une note validée ne peut être modifiée qu'avec un **motif obligatoire**.
+- **Traçabilité** : Horodatage automatique de toute modification.
+- **Historique** : Chaque note possède un journal d'audit complet.
 
-🟩 3. Unités pédagogiques
+---
 
-Une unité pédagogique représente l’acte réel d’enseignement.
+## 🎨 Design System & Interface
 
-Exemples :
+L'interface a été pensée pour réduire la charge cognitive : **Lisibilité maximale, aucune surcharge.**
 
-Informatique – Algorithmique
+### Typographie
+- **Titres** : `Clash Display` (Bold / Semi-bold) — *Pour l'impact et la modernité.*
+- **Corps** : `Satoshi` (Regular / Medium) — *Pour une lisibilité technique parfaite.*
 
-Mathématiques – Analyse
+### Palette Chromatique
+Une esthétique "propre" et apaisante.
 
-SVT – Génétique
+| Usage | Couleur | Note |
+| :--- | :--- | :--- |
+| **Fond** | `Blanc Cassé` | Évite la fatigue oculaire du blanc pur. |
+| **Texte** | `Gris Foncé` | Contraste doux mais suffisant. |
+| **Accent** | `Bleu Glacier` | Professionnel et technologique. |
+| **États** | 🟩 Succès / 🟥 Erreur / 🟪 Info | Codes couleurs universels mais adoucis. |
 
-Lors de la création :
+---
 
-la classe est sélectionnée
+## 🚀 Ambition
 
-la liste des élèves apparaît automatiquement
-
-aucune ressaisie n’est nécessaire
-
-⚙️ Règles de calcul avancées
-
-Chaque unité pédagogique définit ses propres règles :
-
-coefficients
-
-formules de moyenne
-
-règles d’arrondi
-
-mode d’affichage des résultats
-
-🧠 Deux unités d’une même classe peuvent avoir
-des formules totalement différentes.
-
-📊 Saisie des notes
-
-🟦 Tableau rapide, proche d’Excel
-🟪 Calcul automatique des moyennes
-🟩 Zéro saisie manuelle des résultats
-
-🔐 Modification d’une note
-
-Une seule modification possible
-
-Motif obligatoire
-
-Horodatage automatique
-
-Verrouillage définitif après validation
-
-Chaque note possède un historique complet et consultable.
-
-🔒 Règles métier verrouillées
-
-✅ Années scolaires totalement indépendantes
-✅ Les unités pédagogiques ne possèdent jamais leur propre liste d’élèves
-✅ Les moyennes sont toujours recalculées automatiquement
-✅ Les règles de calcul s’appliquent par unité, jamais globalement
-✅ Aucune donnée critique n’est modifiable sans traçabilité
-
-🎨 Interface & Design System
-Typographie
-
-Titres → Clash Display (Bold / Semi-bold)
-
-Texte & UI → Satoshi (Regular / Medium)
-
-Lisibilité maximale, hiérarchie nette, aucune surcharge visuelle.
-
-Couleurs
-
-🤍 Fond : blanc cassé
-
-🖤 Texte : gris très foncé
-
-🟦 Accent principal : bleu glacier
-
-🟩 Succès
-
-🟥 Erreur
-
-🟪 Information
-
-Palette minimaliste, moderne et professionnelle.
-
-🚀 Ambition
-
-EnseiNotes n’est pas une simple application de notes.
+EnseiNotes n’est pas qu'un carnet de notes numérique.
 
 C’est :
+1. Une **infrastructure pédagogique**.
+2. Un **standard de rigueur** scolaire.
+3. Un outil pensé pour **inspirer confiance** aux enseignants, aux élèves et aux parents.
 
-une infrastructure pédagogique numérique
+---
 
-un standard de rigueur scolaire
-
-un outil pensé pour durer, évoluer et inspirer confiance
-
-📌 Statut
-
-🛠️ En cours de développement
-📐 Logique métier finalisée
-🎨 UI/UX strictement cadrée
-🔒 Règles critiques verrouillées dès la conception
+<div align="center">
+  <br/>
+  <p>�️ <b>Statut :</b> En cours de développement actif</p>
+  <p><i>Logique métier finalisée • UI/UX cadrée • Règles critiques implémentées</i></p>
+</div>
