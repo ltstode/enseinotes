@@ -92,6 +92,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
     const finalStudents = inputMode === 'bulk' ? parseBulkInput() : students;
     const validStudents = finalStudents.filter(s => s.firstName.trim() && s.lastName.trim());
 
+<<<<<<< HEAD
     const now = Date.now().toString(36);
 
     addClassRoom({
@@ -101,6 +102,13 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
         // NOTE: ids were previously saved as empty string and broke grade entry.
         // We still normalize again in AppContext for safety.
         id: `${now}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
+=======
+    addClassRoom({
+      name: name.trim(),
+      schoolYearId: activeYearId,
+      students: validStudents.map(s => ({
+        id: '',
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
         firstName: s.firstName.trim(),
         lastName: s.lastName.trim(),
         studentId: s.studentId.trim() || `STU-${Math.random().toString(36).substr(2, 6)}`,

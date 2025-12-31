@@ -80,7 +80,11 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
 
   const getLocalGradeValue = useCallback((studentId: string, evaluationId: string): string => {
     const key = `${studentId}-${evaluationId}`;
+<<<<<<< HEAD
     if (Object.prototype.hasOwnProperty.call(localGrades, key)) {
+=======
+    if (key in localGrades) {
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
       return localGrades[key];
     }
     const grade = getGrade(studentId, evaluationId);
@@ -320,6 +324,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     }
   }, []);
 
+<<<<<<< HEAD
   // Check if a specific evaluation is new (added after save)
   const isNewEvaluation = useCallback((evaluationId: string): boolean => {
     if (!isSaved) return false;
@@ -337,20 +342,38 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     
     // Allow editing if: not saved yet, OR evaluation is new (added after save)
     const canFreeEdit = !isSaved || evalIsNew;
+=======
+  const renderGradeCell = (student: Student, evaluation: Evaluation, studentIndex: number, evalIndex: number, evalList: Evaluation[]) => {
+    const grade = getGrade(student.id, evaluation.id);
+    const isEditing = editingStudent === student.id;
+    const isLocked = isSaved && !isEditing;
+    const alreadyModified = grade?.history && grade.history.length > 0;
+    const key = `${student.id}-${evaluation.id}`;
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
     
     return (
       <td key={evaluation.id} className="p-2 text-center">
         <div className="relative">
+<<<<<<< HEAD
           {canFreeEdit ? (
             // Free editing mode - not saved yet or new evaluation
             <Input
               key={key}
+=======
+          {!isSaved ? (
+            // Free editing mode - not saved yet
+            <Input
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
               ref={(ref) => registerRef(student.id, evaluation.id, ref)}
               type="number"
               min="0"
               max={evaluation.maxScore}
               step="0.5"
+<<<<<<< HEAD
               value={localGrades[key] ?? (grade?.value?.toString() ?? '')}
+=======
+              value={getLocalGradeValue(student.id, evaluation.id)}
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
               onChange={(e) => handleLocalGradeInput(student.id, evaluation.id, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, studentIndex, evalIndex, evalList)}
               className="w-16 mx-auto text-center text-small"
@@ -358,7 +381,10 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           ) : isEditing && !alreadyModified ? (
             // Editing mode for locked grades (one-time modification)
             <Input
+<<<<<<< HEAD
               key={`edit-${key}`}
+=======
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
               ref={(ref) => registerRef(student.id, evaluation.id, ref)}
               type="number"
               min="0"
@@ -444,6 +470,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
             </p>
           </div>
           <div className="flex gap-2">
+<<<<<<< HEAD
             {evaluations.length > 0 && (!isSaved || hasGradesToSave) && (
               <Button 
                 onClick={handleSaveGrades}
@@ -454,6 +481,18 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               >
                 <Save size={18} />
                 {isSaved ? 'Enregistrer les nouvelles notes' : 'Enregistrer les notes'}
+=======
+            {!isSaved && evaluations.length > 0 && (
+              <Button 
+                onClick={handleSaveGrades}
+                variant="default"
+                disabled={!hasGradesToSave && grades.filter(g => 
+                  evaluations.some(e => e.id === g.evaluationId)
+                ).length === 0}
+              >
+                <Save size={18} />
+                Enregistrer les notes
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
               </Button>
             )}
             <Button onClick={() => setShowEvalDialog(true)} variant={isSaved ? "default" : "outline"}>

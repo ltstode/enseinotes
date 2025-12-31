@@ -97,6 +97,7 @@ const StudentsPage: React.FC = () => {
       });
   }, [selectedClass, searchTerm, showArchived]);
 
+<<<<<<< HEAD
   // Format name: each word capitalized (first letter uppercase, rest lowercase)
   const formatFirstName = (name: string): string => {
     return name
@@ -106,11 +107,17 @@ const StudentsPage: React.FC = () => {
       .join(' ');
   };
 
+=======
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
   const handleAddStudent = () => {
     if (!selectedClassId || !newLastName.trim()) return;
     
     addStudentToClass(selectedClassId, {
+<<<<<<< HEAD
       firstName: formatFirstName(newFirstName),
+=======
+      firstName: newFirstName.trim(),
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
       lastName: newLastName.trim().toUpperCase(),
       studentId: '',
       status: 'active'
@@ -133,7 +140,11 @@ const StudentsPage: React.FC = () => {
     names.forEach(name => {
       const parts = name.split(/\s+/);
       const lastName = parts[0]?.toUpperCase() || '';
+<<<<<<< HEAD
       const firstName = formatFirstName(parts.slice(1).join(' '));
+=======
+      const firstName = parts.slice(1).join(' ') || '';
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
       
       addStudentToClass(selectedClassId, {
         firstName,
@@ -188,7 +199,11 @@ const StudentsPage: React.FC = () => {
     if (!selectedClassId || !editingStudent || !editLastName.trim()) return;
     
     updateStudentInClass(selectedClassId, editingStudent.id, { 
+<<<<<<< HEAD
       firstName: formatFirstName(editFirstName), 
+=======
+      firstName: editFirstName.trim(), 
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
       lastName: editLastName.trim().toUpperCase() 
     });
     setEditingStudent(null);
@@ -198,6 +213,7 @@ const StudentsPage: React.FC = () => {
   };
 
   const toggleStudentSelection = (studentId: string) => {
+<<<<<<< HEAD
     setSelectedStudents((prev) => {
       const next = new Set(prev);
       if (next.has(studentId)) {
@@ -214,6 +230,23 @@ const StudentsPage: React.FC = () => {
       if (prev.size === filteredStudents.length) return new Set();
       return new Set(filteredStudents.map((s) => s.id));
     });
+=======
+    const newSelection = new Set(selectedStudents);
+    if (newSelection.has(studentId)) {
+      newSelection.delete(studentId);
+    } else {
+      newSelection.add(studentId);
+    }
+    setSelectedStudents(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedStudents.size === filteredStudents.length) {
+      setSelectedStudents(new Set());
+    } else {
+      setSelectedStudents(new Set(filteredStudents.map(s => s.id)));
+    }
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
   };
 
   return (
@@ -402,10 +435,14 @@ const StudentsPage: React.FC = () => {
                     >
                       <Checkbox
                         checked={selectedStudents.has(student.id)}
+<<<<<<< HEAD
                         onCheckedChange={() => {
                           toggleStudentSelection(student.id);
                         }}
                         onClick={(e) => e.stopPropagation()}
+=======
+                        onCheckedChange={() => toggleStudentSelection(student.id)}
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
                       />
                       
                       {editingStudent?.id === student.id ? (

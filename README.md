@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Welcome to your Lovable project
 
 ## Project info
@@ -71,3 +72,168 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+=======
+<div align="center">
+🎓 EnseiNotes
+La productivité pédagogique, enfin structurée.
+<br/>
+
+🟦 Gestion intelligente des classes
+🟪 Règles de calcul verrouillées
+🟩 Traçabilité totale des notes
+
+<br/>
+
+EnseiNotes est une application professionnelle conçue pour les enseignants qui veulent
+travailler avec rigueur, rapidité et crédibilité numérique.
+
+</div>
+✨ Pourquoi EnseiNotes ?
+
+Parce qu’un enseignant ne devrait jamais :
+
+ressaisir deux fois la même liste d’élèves
+
+recalculer manuellement des moyennes
+
+justifier une incohérence de notes
+
+EnseiNotes élimine tout ça par la structure.
+
+🧠 Philosophie du produit
+
+🟦 Une année scolaire = un univers fermé
+🟪 Une classe = une seule liste officielle d’élèves
+🟩 Une unité pédagogique = ses propres règles
+
+Ici, rien n’est approximatif.
+Chaque donnée a une place, une logique et une durée de vie claire.
+
+🗂️ Architecture fonctionnelle
+🟦 1. Année scolaire
+
+Création d’une nouvelle année
+
+Choix du découpage :
+
+Semestres
+
+Trimestres
+
+Ce choix structure toute l’année et devient définitif
+
+🟪 2. Classe administrative
+
+Création d’une classe (ex. Tle D)
+
+Saisie unique de la liste des élèves
+
+Cette liste devient la référence officielle
+
+🔒 Un élève ne peut pas exister deux fois dans la même classe et la même année.
+
+🟩 3. Unités pédagogiques
+
+Une unité pédagogique représente l’acte réel d’enseignement.
+
+Exemples :
+
+Informatique – Algorithmique
+
+Mathématiques – Analyse
+
+SVT – Génétique
+
+Lors de la création :
+
+la classe est sélectionnée
+
+la liste des élèves apparaît automatiquement
+
+aucune ressaisie n’est nécessaire
+
+⚙️ Règles de calcul avancées
+
+Chaque unité pédagogique définit ses propres règles :
+
+coefficients
+
+formules de moyenne
+
+règles d’arrondi
+
+mode d’affichage des résultats
+
+🧠 Deux unités d’une même classe peuvent avoir
+des formules totalement différentes.
+
+📊 Saisie des notes
+
+🟦 Tableau rapide, proche d’Excel
+🟪 Calcul automatique des moyennes
+🟩 Zéro saisie manuelle des résultats
+
+🔐 Modification d’une note
+
+Une seule modification possible
+
+Motif obligatoire
+
+Horodatage automatique
+
+Verrouillage définitif après validation
+
+Chaque note possède un historique complet et consultable.
+
+🔒 Règles métier verrouillées
+
+✅ Années scolaires totalement indépendantes
+✅ Les unités pédagogiques ne possèdent jamais leur propre liste d’élèves
+✅ Les moyennes sont toujours recalculées automatiquement
+✅ Les règles de calcul s’appliquent par unité, jamais globalement
+✅ Aucune donnée critique n’est modifiable sans traçabilité
+
+🎨 Interface & Design System
+Typographie
+
+Titres → Clash Display (Bold / Semi-bold)
+
+Texte & UI → Satoshi (Regular / Medium)
+
+Lisibilité maximale, hiérarchie nette, aucune surcharge visuelle.
+
+Couleurs
+
+🤍 Fond : blanc cassé
+
+🖤 Texte : gris très foncé
+
+🟦 Accent principal : bleu glacier
+
+🟩 Succès
+
+🟥 Erreur
+
+🟪 Information
+
+Palette minimaliste, moderne et professionnelle.
+
+🚀 Ambition
+
+EnseiNotes n’est pas une simple application de notes.
+
+C’est :
+
+une infrastructure pédagogique numérique
+
+un standard de rigueur scolaire
+
+un outil pensé pour durer, évoluer et inspirer confiance
+
+📌 Statut
+
+🛠️ En cours de développement
+📐 Logique métier finalisée
+🎨 UI/UX strictement cadrée
+🔒 Règles critiques verrouillées dès la conception
+>>>>>>> 9d33d5c (chore: initial sandbox commit)

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+=======
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
 import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student } from '@/types/enseinotes';
 
 interface AppState {
@@ -35,6 +39,7 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+<<<<<<< HEAD
 const generateId = () => {
   // Avoid '-' to keep other composite keys predictable.
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -65,6 +70,9 @@ const sortStudentsAZ = (students: Student[]) => {
     return a.firstName.localeCompare(b.firstName, 'fr');
   });
 };
+=======
+const generateId = () => Math.random().toString(36).substring(2, 15);
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>({
@@ -79,6 +87,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Track which units have been saved
   const [savedUnits, setSavedUnits] = useState<Set<string>>(new Set());
 
+<<<<<<< HEAD
   // Migration/normalization (fix old classes created with students having empty ids)
   useEffect(() => {
     const needsFix = state.classRooms.some((c) =>
@@ -109,6 +118,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   }, [state.classRooms]);
 
+=======
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
   const addSchoolYear = (year: Omit<SchoolYear, 'id' | 'createdAt'>) => {
     const newYear: SchoolYear = {
       ...year,
@@ -123,6 +134,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addClassRoom = (classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => {
+<<<<<<< HEAD
     const normalizedStudents = sortStudentsAZ(
       classRoom.students.map((s) => {
         const id = s.id && s.id.trim() !== '' ? s.id : generateId();
@@ -135,11 +147,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }),
     );
 
+=======
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
     const newClass: ClassRoom = {
       ...classRoom,
       id: generateId(),
       createdAt: new Date(),
+<<<<<<< HEAD
       students: normalizedStudents,
+=======
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
     };
     setState(prev => ({
       ...prev,
@@ -171,14 +188,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addStudentToClass = (classRoomId: string, student: Omit<Student, 'id'>) => {
     const newStudent: Student = {
+<<<<<<< HEAD
       ...normalizeStudent(student),
+=======
+      ...student,
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
       id: generateId(),
     };
     setState(prev => ({
       ...prev,
       classRooms: prev.classRooms.map(c => {
         if (c.id !== classRoomId) return c;
+<<<<<<< HEAD
         return { ...c, students: sortStudentsAZ([...c.students, newStudent]) };
+=======
+        const updatedStudents = [...c.students, newStudent].sort((a, b) => {
+          const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
+          if (lastNameCompare !== 0) return lastNameCompare;
+          return a.firstName.localeCompare(b.firstName, 'fr');
+        });
+        return { ...c, students: updatedStudents };
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
       }),
     }));
   };
@@ -186,6 +216,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateStudentInClass = (classRoomId: string, studentId: string, updates: Partial<Student>) => {
     setState(prev => ({
       ...prev,
+<<<<<<< HEAD
       classRooms: prev.classRooms.map(c => {
         if (c.id !== classRoomId) return c;
 
@@ -202,6 +233,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         return { ...c, students: sortStudentsAZ(updated) };
       }),
+=======
+      classRooms: prev.classRooms.map(c =>
+        c.id === classRoomId
+          ? {
+              ...c,
+              students: c.students.map(s =>
+                s.id === studentId ? { ...s, ...updates } : s
+              ),
+            }
+          : c
+      ),
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
     }));
   };
 
@@ -210,7 +253,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...prev,
       classRooms: prev.classRooms.map(c =>
         c.id === classRoomId
+<<<<<<< HEAD
           ? { ...c, students: sortStudentsAZ(c.students.filter(s => s.id !== studentId)) }
+=======
+          ? { ...c, students: c.students.filter(s => s.id !== studentId) }
+>>>>>>> 9d33d5c (chore: initial sandbox commit)
           : c
       ),
       // Also delete associated grades
