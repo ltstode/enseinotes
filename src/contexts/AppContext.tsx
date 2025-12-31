@@ -104,11 +104,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     setState(prev => ({
       ...prev,
-      classRooms: prev.classRooms.map(c =>
-        c.id === classRoomId
-          ? { ...c, students: [...c.students, newStudent] }
-          : c
-      ),
+      classRooms: prev.classRooms.map(c => {
+        if (c.id !== classRoomId) return c;
+        const updatedStudents = [...c.students, newStudent].sort((a, b) => {
+          const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
+          if (lastNameCompare !== 0) return lastNameCompare;
+          return a.firstName.localeCompare(b.firstName, 'fr');
+        });
+        return { ...c, students: updatedStudents };
+      }),
     }));
   };
 
