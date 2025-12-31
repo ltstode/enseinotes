@@ -8,7 +8,8 @@ import {
   ClipboardList,
   GraduationCap,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -75,16 +76,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Tableau de bord' },
     { to: '/years', icon: <Calendar size={20} />, label: 'Années scolaires' },
     { to: '/classes', icon: <Users size={20} />, label: 'Classes' },
+    { to: '/students', icon: <UserCog size={20} />, label: 'Élèves' },
     { to: '/units', icon: <BookOpen size={20} />, label: 'Unités pédagogiques' },
     { to: '/grades', icon: <ClipboardList size={20} />, label: 'Notes' },
   ];
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen flex bg-background">
+      <div className="h-screen flex bg-background overflow-hidden">
         {/* Sidebar */}
         <aside className={cn(
-          "border-r bg-card flex flex-col transition-all duration-300",
+          "h-screen border-r bg-card flex flex-col transition-all duration-300 flex-shrink-0",
           isCollapsed ? "w-16" : "w-64"
         )}>
           {/* Logo */}
@@ -143,7 +145,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 p-2 space-y-1">
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto scrollbar-thin">
             {navItems.map(item => (
               <NavItem
                 key={item.to}
@@ -166,7 +168,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 h-screen overflow-auto">
           <div className="p-8 animate-fade-in">
             {children}
           </div>
