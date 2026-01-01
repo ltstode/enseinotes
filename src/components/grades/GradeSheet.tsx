@@ -444,16 +444,16 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
             </p>
           </div>
           <div className="flex gap-2">
-            {!isSaved && evaluations.length > 0 && (
+            {evaluations.length > 0 && (!isSaved || hasGradesToSave) && (
               <Button 
                 onClick={handleSaveGrades}
                 variant="default"
-                disabled={!hasGradesToSave && grades.filter(g => 
+                disabled={isSaved ? !hasGradesToSave : (!hasGradesToSave && grades.filter(g => 
                   evaluations.some(e => e.id === g.evaluationId)
-                ).length === 0}
+                ).length === 0)}
               >
                 <Save size={18} />
-                Enregistrer les notes
+                {isSaved ? 'Enregistrer les nouvelles notes' : 'Enregistrer les notes'}
               </Button>
             )}
             <Button onClick={() => setShowEvalDialog(true)} variant={isSaved ? "default" : "outline"}>

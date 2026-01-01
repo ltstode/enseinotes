@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student } from '@/types/enseinotes';
 
 interface AppState {
@@ -35,7 +35,36 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const generateId = () => Math.random().toString(36).substring(2, 15);
+const generateId = () => {
+  // Avoid '-' to keep other composite keys predictable.
+  return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const normalizeLastName = (value: string) => value.trim().toUpperCase();
+
+const normalizeFirstName = (value: string) => {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const normalizeStudent = (student: Omit<Student, 'id'>): Omit<Student, 'id'> => ({
+  ...student,
+  lastName: normalizeLastName(student.lastName),
+  firstName: normalizeFirstName(student.firstName),
+  studentId: student.studentId.trim(),
+});
+
+const sortStudentsAZ = (students: Student[]) => {
+  return [...students].sort((a, b) => {
+    const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
+    if (lastNameCompare !== 0) return lastNameCompare;
+    return a.firstName.localeCompare(b.firstName, 'fr');
+  });
+};
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>({
@@ -49,6 +78,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Track which units have been saved
   const [savedUnits, setSavedUnits] = useState<Set<string>>(new Set());
+
+  // Migration/normalization (fix old classes created with students having empty ids)
+  useEffect(() => {
+    const needsFix = state.classRooms.some((c) =>
+      c.students.some(
+        (s) =>
+          !s.id ||
+          s.id.trim() === '' ||
+          s.lastName !== normalizeLastName(s.lastName) ||
+          s.firstName !== normalizeFirstName(s.firstName),
+      ),
+    );
+
+    if (!needsFix) return;
+
+    setState((prev) => ({
+      ...prev,
+      classRooms: prev.classRooms.map((c) => ({
+        ...c,
+        students: sortStudentsAZ(
+          c.students.map((s) => ({
+            ...s,
+            id: s.id && s.id.trim() !== '' ? s.id : generateId(),
+            lastName: normalizeLastName(s.lastName),
+            firstName: normalizeFirstName(s.firstName),
+          })),
+        ),
+      })),
+    }));
+  }, [state.classRooms]);
 
   const addSchoolYear = (year: Omit<SchoolYear, 'id' | 'createdAt'>) => {
     const newYear: SchoolYear = {
@@ -64,10 +123,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addClassRoom = (classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => {
+    const normalizedStudents = sortStudentsAZ(
+      classRoom.students.map((s) => {
+        const id = s.id && s.id.trim() !== '' ? s.id : generateId();
+        return { ...normalizeStudent({
+          firstName: s.firstName,
+          lastName: s.lastName,
+          studentId: s.studentId,
+          status: s.status,
+        }), id };
+      }),
+    );
+
     const newClass: ClassRoom = {
       ...classRoom,
       id: generateId(),
       createdAt: new Date(),
+      students: normalizedStudents,
     };
     setState(prev => ({
       ...prev,
@@ -99,19 +171,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addStudentToClass = (classRoomId: string, student: Omit<Student, 'id'>) => {
     const newStudent: Student = {
-      ...student,
+      ...normalizeStudent(student),
       id: generateId(),
     };
     setState(prev => ({
       ...prev,
       classRooms: prev.classRooms.map(c => {
         if (c.id !== classRoomId) return c;
-        const updatedStudents = [...c.students, newStudent].sort((a, b) => {
-          const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
-          if (lastNameCompare !== 0) return lastNameCompare;
-          return a.firstName.localeCompare(b.firstName, 'fr');
-        });
-        return { ...c, students: updatedStudents };
+        return { ...c, students: sortStudentsAZ([...c.students, newStudent]) };
       }),
     }));
   };
@@ -119,16 +186,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateStudentInClass = (classRoomId: string, studentId: string, updates: Partial<Student>) => {
     setState(prev => ({
       ...prev,
-      classRooms: prev.classRooms.map(c =>
-        c.id === classRoomId
-          ? {
-              ...c,
-              students: c.students.map(s =>
-                s.id === studentId ? { ...s, ...updates } : s
-              ),
-            }
-          : c
-      ),
+      classRooms: prev.classRooms.map(c => {
+        if (c.id !== classRoomId) return c;
+
+        const updated = c.students.map(s => {
+          if (s.id !== studentId) return s;
+
+          const next = { ...s, ...updates };
+          return {
+            ...next,
+            lastName: updates.lastName !== undefined ? normalizeLastName(next.lastName) : next.lastName,
+            firstName: updates.firstName !== undefined ? normalizeFirstName(next.firstName) : next.firstName,
+          };
+        });
+
+        return { ...c, students: sortStudentsAZ(updated) };
+      }),
     }));
   };
 
@@ -137,7 +210,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...prev,
       classRooms: prev.classRooms.map(c =>
         c.id === classRoomId
-          ? { ...c, students: c.students.filter(s => s.id !== studentId) }
+          ? { ...c, students: sortStudentsAZ(c.students.filter(s => s.id !== studentId)) }
           : c
       ),
       // Also delete associated grades
