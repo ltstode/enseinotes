@@ -198,21 +198,22 @@ const StudentsPage: React.FC = () => {
   };
 
   const toggleStudentSelection = (studentId: string) => {
-    const newSelection = new Set(selectedStudents);
-    if (newSelection.has(studentId)) {
-      newSelection.delete(studentId);
-    } else {
-      newSelection.add(studentId);
-    }
-    setSelectedStudents(newSelection);
+    setSelectedStudents((prev) => {
+      const next = new Set(prev);
+      if (next.has(studentId)) {
+        next.delete(studentId);
+      } else {
+        next.add(studentId);
+      }
+      return next;
+    });
   };
 
   const toggleSelectAll = () => {
-    if (selectedStudents.size === filteredStudents.length) {
-      setSelectedStudents(new Set());
-    } else {
-      setSelectedStudents(new Set(filteredStudents.map(s => s.id)));
-    }
+    setSelectedStudents((prev) => {
+      if (prev.size === filteredStudents.length) return new Set();
+      return new Set(filteredStudents.map((s) => s.id));
+    });
   };
 
   return (
