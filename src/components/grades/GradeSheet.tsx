@@ -1,0 +1,651 @@
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Plus, History, Lock, AlertCircle, HelpCircle, FileText, Save, Pencil, Check, X } from 'lucide-react';
+import { PedagogicalUnit, Student, Evaluation, EvaluationType } from '@/types/enseinotes';
+import { useApp } from '@/contexts/AppContext';
+import { useToast } from '@/hooks/use-toast';
+import CreateEvaluationDialog from './CreateEvaluationDialog';
+
+interface GradeSheetProps {
+  unit: PedagogicalUnit;
+}
+
+interface LocalGradeState {
+  [key: string]: string; // key = `${studentId}-${evaluationId}`, value = grade as string
+}
+
+const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
+  const { 
+    getStudentsByClass, 
+    getEvaluationsByUnit, 
+    grades, 
+    addGrade,
+    updateGrade,
+    updateGradeValue,
+    saveGrades,
+    isUnitSaved,
+  } = useApp();
+  
+  const { toast } = useToast();
+  
+  // Get students and sort alphabetically by lastName then firstName
+  const students = useMemo(() => {
+    return getStudentsByClass(unit.classRoomId)
+      .filter(s => s.status === 'active')
+      .sort((a, b) => {
+        const lastNameCompare = a.lastName.localeCompare(b.lastName, 'fr');
+        if (lastNameCompare !== 0) return lastNameCompare;
+        return a.firstName.localeCompare(b.firstName, 'fr');
+      });
+  }, [getStudentsByClass, unit.classRoomId]);
+  
+  const evaluations = getEvaluationsByUnit(unit.id);
+  const isSaved = isUnitSaved(unit.id);
+  
+  const interros = evaluations.filter(e => e.type === 'interro');
+  const devoirs = evaluations.filter(e => e.type === 'devoir');
+  
+  const [showEvalDialog, setShowEvalDialog] = useState(false);
+  const [showModifyDialog, setShowModifyDialog] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<string | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<{
+    gradeId: string;
+    studentName: string;
+    currentValue: number;
+    evalName: string;
+  } | null>(null);
+  const [modifyReason, setModifyReason] = useState('');
+  const [newGradeValue, setNewGradeValue] = useState('');
+  
+  // Use an object instead of Map for local grades to avoid reference issues
+  const [localGrades, setLocalGrades] = useState<LocalGradeState>({});
+  
+  const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+
+  const getGrade = useCallback((studentId: string, evaluationId: string) => {
+    return grades.find(g => g.studentId === studentId && g.evaluationId === evaluationId);
+  }, [grades]);
+
+  const getLocalGradeValue = useCallback((studentId: string, evaluationId: string): string => {
+    const key = `${studentId}-${evaluationId}`;
+    if (Object.prototype.hasOwnProperty.call(localGrades, key)) {
+      return localGrades[key];
+    }
+    const grade = getGrade(studentId, evaluationId);
+    return grade?.value?.toString() ?? '';
+  }, [localGrades, getGrade]);
+
+  // Calculate average for a specific type of evaluation
+  const calculateTypeAverage = useCallback((studentId: string, evals: Evaluation[]): number | null => {
+    const studentGrades = evals
+      .map(e => {
+        const key = `${studentId}-${e.id}`;
+        const localValue = localGrades[key];
+        const grade = getGrade(studentId, e.id);
+        
+        let value: number | undefined;
+        if (localValue !== undefined && localValue !== '') {
+          value = parseFloat(localValue);
+        } else if (grade?.value !== undefined) {
+          value = grade.value;
+        }
+        
+        return value !== undefined && !isNaN(value) ? { value, evaluation: e } : null;
+      })
+      .filter(Boolean) as { value: number; evaluation: Evaluation }[];
+
+    if (studentGrades.length === 0) return null;
+
+    let totalWeighted = 0;
+    let totalCoefficients = 0;
+
+    studentGrades.forEach(({ value, evaluation }) => {
+      const normalized = (value / evaluation.maxScore) * 20;
+      totalWeighted += normalized * evaluation.coefficient;
+      totalCoefficients += evaluation.coefficient;
+    });
+
+    return totalCoefficients > 0 ? Math.round((totalWeighted / totalCoefficients) * 100) / 100 : null;
+  }, [localGrades, getGrade]);
+
+  // Calculate final average using the unit's formula
+  const calculateFinalAverage = useCallback((studentId: string): number | null => {
+    const moyInterros = calculateTypeAverage(studentId, interros);
+    const moyDevoirs = calculateTypeAverage(studentId, devoirs);
+
+    if (moyInterros === null && moyDevoirs === null) return null;
+
+    const { interroWeight, devoirWeight } = unit.rules;
+
+    // Handle cases where only one type has grades
+    if (moyInterros !== null && moyDevoirs === null) return moyInterros;
+    if (moyDevoirs !== null && moyInterros === null) return moyDevoirs;
+
+    // Apply formula
+    const totalWeight = interroWeight + devoirWeight;
+    const weighted = (moyInterros! * interroWeight + moyDevoirs! * devoirWeight) / totalWeight;
+    
+    return Math.round(weighted * 100) / 100;
+  }, [calculateTypeAverage, interros, devoirs, unit.rules]);
+
+  const handleLocalGradeInput = useCallback((studentId: string, evaluationId: string, value: string) => {
+    const evaluation = evaluations.find(e => e.id === evaluationId);
+    const key = `${studentId}-${evaluationId}`;
+    
+    // Allow empty value
+    if (value === '') {
+      setLocalGrades(prev => {
+        const next = { ...prev };
+        next[key] = '';
+        return next;
+      });
+      return;
+    }
+    
+    // Validate numeric input
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) {
+      return;
+    }
+    
+    // Check max score if evaluation exists
+    if (evaluation && numValue > evaluation.maxScore) {
+      return;
+    }
+
+    setLocalGrades(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }, [evaluations]);
+
+  const handleSaveGrades = useCallback(() => {
+    // Save all local grades to the context
+    Object.entries(localGrades).forEach(([key, value]) => {
+      if (value === '') return;
+      
+      const [studentId, evaluationId] = key.split('-');
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return;
+      
+      const existingGrade = getGrade(studentId, evaluationId);
+      
+      if (existingGrade) {
+        updateGradeValue(existingGrade.id, numValue);
+      } else {
+        addGrade({
+          studentId,
+          evaluationId,
+          value: numValue,
+        });
+      }
+    });
+
+    // Lock all grades for this unit
+    saveGrades(unit.id);
+    setLocalGrades({});
+    
+    toast({
+      title: 'Notes enregistrées',
+      description: 'Toutes les notes ont été sauvegardées et verrouillées',
+    });
+  }, [localGrades, getGrade, updateGradeValue, addGrade, saveGrades, unit.id, toast]);
+
+  const handleEditStudent = useCallback((studentId: string) => {
+    setEditingStudent(studentId);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingStudent(null);
+  }, []);
+
+  const handleModifyGrade = useCallback((studentId: string, evaluationId: string, newValue: string) => {
+    const existingGrade = getGrade(studentId, evaluationId);
+    const evaluation = evaluations.find(e => e.id === evaluationId);
+    const student = students.find(s => s.id === studentId);
+    
+    if (!existingGrade || !evaluation || !student) return;
+    
+    // Check if already modified
+    if (existingGrade.history.length > 0) {
+      toast({
+        title: 'Note verrouillée',
+        description: 'Cette note a déjà été modifiée et ne peut plus être changée',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setSelectedGrade({
+      gradeId: existingGrade.id,
+      studentName: `${student.lastName} ${student.firstName}`,
+      currentValue: existingGrade.value,
+      evalName: evaluation.name,
+    });
+    setNewGradeValue(newValue);
+    setShowModifyDialog(true);
+  }, [getGrade, evaluations, students, toast]);
+
+  const handleModifyConfirm = useCallback(() => {
+    if (!selectedGrade || !modifyReason.trim()) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez saisir un motif de modification',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    updateGrade(selectedGrade.gradeId, parseFloat(newGradeValue), modifyReason.trim());
+    
+    toast({
+      title: 'Note modifiée',
+      description: 'La modification a été enregistrée définitivement',
+    });
+
+    setShowModifyDialog(false);
+    setSelectedGrade(null);
+    setModifyReason('');
+    setNewGradeValue('');
+    setEditingStudent(null);
+  }, [selectedGrade, modifyReason, newGradeValue, updateGrade, toast]);
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback((
+    e: React.KeyboardEvent<HTMLInputElement>,
+    studentIndex: number,
+    evalIndex: number,
+    evalList: Evaluation[]
+  ) => {
+    const allEvals = [...interros, ...devoirs];
+    const currentEvalId = evalList[evalIndex].id;
+    const globalEvalIndex = allEvals.findIndex(ev => ev.id === currentEvalId);
+
+    let nextStudentIndex = studentIndex;
+    let nextEvalIndex = globalEvalIndex;
+
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'Enter':
+        e.preventDefault();
+        nextStudentIndex = Math.min(studentIndex + 1, students.length - 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        nextStudentIndex = Math.max(studentIndex - 1, 0);
+        break;
+      case 'ArrowRight':
+      case 'Tab':
+        if (!e.shiftKey) {
+          e.preventDefault();
+          nextEvalIndex = Math.min(globalEvalIndex + 1, allEvals.length - 1);
+        }
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        nextEvalIndex = Math.max(globalEvalIndex - 1, 0);
+        break;
+      default:
+        return;
+    }
+
+    const nextEval = allEvals[nextEvalIndex];
+    const nextStudent = students[nextStudentIndex];
+    if (nextEval && nextStudent) {
+      const key = `${nextStudent.id}-${nextEval.id}`;
+      const input = inputRefs.current.get(key);
+      input?.focus();
+      input?.select();
+    }
+  }, [students, interros, devoirs]);
+
+  const registerRef = useCallback((studentId: string, evalId: string, ref: HTMLInputElement | null) => {
+    const key = `${studentId}-${evalId}`;
+    if (ref) {
+      inputRefs.current.set(key, ref);
+    } else {
+      inputRefs.current.delete(key);
+    }
+  }, []);
+
+  // Check if a specific evaluation is new (added after save)
+  const isNewEvaluation = useCallback((evaluationId: string): boolean => {
+    if (!isSaved) return false;
+    // If unit is saved but there are no locked grades for this evaluation, it's new
+    const gradesForEval = grades.filter(g => g.evaluationId === evaluationId);
+    return gradesForEval.length === 0 || gradesForEval.every(g => !g.isLocked);
+  }, [isSaved, grades]);
+
+  const renderGradeCell = (student: Student, evaluation: Evaluation, studentIndex: number, evalIndex: number, evalList: Evaluation[]) => {
+    const grade = getGrade(student.id, evaluation.id);
+    const isEditing = editingStudent === student.id;
+    const alreadyModified = grade?.history && grade.history.length > 0;
+    const key = `${student.id}-${evaluation.id}`;
+    const evalIsNew = isNewEvaluation(evaluation.id);
+    
+    // Allow editing if: not saved yet, OR evaluation is new (added after save)
+    const canFreeEdit = !isSaved || evalIsNew;
+    
+    return (
+      <td key={evaluation.id} className="p-2 text-center">
+        <div className="relative">
+          {canFreeEdit ? (
+            // Free editing mode - not saved yet or new evaluation
+            <Input
+              key={key}
+              ref={(ref) => registerRef(student.id, evaluation.id, ref)}
+              type="number"
+              min="0"
+              max={evaluation.maxScore}
+              step="0.5"
+              value={localGrades[key] ?? (grade?.value?.toString() ?? '')}
+              onChange={(e) => handleLocalGradeInput(student.id, evaluation.id, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, studentIndex, evalIndex, evalList)}
+              className="w-16 mx-auto text-center text-small"
+            />
+          ) : isEditing && !alreadyModified ? (
+            // Editing mode for locked grades (one-time modification)
+            <Input
+              key={`edit-${key}`}
+              ref={(ref) => registerRef(student.id, evaluation.id, ref)}
+              type="number"
+              min="0"
+              max={evaluation.maxScore}
+              step="0.5"
+              defaultValue={grade?.value ?? ''}
+              onBlur={(e) => {
+                if (e.target.value !== grade?.value?.toString()) {
+                  handleModifyGrade(student.id, evaluation.id, e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const target = e.target as HTMLInputElement;
+                  if (target.value !== grade?.value?.toString()) {
+                    handleModifyGrade(student.id, evaluation.id, target.value);
+                  }
+                }
+              }}
+              className="w-16 mx-auto text-center text-small border-warning"
+            />
+          ) : (
+            // Display mode - locked
+            <div className={`w-16 mx-auto py-2 px-3 rounded-md text-center text-small bg-muted ${
+              alreadyModified ? 'ring-2 ring-warning/50' : ''
+            }`}>
+              {grade?.value ?? '-'}
+            </div>
+          )}
+          {alreadyModified && (
+            <span title={`Modifié: ${grade.history[0].reason}`}>
+              <History 
+                size={10} 
+                className="absolute -bottom-1 -right-1 text-warning cursor-pointer"
+              />
+            </span>
+          )}
+        </div>
+      </td>
+    );
+  };
+
+  const renderAverageCell = (value: number | null, label: string) => (
+    <td className="p-2 text-center bg-secondary/20">
+      <span className={`font-display font-semibold text-small ${
+        value !== null && value >= 10 ? 'text-success' : 
+        value !== null ? 'text-destructive' : 'text-muted-foreground'
+      }`}>
+        {value !== null ? value.toFixed(2) : '-'}
+      </span>
+    </td>
+  );
+
+  if (students.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <AlertCircle className="mx-auto text-muted-foreground mb-4" size={48} />
+          <h3 className="font-display text-h3 mb-2">Aucun élève actif</h3>
+          <p className="text-muted-foreground">
+            La classe associée à cette unité n'a pas encore d'élèves actifs.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Check if there are any grades to save
+  const hasGradesToSave = Object.keys(localGrades).some(key => localGrades[key] !== '');
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
+          <div>
+            <CardTitle>{unit.name}</CardTitle>
+            <p className="text-small text-muted-foreground mt-1">
+              {students.length} élèves · {interros.length} interro(s) · {devoirs.length} devoir(s)
+              {isSaved && <span className="ml-2 text-success">✓ Enregistré</span>}
+            </p>
+            <p className="text-small text-muted-foreground">
+              Min. requis: {unit.rules.minInterros} interros, {unit.rules.minDevoirs} devoirs
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {evaluations.length > 0 && (!isSaved || hasGradesToSave) && (
+              <Button 
+                onClick={handleSaveGrades}
+                variant="default"
+                disabled={isSaved ? !hasGradesToSave : (!hasGradesToSave && grades.filter(g => 
+                  evaluations.some(e => e.id === g.evaluationId)
+                ).length === 0)}
+              >
+                <Save size={18} />
+                {isSaved ? 'Enregistrer les nouvelles notes' : 'Enregistrer les notes'}
+              </Button>
+            )}
+            <Button onClick={() => setShowEvalDialog(true)} variant={isSaved ? "default" : "outline"}>
+              <Plus size={18} />
+              Nouvelle évaluation
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {evaluations.length === 0 ? (
+            <div className="text-center py-8 border-2 border-dashed rounded-xl">
+              <p className="text-muted-foreground mb-4">
+                Créez votre première évaluation pour commencer à saisir les notes
+              </p>
+              <Button variant="outline" onClick={() => setShowEvalDialog(true)}>
+                <Plus size={18} />
+                Créer une évaluation
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full border-collapse text-small">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-3 font-display font-semibold bg-secondary/30 sticky left-0 z-10">
+                      Élève
+                    </th>
+                    {isSaved && (
+                      <th className="p-2 text-center min-w-[60px] bg-secondary/30">
+                        <span className="text-xs">Actions</span>
+                      </th>
+                    )}
+                    {/* Interrogations header */}
+                    {interros.length > 0 && (
+                      <>
+                        {interros.map((evaluation) => (
+                          <th key={evaluation.id} className="p-2 text-center min-w-[70px] bg-info/10">
+                            <div className="flex items-center justify-center gap-1">
+                              <HelpCircle size={12} className="text-info" />
+                              <span className="font-display font-semibold text-xs">{evaluation.name}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground font-normal">
+                              /{evaluation.maxScore}
+                            </div>
+                          </th>
+                        ))}
+                        <th className="p-2 text-center min-w-[70px] bg-info/20">
+                          <div className="font-display font-semibold text-xs">Moy. Interros</div>
+                        </th>
+                      </>
+                    )}
+                    {/* Devoirs header */}
+                    {devoirs.length > 0 && (
+                      <>
+                        {devoirs.map((evaluation) => (
+                          <th key={evaluation.id} className="p-2 text-center min-w-[70px] bg-warning/10">
+                            <div className="flex items-center justify-center gap-1">
+                              <FileText size={12} className="text-warning" />
+                              <span className="font-display font-semibold text-xs">{evaluation.name}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground font-normal">
+                              /{evaluation.maxScore}
+                            </div>
+                          </th>
+                        ))}
+                        <th className="p-2 text-center min-w-[70px] bg-warning/20">
+                          <div className="font-display font-semibold text-xs">Moy. Devoirs</div>
+                        </th>
+                      </>
+                    )}
+                    {/* Final average */}
+                    <th className="p-2 text-center min-w-[90px] bg-accent/30">
+                      <div className="font-display font-semibold text-xs">Moyenne</div>
+                      <div className="text-xs text-muted-foreground font-normal">
+                        (coef. {unit.rules.interroWeight + unit.rules.devoirWeight})
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student, studentIndex) => (
+                    <tr key={student.id} className="border-b hover:bg-muted/20 transition-colors">
+                      <td className="p-3 font-medium bg-secondary/10 sticky left-0 z-10">
+                        {student.lastName} {student.firstName}
+                      </td>
+                      {isSaved && (
+                        <td className="p-2 text-center">
+                          {editingStudent === student.id ? (
+                            <div className="flex justify-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6"
+                                onClick={() => handleCancelEdit()}
+                              >
+                                <X size={12} />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => handleEditStudent(student.id)}
+                            >
+                              <Pencil size={12} />
+                            </Button>
+                          )}
+                        </td>
+                      )}
+                      {/* Interro grades */}
+                      {interros.map((evaluation, evalIndex) => (
+                        renderGradeCell(student, evaluation, studentIndex, evalIndex, interros)
+                      ))}
+                      {interros.length > 0 && renderAverageCell(calculateTypeAverage(student.id, interros), 'interro')}
+                      
+                      {/* Devoir grades */}
+                      {devoirs.map((evaluation, evalIndex) => (
+                        renderGradeCell(student, evaluation, studentIndex, evalIndex, devoirs)
+                      ))}
+                      {devoirs.length > 0 && renderAverageCell(calculateTypeAverage(student.id, devoirs), 'devoir')}
+                      
+                      {/* Final average */}
+                      <td className="p-2 text-center bg-accent/10">
+                        <span className={`font-display font-bold text-base ${
+                          calculateFinalAverage(student.id) !== null && calculateFinalAverage(student.id)! >= 10 
+                            ? 'text-success' 
+                            : calculateFinalAverage(student.id) !== null 
+                              ? 'text-destructive' 
+                              : 'text-muted-foreground'
+                        }`}>
+                          {calculateFinalAverage(student.id)?.toFixed(2) ?? '-'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <CreateEvaluationDialog
+        open={showEvalDialog}
+        onOpenChange={setShowEvalDialog}
+        unitId={unit.id}
+      />
+
+      {/* Modify Grade Dialog */}
+      <Dialog open={showModifyDialog} onOpenChange={setShowModifyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier une note</DialogTitle>
+            <DialogDescription>
+              Cette modification sera définitive et tracée dans l'historique.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedGrade && (
+            <div className="space-y-4 py-4">
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <p><strong>Élève:</strong> {selectedGrade.studentName}</p>
+                <p><strong>Évaluation:</strong> {selectedGrade.evalName}</p>
+                <p><strong>Note actuelle:</strong> {selectedGrade.currentValue}</p>
+                <p><strong>Nouvelle note:</strong> {newGradeValue}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reason">Motif de la modification *</Label>
+                <Textarea
+                  id="reason"
+                  placeholder="Expliquez la raison de cette modification..."
+                  value={modifyReason}
+                  onChange={(e) => setModifyReason(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowModifyDialog(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleModifyConfirm} disabled={!modifyReason.trim()}>
+              Confirmer la modification
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default GradeSheet;
