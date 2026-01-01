@@ -97,11 +97,20 @@ const StudentsPage: React.FC = () => {
       });
   }, [selectedClass, searchTerm, showArchived]);
 
+  // Format name: each word capitalized (first letter uppercase, rest lowercase)
+  const formatFirstName = (name: string): string => {
+    return name
+      .trim()
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const handleAddStudent = () => {
     if (!selectedClassId || !newLastName.trim()) return;
     
     addStudentToClass(selectedClassId, {
-      firstName: newFirstName.trim(),
+      firstName: formatFirstName(newFirstName),
       lastName: newLastName.trim().toUpperCase(),
       studentId: '',
       status: 'active'
@@ -124,7 +133,7 @@ const StudentsPage: React.FC = () => {
     names.forEach(name => {
       const parts = name.split(/\s+/);
       const lastName = parts[0]?.toUpperCase() || '';
-      const firstName = parts.slice(1).join(' ') || '';
+      const firstName = formatFirstName(parts.slice(1).join(' '));
       
       addStudentToClass(selectedClassId, {
         firstName,
@@ -179,7 +188,7 @@ const StudentsPage: React.FC = () => {
     if (!selectedClassId || !editingStudent || !editLastName.trim()) return;
     
     updateStudentInClass(selectedClassId, editingStudent.id, { 
-      firstName: editFirstName.trim(), 
+      firstName: formatFirstName(editFirstName), 
       lastName: editLastName.trim().toUpperCase() 
     });
     setEditingStudent(null);
@@ -392,7 +401,10 @@ const StudentsPage: React.FC = () => {
                     >
                       <Checkbox
                         checked={selectedStudents.has(student.id)}
-                        onCheckedChange={() => toggleStudentSelection(student.id)}
+                        onCheckedChange={() => {
+                          toggleStudentSelection(student.id);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       
                       {editingStudent?.id === student.id ? (

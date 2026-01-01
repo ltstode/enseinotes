@@ -80,7 +80,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
 
   const getLocalGradeValue = useCallback((studentId: string, evaluationId: string): string => {
     const key = `${studentId}-${evaluationId}`;
-    if (key in localGrades) {
+    if (Object.prototype.hasOwnProperty.call(localGrades, key)) {
       return localGrades[key];
     }
     const grade = getGrade(studentId, evaluationId);
@@ -320,25 +320,37 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     }
   }, []);
 
+  // Check if a specific evaluation is new (added after save)
+  const isNewEvaluation = useCallback((evaluationId: string): boolean => {
+    if (!isSaved) return false;
+    // If unit is saved but there are no locked grades for this evaluation, it's new
+    const gradesForEval = grades.filter(g => g.evaluationId === evaluationId);
+    return gradesForEval.length === 0 || gradesForEval.every(g => !g.isLocked);
+  }, [isSaved, grades]);
+
   const renderGradeCell = (student: Student, evaluation: Evaluation, studentIndex: number, evalIndex: number, evalList: Evaluation[]) => {
     const grade = getGrade(student.id, evaluation.id);
     const isEditing = editingStudent === student.id;
-    const isLocked = isSaved && !isEditing;
     const alreadyModified = grade?.history && grade.history.length > 0;
     const key = `${student.id}-${evaluation.id}`;
+    const evalIsNew = isNewEvaluation(evaluation.id);
+    
+    // Allow editing if: not saved yet, OR evaluation is new (added after save)
+    const canFreeEdit = !isSaved || evalIsNew;
     
     return (
       <td key={evaluation.id} className="p-2 text-center">
         <div className="relative">
-          {!isSaved ? (
-            // Free editing mode - not saved yet
+          {canFreeEdit ? (
+            // Free editing mode - not saved yet or new evaluation
             <Input
+              key={key}
               ref={(ref) => registerRef(student.id, evaluation.id, ref)}
               type="number"
               min="0"
               max={evaluation.maxScore}
               step="0.5"
-              value={getLocalGradeValue(student.id, evaluation.id)}
+              value={localGrades[key] ?? (grade?.value?.toString() ?? '')}
               onChange={(e) => handleLocalGradeInput(student.id, evaluation.id, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, studentIndex, evalIndex, evalList)}
               className="w-16 mx-auto text-center text-small"
@@ -346,6 +358,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           ) : isEditing && !alreadyModified ? (
             // Editing mode for locked grades (one-time modification)
             <Input
+              key={`edit-${key}`}
               ref={(ref) => registerRef(student.id, evaluation.id, ref)}
               type="number"
               min="0"
