@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student } from '@/types/enseinotes';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData } from '@/types/enseinotes';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppState {
   schoolYears: SchoolYear[];
@@ -36,7 +37,6 @@ interface AppContextType extends AppState {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const generateId = () => {
-  // Avoid '-' to keep other composite keys predictable.
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 };
 
@@ -66,21 +66,111 @@ const sortStudentsAZ = (students: Student[]) => {
   });
 };
 
+const getStorageKey = (teacherId: string) => `enseinotes_data_${teacherId}`;
+
+const loadTeacherData = (teacherId: string): TeacherData | null => {
+  try {
+    const data = localStorage.getItem(getStorageKey(teacherId));
+    if (!data) return null;
+    const parsed = JSON.parse(data);
+    return {
+      ...parsed,
+      schoolYears: parsed.schoolYears.map((y: SchoolYear) => ({
+        ...y,
+        createdAt: new Date(y.createdAt),
+      })),
+      classRooms: parsed.classRooms.map((c: ClassRoom) => ({
+        ...c,
+        createdAt: new Date(c.createdAt),
+      })),
+      pedagogicalUnits: parsed.pedagogicalUnits.map((u: PedagogicalUnit) => ({
+        ...u,
+        createdAt: new Date(u.createdAt),
+      })),
+      evaluations: parsed.evaluations.map((e: Evaluation) => ({
+        ...e,
+        date: new Date(e.date),
+      })),
+      grades: parsed.grades.map((g: Grade) => ({
+        ...g,
+        createdAt: new Date(g.createdAt),
+        modifiedAt: g.modifiedAt ? new Date(g.modifiedAt) : undefined,
+        history: g.history.map((h) => ({
+          ...h,
+          modifiedAt: new Date(h.modifiedAt),
+        })),
+      })),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveTeacherData = (teacherId: string, data: TeacherData) => {
+  localStorage.setItem(getStorageKey(teacherId), JSON.stringify(data));
+};
+
+const emptyState: AppState = {
+  schoolYears: [],
+  classRooms: [],
+  pedagogicalUnits: [],
+  evaluations: [],
+  grades: [],
+  activeYearId: null,
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AppState>({
-    schoolYears: [],
-    classRooms: [],
-    pedagogicalUnits: [],
-    evaluations: [],
-    grades: [],
-    activeYearId: null,
-  });
-
-  // Track which units have been saved
+  const { teacher, isAuthenticated } = useAuth();
+  const [state, setState] = useState<AppState>(emptyState);
   const [savedUnits, setSavedUnits] = useState<Set<string>>(new Set());
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Migration/normalization (fix old classes created with students having empty ids)
+  // Load data when teacher changes
   useEffect(() => {
+    if (teacher?.id) {
+      const data = loadTeacherData(teacher.id);
+      if (data) {
+        setState({
+          schoolYears: data.schoolYears,
+          classRooms: data.classRooms,
+          pedagogicalUnits: data.pedagogicalUnits,
+          evaluations: data.evaluations,
+          grades: data.grades,
+          activeYearId: data.activeYearId,
+        });
+        setSavedUnits(new Set(data.savedUnits || []));
+      } else {
+        setState(emptyState);
+        setSavedUnits(new Set());
+      }
+      setIsInitialized(true);
+    } else {
+      setState(emptyState);
+      setSavedUnits(new Set());
+      setIsInitialized(false);
+    }
+  }, [teacher?.id]);
+
+  // Save data whenever state changes (debounced)
+  useEffect(() => {
+    if (!teacher?.id || !isInitialized) return;
+
+    const data: TeacherData = {
+      schoolYears: state.schoolYears,
+      classRooms: state.classRooms,
+      pedagogicalUnits: state.pedagogicalUnits,
+      evaluations: state.evaluations,
+      grades: state.grades,
+      activeYearId: state.activeYearId,
+      savedUnits: Array.from(savedUnits),
+    };
+    saveTeacherData(teacher.id, data);
+  }, [teacher?.id, state, savedUnits, isInitialized]);
+
+  // Migration/normalization
+  useEffect(() => {
+    if (!isInitialized) return;
+    
     const needsFix = state.classRooms.some((c) =>
       c.students.some(
         (s) =>
@@ -107,9 +197,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ),
       })),
     }));
-  }, [state.classRooms]);
+  }, [state.classRooms, isInitialized]);
 
-  const addSchoolYear = (year: Omit<SchoolYear, 'id' | 'createdAt'>) => {
+  const addSchoolYear = useCallback((year: Omit<SchoolYear, 'id' | 'createdAt'>) => {
     const newYear: SchoolYear = {
       ...year,
       id: generateId(),
@@ -120,9 +210,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       schoolYears: [...prev.schoolYears, newYear],
       activeYearId: newYear.id,
     }));
-  };
+  }, []);
 
-  const addClassRoom = (classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => {
+  const addClassRoom = useCallback((classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => {
     const normalizedStudents = sortStudentsAZ(
       classRoom.students.map((s) => {
         const id = s.id && s.id.trim() !== '' ? s.id : generateId();
@@ -145,31 +235,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...prev,
       classRooms: [...prev.classRooms, newClass],
     }));
-  };
+  }, []);
 
-  const updateClassRoom = (classRoomId: string, updates: Partial<Pick<ClassRoom, 'name'>>) => {
+  const updateClassRoom = useCallback((classRoomId: string, updates: Partial<Pick<ClassRoom, 'name'>>) => {
     setState(prev => ({
       ...prev,
       classRooms: prev.classRooms.map(c =>
         c.id === classRoomId ? { ...c, ...updates } : c
       ),
     }));
-  };
+  }, []);
 
-  const deleteClassRoom = (classRoomId: string) => {
+  const deleteClassRoom = useCallback((classRoomId: string) => {
     setState(prev => ({
       ...prev,
       classRooms: prev.classRooms.filter(c => c.id !== classRoomId),
-      // Also delete associated units, evaluations, and grades
       pedagogicalUnits: prev.pedagogicalUnits.filter(u => u.classRoomId !== classRoomId),
       evaluations: prev.evaluations.filter(e => {
         const unit = prev.pedagogicalUnits.find(u => u.id === e.pedagogicalUnitId);
         return unit?.classRoomId !== classRoomId;
       }),
     }));
-  };
+  }, []);
 
-  const addStudentToClass = (classRoomId: string, student: Omit<Student, 'id'>) => {
+  const addStudentToClass = useCallback((classRoomId: string, student: Omit<Student, 'id'>) => {
     const newStudent: Student = {
       ...normalizeStudent(student),
       id: generateId(),
@@ -181,9 +270,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return { ...c, students: sortStudentsAZ([...c.students, newStudent]) };
       }),
     }));
-  };
+  }, []);
 
-  const updateStudentInClass = (classRoomId: string, studentId: string, updates: Partial<Student>) => {
+  const updateStudentInClass = useCallback((classRoomId: string, studentId: string, updates: Partial<Student>) => {
     setState(prev => ({
       ...prev,
       classRooms: prev.classRooms.map(c => {
@@ -203,9 +292,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return { ...c, students: sortStudentsAZ(updated) };
       }),
     }));
-  };
+  }, []);
 
-  const deleteStudentFromClass = (classRoomId: string, studentId: string) => {
+  const deleteStudentFromClass = useCallback((classRoomId: string, studentId: string) => {
     setState(prev => ({
       ...prev,
       classRooms: prev.classRooms.map(c =>
@@ -213,12 +302,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ? { ...c, students: sortStudentsAZ(c.students.filter(s => s.id !== studentId)) }
           : c
       ),
-      // Also delete associated grades
       grades: prev.grades.filter(g => g.studentId !== studentId),
     }));
-  };
+  }, []);
 
-  const addPedagogicalUnit = (unit: Omit<PedagogicalUnit, 'id' | 'createdAt'>) => {
+  const addPedagogicalUnit = useCallback((unit: Omit<PedagogicalUnit, 'id' | 'createdAt'>) => {
     const newUnit: PedagogicalUnit = {
       ...unit,
       id: generateId(),
@@ -228,9 +316,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...prev,
       pedagogicalUnits: [...prev.pedagogicalUnits, newUnit],
     }));
-  };
+  }, []);
 
-  const addEvaluation = (evaluation: Omit<Evaluation, 'id'>) => {
+  const addEvaluation = useCallback((evaluation: Omit<Evaluation, 'id'>) => {
     const newEvaluation: Evaluation = {
       ...evaluation,
       id: generateId(),
@@ -239,9 +327,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...prev,
       evaluations: [...prev.evaluations, newEvaluation],
     }));
-  };
+  }, []);
 
-  const addGrade = (grade: Omit<Grade, 'id' | 'createdAt' | 'history' | 'isLocked'>) => {
+  const addGrade = useCallback((grade: Omit<Grade, 'id' | 'createdAt' | 'history' | 'isLocked'>) => {
     const newGrade: Grade = {
       ...grade,
       id: generateId(),
@@ -253,10 +341,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...prev,
       grades: [...prev.grades, newGrade],
     }));
-  };
+  }, []);
 
-  // Update grade value without locking (for free editing before save)
-  const updateGradeValue = (gradeId: string, newValue: number) => {
+  const updateGradeValue = useCallback((gradeId: string, newValue: number) => {
     setState(prev => ({
       ...prev,
       grades: prev.grades.map(g =>
@@ -265,33 +352,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           : g
       ),
     }));
-  };
+  }, []);
 
-  // Lock and save grades for a unit
-  const saveGrades = (unitId: string) => {
-    const unitEvaluations = state.evaluations.filter(e => e.pedagogicalUnitId === unitId);
-    const evaluationIds = unitEvaluations.map(e => e.id);
-    
-    setState(prev => ({
-      ...prev,
-      grades: prev.grades.map(g =>
-        evaluationIds.includes(g.evaluationId)
-          ? { ...g, isLocked: true }
-          : g
-      ),
-    }));
+  const saveGrades = useCallback((unitId: string) => {
+    setState(prev => {
+      const unitEvaluations = prev.evaluations.filter(e => e.pedagogicalUnitId === unitId);
+      const evaluationIds = unitEvaluations.map(e => e.id);
+      
+      return {
+        ...prev,
+        grades: prev.grades.map(g =>
+          evaluationIds.includes(g.evaluationId)
+            ? { ...g, isLocked: true }
+            : g
+        ),
+      };
+    });
     
     setSavedUnits(prev => new Set([...prev, unitId]));
-  };
+  }, []);
 
-  const updateGrade = (gradeId: string, newValue: number, reason: string) => {
+  const updateGrade = useCallback((gradeId: string, newValue: number, reason: string) => {
     setState(prev => ({
       ...prev,
       grades: prev.grades.map(g => {
         if (g.id === gradeId && g.isLocked) {
-          // Only allow one modification after lock
           if (g.history.length > 0) {
-            return g; // Already modified once, cannot modify again
+            return g;
           }
           const historyEntry = {
             value: g.value,
@@ -308,31 +395,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return g;
       }),
     }));
-  };
+  }, []);
 
-  const setActiveYear = (yearId: string | null) => {
+  const setActiveYear = useCallback((yearId: string | null) => {
     setState(prev => ({ ...prev, activeYearId: yearId }));
-  };
+  }, []);
 
-  const getClassesByYear = (yearId: string) => {
+  const getClassesByYear = useCallback((yearId: string) => {
     return state.classRooms.filter(c => c.schoolYearId === yearId);
-  };
+  }, [state.classRooms]);
 
-  const getUnitsByClass = (classId: string) => {
+  const getUnitsByClass = useCallback((classId: string) => {
     return state.pedagogicalUnits.filter(u => u.classRoomId === classId);
-  };
+  }, [state.pedagogicalUnits]);
 
-  const getStudentsByClass = (classId: string) => {
+  const getStudentsByClass = useCallback((classId: string) => {
     const classRoom = state.classRooms.find(c => c.id === classId);
     return classRoom?.students || [];
-  };
+  }, [state.classRooms]);
 
-  const getEvaluationsByUnit = (unitId: string) => {
+  const getEvaluationsByUnit = useCallback((unitId: string) => {
     return state.evaluations.filter(e => e.pedagogicalUnitId === unitId);
-  };
+  }, [state.evaluations]);
 
-  const calculateAverage = (studentId: string, unitId: string): number | null => {
-    const evaluations = getEvaluationsByUnit(unitId);
+  const calculateAverage = useCallback((studentId: string, unitId: string): number | null => {
+    const evaluations = state.evaluations.filter(e => e.pedagogicalUnitId === unitId);
     const studentGrades = state.grades.filter(
       g => g.studentId === studentId && 
       evaluations.some(e => e.id === g.evaluationId)
@@ -352,9 +439,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     return totalCoefficients > 0 ? Math.round((totalWeighted / totalCoefficients) * 100) / 100 : null;
-  };
+  }, [state.evaluations, state.grades]);
 
-  const isUnitSaved = (unitId: string) => savedUnits.has(unitId);
+  const isUnitSaved = useCallback((unitId: string) => savedUnits.has(unitId), [savedUnits]);
+
+  // Don't render children until auth check is complete
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <AppContext.Provider

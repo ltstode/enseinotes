@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -9,10 +9,12 @@ import {
   GraduationCap,
   PanelLeftClose,
   PanelLeft,
-  UserCog
+  UserCog,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -20,6 +22,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface NavItemProps {
   to: string;
@@ -68,9 +78,21 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { schoolYears, activeYearId } = useApp();
+  const { teacher, logout } = useAuth();
   const activeYear = schoolYears.find(y => y.id === activeYearId);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getInitials = () => {
+    if (!teacher) return '?';
+    return `${teacher.firstName.charAt(0)}${teacher.lastName.charAt(0)}`.toUpperCase();
+  };
 
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Tableau de bord' },
@@ -156,14 +178,42 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             ))}
           </nav>
 
-          {/* Footer */}
-          <div className="p-3 border-t">
-            <p className={cn(
-              "text-small text-muted-foreground text-center",
-              isCollapsed && "text-xs"
-            )}>
-              {isCollapsed ? "v1.0" : "EnseiNotes v1.0"}
-            </p>
+          {/* User Menu */}
+          <div className={cn("p-3 border-t", isCollapsed && "flex justify-center")}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className={cn(
+                    "w-full justify-start gap-3 h-auto py-2",
+                    isCollapsed && "w-auto justify-center px-2"
+                  )}
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {!isCollapsed && teacher && (
+                    <div className="text-left">
+                      <p className="text-sm font-medium truncate">{teacher.firstName} {teacher.lastName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{teacher.email}</p>
+                    </div>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align={isCollapsed ? "center" : "start"} side="top" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{teacher?.firstName} {teacher?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{teacher?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <LogOut size={16} className="mr-2" />
+                  Se déconnecter
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </aside>
 
