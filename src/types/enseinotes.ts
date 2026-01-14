@@ -4,6 +4,15 @@ export type EvaluationType = 'interro' | 'devoir';
 
 export type StudentStatus = 'active' | 'archived';
 
+export interface Teacher {
+  id: string;
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  createdAt: Date;
+}
+
 export interface SchoolYear {
   id: string;
   name: string;
@@ -80,4 +89,15 @@ export interface DashboardStats {
   totalClasses: number;
   totalStudents: number;
   totalUnits: number;
+}
+
+// Data structure stored per teacher
+export interface TeacherData {
+  schoolYears: SchoolYear[];
+  classRooms: ClassRoom[];
+  pedagogicalUnits: PedagogicalUnit[];
+  evaluations: Evaluation[];
+  grades: Grade[];
+  activeYearId: string | null;
+  savedUnits: string[];
 }
