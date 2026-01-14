@@ -40,8 +40,8 @@ export interface ClassRoom {
 export interface GradeRule {
   coefficient: number;
   coefficientEnabled: boolean;
-  minInterros: number;
-  minDevoirs: number;
+  expectedInterros: number; // Renamed from minInterros - indicative, no strict limit
+  expectedDevoirs: number; // Renamed from minDevoirs - indicative, no strict limit
   formula: string; // e.g., "(MoyInterros * 1 + MoyDevoirs * 2) / 3"
   displayMode: 'numeric' | 'letter' | 'percentage';
   interroWeight: number; // Weight for interros in formula (default 1)
