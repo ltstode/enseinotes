@@ -37,8 +37,8 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
   const [selectedClassId, setSelectedClassId] = useState(preselectedClassId || '');
   const [coefficientEnabled, setCoefficientEnabled] = useState(true);
   const [coefficient, setCoefficient] = useState('1');
-  const [minInterros, setMinInterros] = useState('2');
-  const [minDevoirs, setMinDevoirs] = useState('2');
+  const [minInterros, setMinInterros] = useState('0');
+  const [minDevoirs, setMinDevoirs] = useState('0');
   const [interroWeight, setInterroWeight] = useState('1');
   const [devoirWeight, setDevoirWeight] = useState('2');
   const [displayMode, setDisplayMode] = useState<'numeric' | 'letter' | 'percentage'>('numeric');
@@ -92,8 +92,8 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
       rules: {
         coefficient: parseFloat(coefficient) || 1,
         coefficientEnabled,
-        minInterros: parseInt(minInterros) || 2,
-        minDevoirs: parseInt(minDevoirs) || 2,
+        expectedInterros: parseInt(minInterros) || 0,
+        expectedDevoirs: parseInt(minDevoirs) || 0,
         formula,
         displayMode,
         interroWeight: parseFloat(interroWeight) || 1,
@@ -115,8 +115,8 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
     setSelectedClassId(preselectedClassId || '');
     setCoefficientEnabled(true);
     setCoefficient('1');
-    setMinInterros('2');
-    setMinDevoirs('2');
+    setMinInterros('0');
+    setMinDevoirs('0');
     setInterroWeight('1');
     setDevoirWeight('2');
     setDisplayMode('numeric');
@@ -252,31 +252,33 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
             )}
           </div>
 
-          {/* Minimum evaluations */}
+          {/* Nombre d'évaluations attendu (indicatif, pas de contrainte stricte) */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="minInterros">Nombre min. d'interrogations</Label>
+              <Label htmlFor="minInterros">Nombre d'interrogations prévu</Label>
               <Input
                 id="minInterros"
                 type="number"
                 min="0"
-                max="20"
                 value={minInterros}
                 onChange={(e) => setMinInterros(e.target.value)}
                 className="h-12"
+                placeholder="Optionnel"
               />
+              <p className="text-xs text-muted-foreground">0 = pas de limite</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="minDevoirs">Nombre min. de devoirs</Label>
+              <Label htmlFor="minDevoirs">Nombre de devoirs prévu</Label>
               <Input
                 id="minDevoirs"
                 type="number"
                 min="0"
-                max="20"
                 value={minDevoirs}
                 onChange={(e) => setMinDevoirs(e.target.value)}
                 className="h-12"
+                placeholder="Optionnel"
               />
+              <p className="text-xs text-muted-foreground">0 = pas de limite</p>
             </div>
           </div>
 

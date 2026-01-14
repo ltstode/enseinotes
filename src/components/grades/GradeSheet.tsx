@@ -439,9 +439,11 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               {students.length} élèves · {interros.length} interro(s) · {devoirs.length} devoir(s)
               {isSaved && <span className="ml-2 text-success">✓ Enregistré</span>}
             </p>
-            <p className="text-small text-muted-foreground">
-              Min. requis: {unit.rules.minInterros} interros, {unit.rules.minDevoirs} devoirs
-            </p>
+            {(unit.rules.expectedInterros > 0 || unit.rules.expectedDevoirs > 0) && (
+              <p className="text-small text-muted-foreground">
+                Prévu: {unit.rules.expectedInterros > 0 ? `${unit.rules.expectedInterros} interros` : ''}{unit.rules.expectedInterros > 0 && unit.rules.expectedDevoirs > 0 ? ', ' : ''}{unit.rules.expectedDevoirs > 0 ? `${unit.rules.expectedDevoirs} devoirs` : ''}
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
             {evaluations.length > 0 && (!isSaved || hasGradesToSave) && (
