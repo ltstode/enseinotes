@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData } from '@/types/enseinotes';
+import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData, Period } from '@/types/enseinotes';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AppState {
   schoolYears: SchoolYear[];
   classRooms: ClassRoom[];
   pedagogicalUnits: PedagogicalUnit[];
+  periods: Period[];
   evaluations: Evaluation[];
   grades: Grade[];
   activeYearId: string | null;
@@ -20,6 +21,10 @@ interface AppContextType extends AppState {
   updateStudentInClass: (classRoomId: string, studentId: string, updates: Partial<Student>) => void;
   deleteStudentFromClass: (classRoomId: string, studentId: string) => void;
   addPedagogicalUnit: (unit: Omit<PedagogicalUnit, 'id' | 'createdAt'>) => void;
+  addPeriod: (period: Omit<Period, 'id' | 'createdAt'>) => void;
+  updatePeriod: (periodId: string, updates: Partial<Pick<Period, 'name' | 'order'>>) => void;
+  deletePeriod: (periodId: string) => void;
+  getPeriodsByUnit: (unitId: string) => Period[];
   addEvaluation: (evaluation: Omit<Evaluation, 'id'>) => void;
   addGrade: (grade: Omit<Grade, 'id' | 'createdAt' | 'history' | 'isLocked'>) => void;
   updateGrade: (gradeId: string, newValue: number, reason: string) => void;
@@ -30,6 +35,7 @@ interface AppContextType extends AppState {
   getUnitsByClass: (classId: string) => PedagogicalUnit[];
   getStudentsByClass: (classId: string) => Student[];
   getEvaluationsByUnit: (unitId: string) => Evaluation[];
+  getEvaluationsByPeriod: (periodId: string) => Evaluation[];
   calculateAverage: (studentId: string, unitId: string) => number | null;
   isUnitSaved: (unitId: string) => boolean;
   exportData: () => string;
@@ -89,6 +95,10 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
         ...u,
         createdAt: new Date(u.createdAt),
       })),
+      periods: (parsed.periods || []).map((p: Period) => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+      })),
       evaluations: parsed.evaluations.map((e: Evaluation) => ({
         ...e,
         date: new Date(e.date),
@@ -116,6 +126,7 @@ const emptyState: AppState = {
   schoolYears: [],
   classRooms: [],
   pedagogicalUnits: [],
+  periods: [],
   evaluations: [],
   grades: [],
   activeYearId: null,
@@ -136,6 +147,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           schoolYears: data.schoolYears,
           classRooms: data.classRooms,
           pedagogicalUnits: data.pedagogicalUnits,
+          periods: data.periods || [],
           evaluations: data.evaluations,
           grades: data.grades,
           activeYearId: data.activeYearId,
@@ -161,6 +173,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       schoolYears: state.schoolYears,
       classRooms: state.classRooms,
       pedagogicalUnits: state.pedagogicalUnits,
+      periods: state.periods,
       evaluations: state.evaluations,
       grades: state.grades,
       activeYearId: state.activeYearId,
@@ -320,6 +333,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   }, []);
 
+  // Period management
+  const addPeriod = useCallback((period: Omit<Period, 'id' | 'createdAt'>) => {
+    const newPeriod: Period = {
+      ...period,
+      id: generateId(),
+      createdAt: new Date(),
+    };
+    setState(prev => ({
+      ...prev,
+      periods: [...prev.periods, newPeriod],
+    }));
+  }, []);
+
+  const updatePeriod = useCallback((periodId: string, updates: Partial<Pick<Period, 'name' | 'order'>>) => {
+    setState(prev => ({
+      ...prev,
+      periods: prev.periods.map(p =>
+        p.id === periodId ? { ...p, ...updates } : p
+      ),
+    }));
+  }, []);
+
+  const deletePeriod = useCallback((periodId: string) => {
+    setState(prev => ({
+      ...prev,
+      periods: prev.periods.filter(p => p.id !== periodId),
+      // Remove periodId from evaluations that used this period
+      evaluations: prev.evaluations.map(e =>
+        e.periodId === periodId ? { ...e, periodId: undefined } : e
+      ),
+    }));
+  }, []);
+
+  const getPeriodsByUnit = useCallback((unitId: string) => {
+    return state.periods
+      .filter(p => p.pedagogicalUnitId === unitId)
+      .sort((a, b) => a.order - b.order);
+  }, [state.periods]);
+
   const addEvaluation = useCallback((evaluation: Omit<Evaluation, 'id'>) => {
     const newEvaluation: Evaluation = {
       ...evaluation,
@@ -420,6 +472,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return state.evaluations.filter(e => e.pedagogicalUnitId === unitId);
   }, [state.evaluations]);
 
+  const getEvaluationsByPeriod = useCallback((periodId: string) => {
+    return state.evaluations.filter(e => e.periodId === periodId);
+  }, [state.evaluations]);
+
   const calculateAverage = useCallback((studentId: string, unitId: string): number | null => {
     const evaluations = state.evaluations.filter(e => e.pedagogicalUnitId === unitId);
     const studentGrades = state.grades.filter(
@@ -450,6 +506,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       schoolYears: state.schoolYears,
       classRooms: state.classRooms,
       pedagogicalUnits: state.pedagogicalUnits,
+      periods: state.periods,
       evaluations: state.evaluations,
       grades: state.grades,
       activeYearId: state.activeYearId,
@@ -482,6 +539,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ...u,
           createdAt: new Date(u.createdAt),
         })),
+        periods: (parsed.periods || []).map((p: Period) => ({
+          ...p,
+          createdAt: new Date(p.createdAt),
+        })),
         evaluations: parsed.evaluations.map((e: Evaluation) => ({
           ...e,
           date: new Date(e.date),
@@ -503,6 +564,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         schoolYears: data.schoolYears,
         classRooms: data.classRooms,
         pedagogicalUnits: data.pedagogicalUnits,
+        periods: data.periods,
         evaluations: data.evaluations,
         grades: data.grades,
         activeYearId: data.activeYearId,
@@ -532,6 +594,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateStudentInClass,
         deleteStudentFromClass,
         addPedagogicalUnit,
+        addPeriod,
+        updatePeriod,
+        deletePeriod,
+        getPeriodsByUnit,
         addEvaluation,
         addGrade,
         updateGrade,
@@ -542,6 +608,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         getUnitsByClass,
         getStudentsByClass,
         getEvaluationsByUnit,
+        getEvaluationsByPeriod,
         calculateAverage,
         isUnitSaved,
         exportData,
