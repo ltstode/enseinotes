@@ -17,7 +17,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected route wrapper
+// Protected route wrapper - must be used inside AuthProvider
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -55,6 +55,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+// Routes component - separated to ensure it's rendered inside AuthProvider
 const AppRoutes = () => (
   <Routes>
     <Route
@@ -125,17 +126,24 @@ const AppRoutes = () => (
   </Routes>
 );
 
+// Inner app component that uses auth context
+const AppWithAuth = () => {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthProvider>
+        <AppWithAuth />
+      </AuthProvider>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 
