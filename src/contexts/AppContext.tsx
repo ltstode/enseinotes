@@ -32,6 +32,8 @@ interface AppContextType extends AppState {
   getEvaluationsByUnit: (unitId: string) => Evaluation[];
   calculateAverage: (studentId: string, unitId: string) => number | null;
   isUnitSaved: (unitId: string) => boolean;
+  exportData: () => string;
+  importData: (jsonData: string) => { success: boolean; error?: string };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -443,6 +445,76 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const isUnitSaved = useCallback((unitId: string) => savedUnits.has(unitId), [savedUnits]);
 
+  const exportData = useCallback((): string => {
+    const data: TeacherData = {
+      schoolYears: state.schoolYears,
+      classRooms: state.classRooms,
+      pedagogicalUnits: state.pedagogicalUnits,
+      evaluations: state.evaluations,
+      grades: state.grades,
+      activeYearId: state.activeYearId,
+      savedUnits: Array.from(savedUnits),
+    };
+    return JSON.stringify(data, null, 2);
+  }, [state, savedUnits]);
+
+  const importData = useCallback((jsonData: string): { success: boolean; error?: string } => {
+    try {
+      const parsed = JSON.parse(jsonData);
+      
+      // Validate structure
+      if (!parsed.schoolYears || !parsed.classRooms || !parsed.pedagogicalUnits || 
+          !parsed.evaluations || !parsed.grades) {
+        return { success: false, error: 'Structure de données invalide' };
+      }
+
+      // Parse dates
+      const data: TeacherData = {
+        schoolYears: parsed.schoolYears.map((y: SchoolYear) => ({
+          ...y,
+          createdAt: new Date(y.createdAt),
+        })),
+        classRooms: parsed.classRooms.map((c: ClassRoom) => ({
+          ...c,
+          createdAt: new Date(c.createdAt),
+        })),
+        pedagogicalUnits: parsed.pedagogicalUnits.map((u: PedagogicalUnit) => ({
+          ...u,
+          createdAt: new Date(u.createdAt),
+        })),
+        evaluations: parsed.evaluations.map((e: Evaluation) => ({
+          ...e,
+          date: new Date(e.date),
+        })),
+        grades: parsed.grades.map((g: Grade) => ({
+          ...g,
+          createdAt: new Date(g.createdAt),
+          modifiedAt: g.modifiedAt ? new Date(g.modifiedAt) : undefined,
+          history: g.history.map((h) => ({
+            ...h,
+            modifiedAt: new Date(h.modifiedAt),
+          })),
+        })),
+        activeYearId: parsed.activeYearId,
+        savedUnits: parsed.savedUnits || [],
+      };
+
+      setState({
+        schoolYears: data.schoolYears,
+        classRooms: data.classRooms,
+        pedagogicalUnits: data.pedagogicalUnits,
+        evaluations: data.evaluations,
+        grades: data.grades,
+        activeYearId: data.activeYearId,
+      });
+      setSavedUnits(new Set(data.savedUnits));
+
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: 'Fichier JSON invalide' };
+    }
+  }, []);
+
   // Don't render children until auth check is complete
   if (!isAuthenticated) {
     return null;
@@ -472,6 +544,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         getEvaluationsByUnit,
         calculateAverage,
         isUnitSaved,
+        exportData,
+        importData,
       }}
     >
       {children}

@@ -10,7 +10,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   UserCog,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -101,6 +102,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { to: '/students', icon: <UserCog size={20} />, label: 'Élèves' },
     { to: '/units', icon: <BookOpen size={20} />, label: 'Unités pédagogiques' },
     { to: '/grades', icon: <ClipboardList size={20} />, label: 'Notes' },
+    { to: '/settings', icon: <Settings size={20} />, label: 'Paramètres' },
   ];
 
   return (

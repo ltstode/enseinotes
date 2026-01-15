@@ -140,6 +140,39 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     return Math.round(weighted * 100) / 100;
   }, [calculateTypeAverage, interros, devoirs, unit.rules]);
 
+  // Calculate rankings for all students based on final average
+  const studentRankings = useMemo(() => {
+    const studentsWithAverages = students.map(student => ({
+      studentId: student.id,
+      average: calculateFinalAverage(student.id)
+    }));
+
+    // Sort by average descending (higher is better)
+    const sorted = [...studentsWithAverages]
+      .filter(s => s.average !== null)
+      .sort((a, b) => b.average! - a.average!);
+
+    const rankings: Record<string, number | null> = {};
+    
+    sorted.forEach((student, index) => {
+      // Handle ties - students with same average get same rank
+      if (index > 0 && student.average === sorted[index - 1].average) {
+        rankings[student.studentId] = rankings[sorted[index - 1].studentId];
+      } else {
+        rankings[student.studentId] = index + 1;
+      }
+    });
+
+    // Students without averages get null rank
+    students.forEach(student => {
+      if (!(student.id in rankings)) {
+        rankings[student.id] = null;
+      }
+    });
+
+    return rankings;
+  }, [students, calculateFinalAverage]);
+
   const handleLocalGradeInput = useCallback((studentId: string, evaluationId: string, value: string) => {
     const evaluation = evaluations.find(e => e.id === evaluationId);
     const key = `${studentId}-${evaluationId}`;
@@ -480,7 +513,10 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               <table className="w-full border-collapse text-small">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-3 font-display font-semibold bg-secondary/30 sticky left-0 z-10">
+                    <th className="p-2 text-center min-w-[50px] bg-secondary/30">
+                      <span className="font-display font-semibold text-xs">Rang</span>
+                    </th>
+                    <th className="text-left p-3 font-display font-semibold bg-secondary/30 sticky left-[50px] z-10">
                       Élève
                     </th>
                     {isSaved && (
@@ -538,7 +574,17 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                 <tbody>
                   {students.map((student, studentIndex) => (
                     <tr key={student.id} className="border-b hover:bg-muted/20 transition-colors">
-                      <td className="p-3 font-medium bg-secondary/10 sticky left-0 z-10">
+                      <td className="p-2 text-center bg-secondary/10">
+                        <span className={`font-display font-bold text-sm ${
+                          studentRankings[student.id] === 1 ? 'text-warning' :
+                          studentRankings[student.id] === 2 ? 'text-muted-foreground' :
+                          studentRankings[student.id] === 3 ? 'text-warning/70' :
+                          'text-foreground'
+                        }`}>
+                          {studentRankings[student.id] ?? '-'}
+                        </span>
+                      </td>
+                      <td className="p-3 font-medium bg-secondary/10 sticky left-[50px] z-10">
                         {student.lastName} {student.firstName}
                       </td>
                       {isSaved && (

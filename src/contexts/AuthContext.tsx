@@ -8,6 +8,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateProfile: (firstName: string, lastName: string, email: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -130,6 +132,67 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem(CURRENT_TEACHER_KEY);
   };
 
+  const updateProfile = async (
+    firstName: string,
+    lastName: string,
+    email: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!teacher) {
+      return { success: false, error: 'Non connecté' };
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const teachers = getStoredTeachers();
+
+    // Check if email already exists (and it's not the current user)
+    if (teachers.some(t => t.email === normalizedEmail && t.id !== teacher.id)) {
+      return { success: false, error: 'Un autre compte utilise déjà cet email' };
+    }
+
+    const updatedTeacher: Teacher = {
+      ...teacher,
+      firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase(),
+      lastName: lastName.toUpperCase(),
+      email: normalizedEmail,
+    };
+
+    const updatedTeachers = teachers.map(t => 
+      t.id === teacher.id ? updatedTeacher : t
+    );
+    saveTeachers(updatedTeachers);
+    setTeacher(updatedTeacher);
+
+    return { success: true };
+  };
+
+  const updatePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!teacher) {
+      return { success: false, error: 'Non connecté' };
+    }
+
+    const currentHash = simpleHash(currentPassword);
+    if (teacher.passwordHash !== currentHash) {
+      return { success: false, error: 'Mot de passe actuel incorrect' };
+    }
+
+    const teachers = getStoredTeachers();
+    const updatedTeacher: Teacher = {
+      ...teacher,
+      passwordHash: simpleHash(newPassword),
+    };
+
+    const updatedTeachers = teachers.map(t => 
+      t.id === teacher.id ? updatedTeacher : t
+    );
+    saveTeachers(updatedTeachers);
+    setTeacher(updatedTeacher);
+
+    return { success: true };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -139,6 +202,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         register,
         logout,
+        updateProfile,
+        updatePassword,
       }}
     >
       {children}
