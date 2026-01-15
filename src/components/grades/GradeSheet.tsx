@@ -12,11 +12,13 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, History, Lock, AlertCircle, HelpCircle, FileText, Save, Pencil, Check, X } from 'lucide-react';
-import { PedagogicalUnit, Student, Evaluation, EvaluationType } from '@/types/enseinotes';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, History, Lock, AlertCircle, HelpCircle, FileText, Save, Pencil, Check, X, Calendar, Trash2 } from 'lucide-react';
+import { PedagogicalUnit, Student, Evaluation, EvaluationType, Period } from '@/types/enseinotes';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import CreateEvaluationDialog from './CreateEvaluationDialog';
+import CreatePeriodDialog from './CreatePeriodDialog';
 
 interface GradeSheetProps {
   unit: PedagogicalUnit;
@@ -30,6 +32,8 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   const { 
     getStudentsByClass, 
     getEvaluationsByUnit, 
+    getPeriodsByUnit,
+    deletePeriod,
     grades, 
     addGrade,
     updateGrade,
@@ -52,12 +56,23 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   }, [getStudentsByClass, unit.classRoomId]);
   
   const evaluations = getEvaluationsByUnit(unit.id);
+  const periods = getPeriodsByUnit(unit.id);
   const isSaved = isUnitSaved(unit.id);
   
-  const interros = evaluations.filter(e => e.type === 'interro');
-  const devoirs = evaluations.filter(e => e.type === 'devoir');
+  const [activePeriod, setActivePeriod] = useState<string>('all');
+  
+  // Filter evaluations by period
+  const filteredEvaluations = useMemo(() => {
+    if (activePeriod === 'all') return evaluations;
+    if (activePeriod === 'none') return evaluations.filter(e => !e.periodId);
+    return evaluations.filter(e => e.periodId === activePeriod);
+  }, [evaluations, activePeriod]);
+  
+  const interros = filteredEvaluations.filter(e => e.type === 'interro');
+  const devoirs = filteredEvaluations.filter(e => e.type === 'devoir');
   
   const [showEvalDialog, setShowEvalDialog] = useState(false);
+  const [showPeriodDialog, setShowPeriodDialog] = useState(false);
   const [showModifyDialog, setShowModifyDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<{
@@ -465,43 +480,101 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
-          <div>
-            <CardTitle>{unit.name}</CardTitle>
-            <p className="text-small text-muted-foreground mt-1">
-              {students.length} élèves · {interros.length} interro(s) · {devoirs.length} devoir(s)
-              {isSaved && <span className="ml-2 text-success">✓ Enregistré</span>}
-            </p>
-            {(unit.rules.expectedInterros > 0 || unit.rules.expectedDevoirs > 0) && (
-              <p className="text-small text-muted-foreground">
-                Prévu: {unit.rules.expectedInterros > 0 ? `${unit.rules.expectedInterros} interros` : ''}{unit.rules.expectedInterros > 0 && unit.rules.expectedDevoirs > 0 ? ', ' : ''}{unit.rules.expectedDevoirs > 0 ? `${unit.rules.expectedDevoirs} devoirs` : ''}
+        <CardHeader className="flex flex-col gap-4">
+          <div className="flex flex-row items-center justify-between flex-wrap gap-4">
+            <div>
+              <CardTitle>{unit.name}</CardTitle>
+              <p className="text-small text-muted-foreground mt-1">
+                {students.length} élèves · {interros.length} interro(s) · {devoirs.length} devoir(s)
+                {isSaved && <span className="ml-2 text-success">✓ Enregistré</span>}
               </p>
-            )}
-          </div>
-          <div className="flex gap-2">
-            {evaluations.length > 0 && (!isSaved || hasGradesToSave) && (
-              <Button 
-                onClick={handleSaveGrades}
-                variant="default"
-                disabled={isSaved ? !hasGradesToSave : (!hasGradesToSave && grades.filter(g => 
-                  evaluations.some(e => e.id === g.evaluationId)
-                ).length === 0)}
-              >
-                <Save size={18} />
-                {isSaved ? 'Enregistrer les nouvelles notes' : 'Enregistrer les notes'}
+              {(unit.rules.expectedInterros > 0 || unit.rules.expectedDevoirs > 0) && (
+                <p className="text-small text-muted-foreground">
+                  Prévu: {unit.rules.expectedInterros > 0 ? `${unit.rules.expectedInterros} interros` : ''}{unit.rules.expectedInterros > 0 && unit.rules.expectedDevoirs > 0 ? ', ' : ''}{unit.rules.expectedDevoirs > 0 ? `${unit.rules.expectedDevoirs} devoirs` : ''}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {evaluations.length > 0 && (!isSaved || hasGradesToSave) && (
+                <Button 
+                  onClick={handleSaveGrades}
+                  variant="default"
+                  disabled={isSaved ? !hasGradesToSave : (!hasGradesToSave && grades.filter(g => 
+                    evaluations.some(e => e.id === g.evaluationId)
+                  ).length === 0)}
+                >
+                  <Save size={18} />
+                  {isSaved ? 'Enregistrer les nouvelles notes' : 'Enregistrer les notes'}
+                </Button>
+              )}
+              <Button onClick={() => setShowPeriodDialog(true)} variant="outline" size="sm">
+                <Calendar size={16} />
+                Gérer les périodes
               </Button>
-            )}
-            <Button onClick={() => setShowEvalDialog(true)} variant={isSaved ? "default" : "outline"}>
-              <Plus size={18} />
-              Nouvelle évaluation
-            </Button>
+              <Button onClick={() => setShowEvalDialog(true)} variant={isSaved ? "default" : "outline"}>
+                <Plus size={18} />
+                Nouvelle évaluation
+              </Button>
+            </div>
           </div>
+          
+          {/* Period tabs */}
+          {periods.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Périodes:</span>
+              <div className="flex gap-1 flex-wrap">
+                <Button
+                  variant={activePeriod === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActivePeriod('all')}
+                >
+                  Toutes
+                </Button>
+                {periods.map(period => (
+                  <div key={period.id} className="flex items-center">
+                    <Button
+                      variant={activePeriod === period.id ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setActivePeriod(period.id)}
+                    >
+                      {period.name}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 ml-1 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        deletePeriod(period.id);
+                        if (activePeriod === period.id) setActivePeriod('all');
+                        toast({
+                          title: 'Période supprimée',
+                          description: `La période "${period.name}" a été supprimée`,
+                        });
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant={activePeriod === 'none' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActivePeriod('none')}
+                >
+                  Sans période
+                </Button>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          {evaluations.length === 0 ? (
+          {filteredEvaluations.length === 0 ? (
             <div className="text-center py-8 border-2 border-dashed rounded-xl">
               <p className="text-muted-foreground mb-4">
-                Créez votre première évaluation pour commencer à saisir les notes
+                {evaluations.length === 0 
+                  ? 'Créez votre première évaluation pour commencer à saisir les notes'
+                  : 'Aucune évaluation dans cette période'
+                }
               </p>
               <Button variant="outline" onClick={() => setShowEvalDialog(true)}>
                 <Plus size={18} />
@@ -648,6 +721,12 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
       <CreateEvaluationDialog
         open={showEvalDialog}
         onOpenChange={setShowEvalDialog}
+        unitId={unit.id}
+      />
+
+      <CreatePeriodDialog
+        open={showPeriodDialog}
+        onOpenChange={setShowPeriodDialog}
         unitId={unit.id}
       />
 

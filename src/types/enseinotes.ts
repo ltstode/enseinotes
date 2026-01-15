@@ -40,12 +40,20 @@ export interface ClassRoom {
 export interface GradeRule {
   coefficient: number;
   coefficientEnabled: boolean;
-  expectedInterros: number; // Renamed from minInterros - indicative, no strict limit
-  expectedDevoirs: number; // Renamed from minDevoirs - indicative, no strict limit
-  formula: string; // e.g., "(MoyInterros * 1 + MoyDevoirs * 2) / 3"
+  expectedInterros: number;
+  expectedDevoirs: number;
+  formula: string;
   displayMode: 'numeric' | 'letter' | 'percentage';
-  interroWeight: number; // Weight for interros in formula (default 1)
-  devoirWeight: number; // Weight for devoirs in formula (default 2)
+  interroWeight: number;
+  devoirWeight: number;
+}
+
+export interface Period {
+  id: string;
+  name: string;
+  pedagogicalUnitId: string;
+  order: number;
+  createdAt: Date;
 }
 
 export interface PedagogicalUnit {
@@ -61,6 +69,7 @@ export interface Evaluation {
   id: string;
   name: string;
   pedagogicalUnitId: string;
+  periodId?: string;
   type: EvaluationType;
   coefficient: number;
   maxScore: number;
@@ -96,6 +105,7 @@ export interface TeacherData {
   schoolYears: SchoolYear[];
   classRooms: ClassRoom[];
   pedagogicalUnits: PedagogicalUnit[];
+  periods: Period[];
   evaluations: Evaluation[];
   grades: Grade[];
   activeYearId: string | null;
