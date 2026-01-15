@@ -11,6 +11,7 @@ import ClassesPage from "./pages/ClassesPage";
 import UnitsPage from "./pages/UnitsPage";
 import GradesPage from "./pages/GradesPage";
 import StudentsPage from "./pages/StudentsPage";
+import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -109,6 +110,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <StudentsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/settings"
+      element={
+        <ProtectedRoute>
+          <SettingsPage />
         </ProtectedRoute>
       }
     />

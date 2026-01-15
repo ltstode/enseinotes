@@ -1,4 +1,4 @@
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=saans@400,500,600,700&f[]=satoshi@400,500,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -63,7 +63,7 @@
     --sidebar-ring: 199 100% 50%;
 
     /* Typography */
-    --font-display: 'Clash Display', sans-serif;
+    --font-display: 'Saans', sans-serif;
     --font-body: 'Satoshi', sans-serif;
   }
 
