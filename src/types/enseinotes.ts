@@ -4,6 +4,8 @@ export type EvaluationType = 'interro' | 'devoir';
 
 export type StudentStatus = 'active' | 'archived';
 
+export type PeriodType = 'semester' | 'trimester' | 'custom';
+
 export interface Teacher {
   id: string;
   email: string;
@@ -52,7 +54,12 @@ export interface Period {
   id: string;
   name: string;
   pedagogicalUnitId: string;
+  periodType: PeriodType;
   order: number;
+  // For semesters: fixed 2 devoirs, unlimited interros
+  // For trimesters/custom: teacher defines
+  expectedDevoirs: number;
+  expectedInterros: number;
   createdAt: Date;
 }
 
@@ -62,6 +69,8 @@ export interface PedagogicalUnit {
   classRoomId: string;
   schoolYearId: string;
   rules: GradeRule;
+  // Period system for this unit
+  periodSystem: 'semester' | 'trimester' | 'none';
   createdAt: Date;
 }
 
@@ -69,7 +78,7 @@ export interface Evaluation {
   id: string;
   name: string;
   pedagogicalUnitId: string;
-  periodId?: string;
+  periodId: string; // Required - always linked to a period
   type: EvaluationType;
   coefficient: number;
   maxScore: number;
