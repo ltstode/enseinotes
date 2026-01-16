@@ -37,12 +37,9 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
   const [type, setType] = useState<EvaluationType>('interro');
   const [coefficient, setCoefficient] = useState('1');
   const [maxScore, setMaxScore] = useState('20');
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
   
-  const { addEvaluation, getPeriodsByUnit } = useApp();
+  const { addEvaluation } = useApp();
   const { toast } = useToast();
-
-  const periods = getPeriodsByUnit(unitId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +56,6 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
     addEvaluation({
       name: name.trim(),
       pedagogicalUnitId: unitId,
-      periodId: selectedPeriodId || undefined,
       type,
       coefficient: parseFloat(coefficient) || 1,
       maxScore: parseFloat(maxScore) || 20,
@@ -75,7 +71,6 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
     setType('interro');
     setCoefficient('1');
     setMaxScore('20');
-    setSelectedPeriodId('');
     onOpenChange(false);
   };
 
@@ -141,25 +136,6 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
               className="h-12"
             />
           </div>
-
-          {periods.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="period">Période (optionnel)</Label>
-              <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Sélectionner une période" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Aucune période</SelectItem>
-                  {periods.map(period => (
-                    <SelectItem key={period.id} value={period.id}>
-                      {period.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
