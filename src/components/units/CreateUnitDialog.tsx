@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Users, Settings2 } from 'lucide-react';
+import { BookOpen, Users, Settings2, Calendar, GraduationCap } from 'lucide-react';
 
 interface CreateUnitDialogProps {
   open: boolean;
@@ -35,6 +35,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [selectedClassId, setSelectedClassId] = useState(preselectedClassId || '');
+  const [periodSystem, setPeriodSystem] = useState<'semester' | 'trimester' | 'none'>('semester');
   const [coefficientEnabled, setCoefficientEnabled] = useState(true);
   const [coefficient, setCoefficient] = useState('1');
   const [minInterros, setMinInterros] = useState('0');
@@ -89,6 +90,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
       name: name.trim(),
       classRoomId: selectedClassId,
       schoolYearId: activeYearId,
+      periodSystem,
       rules: {
         coefficient: parseFloat(coefficient) || 1,
         coefficientEnabled,
@@ -113,6 +115,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
   const resetForm = () => {
     setName('');
     setSelectedClassId(preselectedClassId || '');
+    setPeriodSystem('semester');
     setCoefficientEnabled(true);
     setCoefficient('1');
     setMinInterros('0');
@@ -161,7 +164,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 rounded-xl bg-primary/10">
@@ -220,6 +223,85 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
             </div>
           )}
 
+          {/* Period System Selection - Desktop-first design */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Calendar size={16} className="text-muted-foreground" />
+              Système de périodes
+            </Label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setPeriodSystem('semester')}
+                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                  periodSystem === 'semester'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                }`}
+              >
+                <BookOpen className={`mb-2 ${periodSystem === 'semester' ? 'text-primary' : 'text-muted-foreground'}`} size={20} />
+                <p className={`font-medium text-sm ${periodSystem === 'semester' ? 'text-primary' : 'text-foreground'}`}>
+                  Semestre
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  2 devoirs/sem. obligatoires
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodSystem('trimester')}
+                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                  periodSystem === 'trimester'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                }`}
+              >
+                <GraduationCap className={`mb-2 ${periodSystem === 'trimester' ? 'text-primary' : 'text-muted-foreground'}`} size={20} />
+                <p className={`font-medium text-sm ${periodSystem === 'trimester' ? 'text-primary' : 'text-foreground'}`}>
+                  Trimestre
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vous définissez le nombre
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodSystem('none')}
+                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                  periodSystem === 'none'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                }`}
+              >
+                <Settings2 className={`mb-2 ${periodSystem === 'none' ? 'text-primary' : 'text-muted-foreground'}`} size={20} />
+                <p className={`font-medium text-sm ${periodSystem === 'none' ? 'text-primary' : 'text-foreground'}`}>
+                  Personnalisé
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Périodes libres
+                </p>
+              </button>
+            </div>
+            
+            {periodSystem === 'semester' && (
+              <div className="p-3 rounded-lg bg-info/10 border border-info/20 text-sm">
+                <p className="text-info font-medium">Mode semestriel</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  Chaque semestre comprendra obligatoirement 2 devoirs. Nombre d'interrogations libre.
+                </p>
+              </div>
+            )}
+            
+            {periodSystem === 'trimester' && (
+              <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm">
+                <p className="text-warning font-medium">Mode trimestriel</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  Vous définirez le nombre d'évaluations par trimestre lors de la création des périodes.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Coefficient settings */}
           <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border">
             <div className="flex items-center justify-between">
@@ -252,36 +334,6 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
             )}
           </div>
 
-          {/* Nombre d'évaluations attendu (indicatif, pas de contrainte stricte) */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="minInterros">Nombre d'interrogations prévu</Label>
-              <Input
-                id="minInterros"
-                type="number"
-                min="0"
-                value={minInterros}
-                onChange={(e) => setMinInterros(e.target.value)}
-                className="h-12"
-                placeholder="Optionnel"
-              />
-              <p className="text-xs text-muted-foreground">0 = pas de limite</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="minDevoirs">Nombre de devoirs prévu</Label>
-              <Input
-                id="minDevoirs"
-                type="number"
-                min="0"
-                value={minDevoirs}
-                onChange={(e) => setMinDevoirs(e.target.value)}
-                className="h-12"
-                placeholder="Optionnel"
-              />
-              <p className="text-xs text-muted-foreground">0 = pas de limite</p>
-            </div>
-          </div>
-
           {/* Advanced settings toggle */}
           <Button
             type="button"
@@ -295,6 +347,36 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
 
           {showAdvanced && (
             <div className="space-y-6 animate-fade-in">
+              {/* Nombre d'évaluations attendu (indicatif) */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minInterros">Interrogations prévues (global)</Label>
+                  <Input
+                    id="minInterros"
+                    type="number"
+                    min="0"
+                    value={minInterros}
+                    onChange={(e) => setMinInterros(e.target.value)}
+                    className="h-12"
+                    placeholder="Optionnel"
+                  />
+                  <p className="text-xs text-muted-foreground">0 = pas de limite</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minDevoirs">Devoirs prévus (global)</Label>
+                  <Input
+                    id="minDevoirs"
+                    type="number"
+                    min="0"
+                    value={minDevoirs}
+                    onChange={(e) => setMinDevoirs(e.target.value)}
+                    className="h-12"
+                    placeholder="Optionnel"
+                  />
+                  <p className="text-xs text-muted-foreground">0 = pas de limite</p>
+                </div>
+              </div>
+
               {/* Formula weights */}
               <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border">
                 <Label>Formule de moyenne</Label>
@@ -346,7 +428,7 @@ const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>

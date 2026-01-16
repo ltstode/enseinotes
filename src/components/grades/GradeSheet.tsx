@@ -722,12 +722,14 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
         open={showEvalDialog}
         onOpenChange={setShowEvalDialog}
         unitId={unit.id}
+        preselectedPeriodId={activePeriod !== 'all' && activePeriod !== 'none' ? activePeriod : undefined}
       />
 
       <CreatePeriodDialog
         open={showPeriodDialog}
         onOpenChange={setShowPeriodDialog}
         unitId={unit.id}
+        periodSystem={unit.periodSystem || 'semester'}
       />
 
       {/* Modify Grade Dialog */}

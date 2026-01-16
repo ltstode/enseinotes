@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,30 +19,74 @@ import {
 } from '@/components/ui/select';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { ClipboardList, FileText, HelpCircle } from 'lucide-react';
-import { EvaluationType } from '@/types/enseinotes';
+import { ClipboardList, FileText, HelpCircle, Calendar, AlertTriangle } from 'lucide-react';
+import { EvaluationType, Period } from '@/types/enseinotes';
 
 interface CreateEvaluationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   unitId: string;
+  preselectedPeriodId?: string;
 }
 
 const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({ 
   open, 
   onOpenChange, 
-  unitId 
+  unitId,
+  preselectedPeriodId 
 }) => {
   const [name, setName] = useState('');
   const [type, setType] = useState<EvaluationType>('interro');
   const [coefficient, setCoefficient] = useState('1');
   const [maxScore, setMaxScore] = useState('20');
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
   
-  const { addEvaluation } = useApp();
+  const { addEvaluation, getPeriodsByUnit, getEvaluationsByPeriod } = useApp();
   const { toast } = useToast();
+
+  const periods = getPeriodsByUnit(unitId);
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setName('');
+      setType('interro');
+      setCoefficient('1');
+      setMaxScore('20');
+      // Use preselected period or first available
+      setSelectedPeriodId(preselectedPeriodId || (periods.length > 0 ? periods[0].id : ''));
+    }
+  }, [open, preselectedPeriodId, periods]);
+
+  const selectedPeriod = periods.find(p => p.id === selectedPeriodId);
+  
+  // Get existing evaluations for the selected period
+  const periodEvaluations = selectedPeriodId ? getEvaluationsByPeriod(selectedPeriodId) : [];
+  const periodDevoirs = periodEvaluations.filter(e => e.type === 'devoir');
+  const periodInterros = periodEvaluations.filter(e => e.type === 'interro');
+
+  // Check if devoir limit is reached (for semesters)
+  const isDevoirLimitReached = selectedPeriod?.periodType === 'semester' && 
+                               periodDevoirs.length >= 2;
+
+  // Auto-switch to interro if devoir limit reached
+  useEffect(() => {
+    if (isDevoirLimitReached && type === 'devoir') {
+      setType('interro');
+    }
+  }, [isDevoirLimitReached, type]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedPeriodId) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner une période',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (!name.trim()) {
       toast({
@@ -53,9 +97,20 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
       return;
     }
 
+    // Check devoir limit for semesters
+    if (selectedPeriod?.periodType === 'semester' && type === 'devoir' && periodDevoirs.length >= 2) {
+      toast({
+        title: 'Limite atteinte',
+        description: 'Un semestre ne peut contenir que 2 devoirs maximum',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     addEvaluation({
       name: name.trim(),
       pedagogicalUnitId: unitId,
+      periodId: selectedPeriodId,
       type,
       coefficient: parseFloat(coefficient) || 1,
       maxScore: parseFloat(maxScore) || 20,
@@ -64,19 +119,53 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
 
     toast({
       title: 'Évaluation créée',
-      description: `${type === 'interro' ? 'Interrogation' : 'Devoir'} "${name}" ajouté(e)`,
+      description: `${type === 'interro' ? 'Interrogation' : 'Devoir'} "${name}" ajouté(e) à ${selectedPeriod?.name}`,
     });
 
-    setName('');
-    setType('interro');
-    setCoefficient('1');
-    setMaxScore('20');
     onOpenChange(false);
   };
 
+  // No periods available
+  if (periods.length === 0) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 rounded-xl bg-warning/10">
+                <AlertTriangle className="text-warning" size={24} />
+              </div>
+              <div>
+                <DialogTitle className="font-display text-h3">
+                  Aucune période
+                </DialogTitle>
+                <DialogDescription>
+                  Vous devez d'abord créer une période
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="py-6 text-center">
+            <p className="text-muted-foreground mb-4">
+              Les évaluations doivent être associées à une période (semestre ou trimestre).
+              Créez d'abord une période pour pouvoir ajouter des évaluations.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 rounded-xl bg-warning/10">
@@ -94,6 +183,58 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Period selection - Required */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Calendar size={16} className="text-muted-foreground" />
+              Période <span className="text-destructive">*</span>
+            </Label>
+            <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Sélectionnez une période" />
+              </SelectTrigger>
+              <SelectContent>
+                {periods.map(period => {
+                  const pEvals = getEvaluationsByPeriod(period.id);
+                  const pDevoirs = pEvals.filter(e => e.type === 'devoir').length;
+                  const pInterros = pEvals.filter(e => e.type === 'interro').length;
+                  
+                  return (
+                    <SelectItem key={period.id} value={period.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{period.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({pDevoirs}/{period.expectedDevoirs} devoirs, {pInterros} interros)
+                        </span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            
+            {/* Period info */}
+            {selectedPeriod && (
+              <div className="text-xs text-muted-foreground mt-1 p-2 rounded-lg bg-muted/50">
+                {selectedPeriod.periodType === 'semester' ? (
+                  <span className="flex items-center gap-1">
+                    <span className={periodDevoirs.length >= 2 ? 'text-success' : 'text-warning'}>
+                      {periodDevoirs.length}/2 devoirs
+                    </span>
+                    {periodDevoirs.length >= 2 && ' ✓ Complet'}
+                    <span className="mx-2">·</span>
+                    <span>{periodInterros.length} interros</span>
+                  </span>
+                ) : (
+                  <span>
+                    {periodDevoirs.length}/{selectedPeriod.expectedDevoirs} devoirs · {periodInterros.length}/{selectedPeriod.expectedInterros} interros
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Evaluation type */}
           <div className="space-y-2">
             <Label>Type d'évaluation</Label>
             <div className="grid grid-cols-2 gap-3">
@@ -102,26 +243,31 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                 onClick={() => setType('interro')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   type === 'interro'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 }`}
               >
                 <HelpCircle className={`mx-auto mb-2 ${type === 'interro' ? 'text-primary' : 'text-muted-foreground'}`} size={24} />
                 <p className={`font-medium ${type === 'interro' ? 'text-primary' : 'text-foreground'}`}>Interrogation</p>
-                <p className="text-small text-muted-foreground">Test rapide</p>
+                <p className="text-xs text-muted-foreground mt-1">Test rapide</p>
               </button>
               <button
                 type="button"
-                onClick={() => setType('devoir')}
+                onClick={() => !isDevoirLimitReached && setType('devoir')}
+                disabled={isDevoirLimitReached}
                 className={`p-4 rounded-xl border-2 transition-all ${
-                  type === 'devoir'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
+                  isDevoirLimitReached 
+                    ? 'border-border bg-muted/30 opacity-50 cursor-not-allowed'
+                    : type === 'devoir'
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 }`}
               >
-                <FileText className={`mx-auto mb-2 ${type === 'devoir' ? 'text-primary' : 'text-muted-foreground'}`} size={24} />
-                <p className={`font-medium ${type === 'devoir' ? 'text-primary' : 'text-foreground'}`}>Devoir</p>
-                <p className="text-small text-muted-foreground">Évaluation complète</p>
+                <FileText className={`mx-auto mb-2 ${type === 'devoir' && !isDevoirLimitReached ? 'text-primary' : 'text-muted-foreground'}`} size={24} />
+                <p className={`font-medium ${type === 'devoir' && !isDevoirLimitReached ? 'text-primary' : 'text-foreground'}`}>Devoir</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isDevoirLimitReached ? 'Limite atteinte (2/2)' : 'Évaluation complète'}
+                </p>
               </button>
             </div>
           </div>
@@ -166,11 +312,11 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={!selectedPeriodId}>
               Ajouter {type === 'interro' ? "l'interrogation" : 'le devoir'}
             </Button>
           </DialogFooter>

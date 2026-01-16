@@ -94,10 +94,14 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
       pedagogicalUnits: parsed.pedagogicalUnits.map((u: PedagogicalUnit) => ({
         ...u,
         createdAt: new Date(u.createdAt),
+        periodSystem: u.periodSystem || 'semester',
       })),
       periods: (parsed.periods || []).map((p: Period) => ({
         ...p,
         createdAt: new Date(p.createdAt),
+        periodType: p.periodType || 'custom',
+        expectedDevoirs: p.expectedDevoirs ?? 2,
+        expectedInterros: p.expectedInterros ?? 3,
       })),
       evaluations: parsed.evaluations.map((e: Evaluation) => ({
         ...e,
@@ -339,6 +343,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...period,
       id: generateId(),
       createdAt: new Date(),
+      // Ensure defaults
+      periodType: period.periodType || 'custom',
+      expectedDevoirs: period.expectedDevoirs ?? 2,
+      expectedInterros: period.expectedInterros ?? 3,
     };
     setState(prev => ({
       ...prev,
@@ -538,10 +546,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         pedagogicalUnits: parsed.pedagogicalUnits.map((u: PedagogicalUnit) => ({
           ...u,
           createdAt: new Date(u.createdAt),
+          periodSystem: u.periodSystem || 'semester',
         })),
         periods: (parsed.periods || []).map((p: Period) => ({
           ...p,
           createdAt: new Date(p.createdAt),
+          periodType: p.periodType || 'custom',
+          expectedDevoirs: p.expectedDevoirs ?? 2,
+          expectedInterros: p.expectedInterros ?? 3,
         })),
         evaluations: parsed.evaluations.map((e: Evaluation) => ({
           ...e,
