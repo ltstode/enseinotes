@@ -20,7 +20,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { ClipboardList, FileText, HelpCircle, Calendar, AlertTriangle } from 'lucide-react';
-import { EvaluationType, Period } from '@/types/enseinotes';
+import { EvaluationType } from '@/types/enseinotes';
 
 interface CreateEvaluationDialogProps {
   open: boolean;
@@ -46,17 +46,39 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
 
   const periods = getPeriodsByUnit(unitId);
 
-  // Reset form when dialog opens
+  // Reset form when dialog opens (⚠️ do NOT depend on `periods` here, otherwise the name gets reset while typing)
   useEffect(() => {
-    if (open) {
-      setName('');
-      setType('interro');
-      setCoefficient('1');
-      setMaxScore('20');
-      // Use preselected period or first available
-      setSelectedPeriodId(preselectedPeriodId || (periods.length > 0 ? periods[0].id : ''));
+    if (!open) return;
+
+    setName('');
+    setType('interro');
+    setCoefficient('1');
+    setMaxScore('20');
+
+    const initialPeriodId =
+      (preselectedPeriodId && periods.some((p) => p.id === preselectedPeriodId)
+        ? preselectedPeriodId
+        : undefined) ?? (periods[0]?.id ?? '');
+
+    setSelectedPeriodId(initialPeriodId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, preselectedPeriodId, unitId]);
+
+  // Keep selected period valid if periods list changes while the dialog is open
+  useEffect(() => {
+    if (!open) return;
+
+    if (selectedPeriodId && periods.some((p) => p.id === selectedPeriodId)) return;
+
+    const fallbackPeriodId =
+      (preselectedPeriodId && periods.some((p) => p.id === preselectedPeriodId)
+        ? preselectedPeriodId
+        : undefined) ?? (periods[0]?.id ?? '');
+
+    if (fallbackPeriodId && fallbackPeriodId !== selectedPeriodId) {
+      setSelectedPeriodId(fallbackPeriodId);
     }
-  }, [open, preselectedPeriodId, periods]);
+  }, [open, periods, preselectedPeriodId, selectedPeriodId]);
 
   const selectedPeriod = periods.find(p => p.id === selectedPeriodId);
   
