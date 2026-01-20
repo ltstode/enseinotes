@@ -46,14 +46,14 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
               <Calendar size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-black tracking-tight text-foreground">{year.name}</h3>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+              <h3 className="text-xl font-semibold tracking-tight text-foreground">{year.name}</h3>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
                 Système {year.mode === 'semester' ? 'Semestriel' : 'Trimestriel'}
               </p>
             </div>
           </div>
           {isActive && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-black uppercase tracking-tighter border border-success/20">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-medium uppercase tracking-tight border border-success/20">
               <Check size={12} />
               Active
             </div>
@@ -62,12 +62,12 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
 
         <div className="grid grid-cols-2 gap-3 mb-8">
           <div className="p-4 rounded-2xl bg-secondary/30 flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Classes</span>
-            <p className="text-2xl font-black text-foreground">{classes.length}</p>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Classes</span>
+            <p className="text-2xl font-semibold text-foreground">{classes.length}</p>
           </div>
           <div className="p-4 rounded-2xl bg-secondary/30 flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Élèves</span>
-            <p className="text-2xl font-black text-foreground">{totalStudents}</p>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Élèves</span>
+            <p className="text-2xl font-semibold text-foreground">{totalStudents}</p>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
           <Button 
             variant="ghost" 
             onClick={handleActivate} 
-            className="flex-1 rounded-xl h-12 font-bold hover:bg-white hover:shadow-sm"
+            className="flex-1 rounded-xl h-11 font-medium hover:bg-white hover:shadow-sm"
           >
             Activer
           </Button>
@@ -86,7 +86,7 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
           variant={isActive ? "default" : "secondary"} 
           onClick={handleViewClasses}
           className={cn(
-            "flex-1 rounded-xl h-12 font-bold transition-all gap-2",
+            "flex-1 rounded-xl h-11 font-medium transition-all gap-2",
             isActive && "shadow-lg shadow-primary/20 hover:scale-[1.02]"
           )}
         >

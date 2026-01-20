@@ -28,19 +28,19 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
   >
     <div className="flex justify-between items-start mb-8">
       <div className="space-y-1">
-        <p className="text-xs font-bold uppercase tracking-widest opacity-70">{title}</p>
-        <p className="text-3xl font-black">{value}</p>
+        <p className="text-xs font-medium uppercase tracking-wide opacity-70">{title}</p>
+        <p className="text-3xl font-semibold">{value}</p>
       </div>
       <div className="p-3 rounded-2xl bg-white/50 border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
         <Icon size={24} />
       </div>
     </div>
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/40 text-[10px] font-bold">
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/40 text-[10px] font-medium">
         <TrendingUp size={10} />
         <span>{subValue}</span>
       </div>
-      <span className="text-[10px] font-bold opacity-50">Depuis la semaine dernière</span>
+      <span className="text-[10px] font-medium opacity-50">Depuis la semaine dernière</span>
     </div>
   </div>
 );
@@ -54,7 +54,7 @@ const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
         <Icon size={24} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-sm text-foreground">{title}</h4>
+        <h4 className="font-medium text-sm text-foreground">{title}</h4>
         <p className="text-xs text-muted-foreground truncate">{desc}</p>
       </div>
       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-500">
@@ -77,18 +77,18 @@ const Index = () => {
         {/* Welcome Header */}
         <div className="flex items-center justify-between px-2">
           <div className="space-y-1 animate-fade-in">
-            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+            <h2 className="text-3xl font-semibold tracking-tight text-foreground leading-tight flex items-center gap-3">
               Ravi de vous revoir, <span className="text-primary">{teacher?.firstName}</span>
-              <Sparkles className="text-soft-orange-foreground" size={32} />
+              <Sparkles className="text-soft-orange-foreground" size={28} />
             </h2>
-            <p className="text-muted-foreground font-medium">Voici un aperçu de vos activités scolaires pour aujourd'hui.</p>
+            <p className="text-muted-foreground">Voici un aperçu de vos activités scolaires pour aujourd'hui.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-bold hover:bg-white transition-all shadow-sm">
+            <Button variant="outline" className="h-11 px-6 rounded-2xl gap-2 font-medium hover:bg-white transition-all shadow-sm">
               <Calendar size={18} />
               Calendrier
             </Button>
-            <Button className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+            <Button className="h-11 px-6 rounded-2xl gap-2 font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all">
               <Plus size={18} />
               Nouvelle Note
             </Button>
@@ -136,11 +136,11 @@ const Index = () => {
           {/* Main Activity Area */}
           <div className="lg:col-span-2 space-y-6 flex flex-col min-h-0">
             <div className="flex items-center justify-between px-2">
-              <h3 className="font-display font-black text-xl flex items-center gap-2">
-                <Clock className="text-primary" size={20} />
+              <h3 className="font-display font-semibold text-lg flex items-center gap-2">
+                <Clock className="text-primary" size={18} />
                 Actions Rapides
               </h3>
-              <Button variant="link" className="text-primary font-bold hover:no-underline">Voir tout</Button>
+              <Button variant="link" className="text-primary font-medium hover:no-underline">Voir tout</Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -177,7 +177,7 @@ const Index = () => {
             {/* Recent Activity Table Sketch */}
             <div className="apple-card flex-1 min-h-0 flex flex-col border border-white/40 bg-white/20 backdrop-blur-md mt-2">
               <div className="p-6 border-b border-white/20 flex items-center justify-between">
-                <h4 className="font-bold">Dernières évaluations</h4>
+                <h4 className="font-medium">Dernières évaluations</h4>
                 <div className="flex gap-2">
                    <div className="w-8 h-8 rounded-full bg-soft-blue flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
                      <TrendingUp size={14} />
@@ -189,7 +189,7 @@ const Index = () => {
                    <div className="w-20 h-20 bg-soft-blue mx-auto rounded-3xl flex items-center justify-center opacity-50">
                      <ClipboardList size={32} className="text-primary" />
                    </div>
-                   <p className="text-sm font-medium text-muted-foreground max-w-xs mx-auto">
+                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                      Aucun historique récent. Les dernières évaluations saisies apparaîtront ici pour un accès rapide.
                    </p>
                 </div>
@@ -200,7 +200,7 @@ const Index = () => {
           {/* Side Info Panel */}
           <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
-              <h3 className="font-display font-black text-xl">Statut des Périodes</h3>
+              <h3 className="font-display font-semibold text-lg">Statut des Périodes</h3>
             </div>
             
             <div className="apple-card p-6 border-none bg-gradient-to-br from-primary to-accent relative overflow-hidden group">
@@ -210,23 +210,23 @@ const Index = () => {
                     <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
                       <Clock className="text-white" size={20} />
                     </div>
-                    <span className="text-xs font-bold text-white/90">Progression globale</span>
+                    <span className="text-xs font-medium text-white/90">Progression globale</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-black text-white">45%</p>
-                    <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-loose">Fin du 1er Semestre estimée</p>
+                    <p className="text-4xl font-semibold text-white">45%</p>
+                    <p className="text-[10px] font-medium text-white/70 uppercase tracking-wide leading-loose">Fin du 1er Semestre estimée</p>
                   </div>
                   <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
                     <div className="h-full w-[45%] bg-white rounded-full"></div>
                   </div>
-                  <Button className="w-full bg-white text-primary rounded-xl font-bold hover:bg-white/90 shadow-lg">
+                  <Button className="w-full bg-white text-primary rounded-xl font-medium hover:bg-white/90 shadow-lg">
                     Détails du Calendrier
                   </Button>
                </div>
             </div>
 
             <div className="apple-card p-6 border border-white/40 bg-white shadow-sm space-y-6">
-               <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conseils de productivité</h4>
+               <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Conseils de productivité</h4>
                <div className="space-y-4">
                   {[
                     { t: "Raccourcis clavier", d: "Appuyez sur 'N' pour ajouter une note", i: Sparkles },
@@ -237,7 +237,7 @@ const Index = () => {
                         <tip.i size={18} className="text-primary" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold">{tip.t}</p>
+                        <p className="text-xs font-medium">{tip.t}</p>
                         <p className="text-[10px] text-muted-foreground">{tip.d}</p>
                       </div>
                     </div>

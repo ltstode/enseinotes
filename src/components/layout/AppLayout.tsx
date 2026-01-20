@@ -130,8 +130,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </div>
               {!isCollapsed && (
                 <div className="animate-fade-in">
-                  <h1 className="font-display text-xl font-black tracking-tight text-foreground leading-none">EnseiNotes</h1>
-                  <p className="text-[10px] uppercase tracking-widest text-primary font-bold mt-1">Smart Management</p>
+                  <h1 className="font-display text-xl font-semibold tracking-tight text-foreground leading-none">EnseiNotes</h1>
+                  <p className="text-[10px] uppercase tracking-wide text-primary font-medium mt-1">Smart Management</p>
                 </div>
               )}
             </Link>
@@ -140,7 +140,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-2 space-y-2 overflow-y-auto compact-scrollbar">
             <div className={cn("px-3 mb-4 transition-opacity duration-300", isCollapsed ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Menu Principal</p>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Menu Principal</p>
             </div>
             {navItems.map(item => (
               <NavItem
@@ -181,7 +181,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </Avatar>
                   {!isCollapsed && (
                     <div className="text-left flex-1 min-w-0">
-                      <p className="text-xs font-bold text-foreground truncate">{teacher?.firstName} {teacher?.lastName}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{teacher?.firstName} {teacher?.lastName}</p>
                       <p className="text-[10px] text-muted-foreground truncate">{teacher?.email}</p>
                     </div>
                   )}
@@ -190,14 +190,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <DropdownMenuContent align={isCollapsed ? "center" : "start"} side="top" className="w-[220px] rounded-2xl border-none shadow-2xl p-2">
                 <DropdownMenuItem className="rounded-xl p-3 focus:bg-primary/5">
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold">{teacher?.firstName} {teacher?.lastName}</span>
+                    <span className="text-xs font-medium">{teacher?.firstName} {teacher?.lastName}</span>
                     <span className="text-[10px] text-muted-foreground">Profil Enseignant</span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-2 bg-muted/50" />
                 <DropdownMenuItem onClick={handleLogout} className="rounded-xl p-3 text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer">
                   <LogOut size={16} className="mr-3" />
-                  <span className="text-xs font-bold">Se déconnecter</span>
+                  <span className="text-xs font-medium">Se déconnecter</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -222,7 +222,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               {activeYear && (
                 <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-white/20 shadow-sm">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></div>
-                  <span className="text-xs font-bold text-foreground">{activeYear.name}</span>
+                  <span className="text-xs font-medium text-foreground">{activeYear.name}</span>
                   <span className="text-[10px] font-medium text-muted-foreground uppercase opacity-50 px-2 py-0.5 rounded-md bg-secondary">
                     {activeYear.mode === 'semester' ? 'Semestres' : 'Trimestres'}
                   </span>
