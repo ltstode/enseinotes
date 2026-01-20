@@ -74,6 +74,12 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
       activePeriods[0];
 
     setSelectedPeriodId(initialPeriod?.id || '');
+
+    // Auto-focus on first input when dialog opens
+    setTimeout(() => {
+      const firstInput = document.querySelector('[data-first-focus]') as HTMLElement;
+      if (firstInput) firstInput.focus();
+    }, 100);
   }, [open, preselectedPeriodId, unitId, activePeriods.length]);
 
   // Auto-naming logic
@@ -114,18 +120,18 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
           <div className="h-1.5 w-full bg-destructive/50" />
           <div className="p-8 space-y-6">
             <div className="flex flex-col items-center text-center gap-4">
-              <div className="p-4 rounded-3xl bg-destructive/10 text-destructive">
+               <div className="p-4 rounded-3xl bg-destructive/10 text-destructive">
                 <Lock size={40} />
               </div>
               <div className="space-y-1">
-                <DialogTitle className="text-2xl font-black tracking-tight">Période verrouillée</DialogTitle>
+                <DialogTitle className="text-xl font-semibold tracking-tight">Période verrouillée</DialogTitle>
                 <p className="text-muted-foreground">Aucune période n'est actuellement active pour cette unité.</p>
               </div>
             </div>
-            <p className="text-center text-sm text-muted-foreground/80 leading-relaxed font-medium bg-muted/30 p-4 rounded-2xl">
+            <p className="text-center text-sm text-muted-foreground/80 leading-relaxed bg-muted/30 p-4 rounded-2xl">
               Vous devez d'abord activer une période (Semestre ou Trimestre) depuis la feuille de notes pour pouvoir ajouter des évaluations.
             </p>
-            <Button variant="outline" className="w-full h-12 rounded-2xl font-bold border-muted-foreground/10" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" className="w-full h-12 rounded-2xl font-medium border-muted-foreground/10" onClick={() => onOpenChange(false)}>
               Compris, je vais faire ça
             </Button>
           </div>
@@ -159,8 +165,8 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                    {steps[step].icon}
                 </div>
                 <div>
-                   <h3 className="text-xl font-black tracking-tight uppercase text-primary/40 text-[10px] leading-none mb-1">Étape {step + 1}/{steps.length}</h3>
-                   <h2 className="text-lg font-bold tracking-tight text-foreground leading-none">{steps[step].title}</h2>
+                   <h3 className="text-primary/40 text-[10px] font-medium uppercase tracking-wide leading-none mb-1">Étape {step + 1}/{steps.length}</h3>
+                   <h2 className="text-lg font-semibold tracking-tight text-foreground leading-none">{steps[step].title}</h2>
                 </div>
              </div>
              {step > 0 && (
@@ -174,7 +180,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
           {step === 0 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                <div className="space-y-3">
-                <Label className="text-sm font-bold ml-1 text-muted-foreground">Type d'évaluation</Label>
+                <Label className="text-sm font-medium ml-1 text-muted-foreground">Type d'évaluation</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setType('interro')}
@@ -189,8 +195,8 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                       <HelpCircle size={24} />
                     </div>
                     <div className="text-center">
-                      <p className={cn("font-black text-sm", type === 'interro' ? "text-primary" : "text-muted-foreground")}>Interro</p>
-                      <p className="text-[10px] uppercase font-bold opacity-50">Test Rapide</p>
+                      <p className={cn("font-medium text-sm", type === 'interro' ? "text-primary" : "text-muted-foreground")}>Interro</p>
+                      <p className="text-[10px] uppercase font-medium opacity-50">Test Rapide</p>
                     </div>
                     {type === 'interro' && <CheckCircle2 size={16} className="absolute top-3 right-3 text-primary" />}
                   </button>
@@ -208,8 +214,8 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                       <FileText size={24} />
                     </div>
                     <div className="text-center">
-                      <p className={cn("font-black text-sm", type === 'devoir' ? "text-primary" : "text-muted-foreground")}>Devoir</p>
-                      <p className="text-[10px] uppercase font-bold opacity-50">Éval. Complète</p>
+                      <p className={cn("font-medium text-sm", type === 'devoir' ? "text-primary" : "text-muted-foreground")}>Devoir</p>
+                      <p className="text-[10px] uppercase font-medium opacity-50">Éval. Complète</p>
                     </div>
                     {type === 'devoir' && <CheckCircle2 size={16} className="absolute top-3 right-3 text-primary" />}
                   </button>
@@ -217,9 +223,9 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-bold ml-1 text-muted-foreground">Période cible</Label>
+                <Label className="text-sm font-medium ml-1 text-muted-foreground">Période cible</Label>
                 <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
-                  <SelectTrigger className="h-14 rounded-2xl bg-secondary/20 border-none shadow-inner font-bold text-primary">
+                  <SelectTrigger className="h-14 rounded-2xl bg-secondary/20 border-none shadow-inner font-medium text-primary">
                     <SelectValue placeholder="Sélectionnez une période" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-none shadow-xl">
@@ -243,14 +249,15 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                   </div>
                   <div className="relative">
                     <Input
+                      id="eval-name-input"
                       autoFocus
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="h-20 text-center text-2xl font-black rounded-3xl bg-primary/5 border-primary/20 text-primary shadow-inner"
+                      className="h-20 text-center text-2xl font-semibold rounded-3xl bg-primary/5 border-primary/20 text-primary shadow-inner"
                     />
                     <Sparkles size={20} className="absolute right-6 top-1/2 -translate-y-1/2 text-primary/30" />
                   </div>
-                  <p className="text-center text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-8">
+                  <p className="text-center text-[10px] font-medium uppercase text-muted-foreground tracking-wide px-8">
                     Vous pouvez le modifier si vous préférez un titre personnalisé.
                   </p>
                </div>
@@ -262,28 +269,28 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Note Max</Label>
+                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground ml-1">Note Max</Label>
                   <div className="relative">
                     <Input
                       type="number"
                       value={maxScore}
                       onChange={(e) => setMaxScore(e.target.value)}
-                      className="h-16 rounded-2xl bg-secondary/10 border-none text-center text-xl font-black shadow-inner"
+                      className="h-16 rounded-2xl bg-secondary/10 border-none text-center text-xl font-semibold shadow-inner"
                     />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 font-bold">/</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 font-medium">/</span>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Coefficient</Label>
+                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground ml-1">Coefficient</Label>
                   <div className="relative">
                     <Input
                       type="number"
                       step="0.5"
                       value={coefficient}
                       onChange={(e) => setCoefficient(e.target.value)}
-                      className="h-16 rounded-2xl bg-secondary/10 border-none text-center text-xl font-black shadow-inner"
+                      className="h-16 rounded-2xl bg-secondary/10 border-none text-center text-xl font-semibold shadow-inner"
                     />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 font-bold">x</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 font-medium">x</span>
                   </div>
                 </div>
               </div>
@@ -293,8 +300,8 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                     <Calculator className="text-primary" size={20} />
                  </div>
                  <div className="space-y-1">
-                    <p className="text-xs font-bold text-primary">Récapitulatif</p>
-                    <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                    <p className="text-xs font-medium text-primary">Récapitulatif</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
                        Cette évaluation de type <b>{type}</b> sera notée sur <b>{maxScore}</b> avec un coefficient de <b>{coefficient}</b>. Elle impactera la moyenne du <b>{selectedPeriod?.name}</b>.
                     </p>
                  </div>
@@ -306,7 +313,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
           <div className="flex gap-3 pt-4">
             {step < steps.length - 1 ? (
               <Button 
-                className="w-full h-14 rounded-2xl text-lg font-black bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                className="w-full h-14 rounded-2xl text-lg font-semibold bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
                 onClick={() => setStep(step + 1)}
               >
                 Continuer
@@ -314,7 +321,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
               </Button>
             ) : (
               <Button 
-                className="w-full h-14 rounded-2xl text-lg font-black bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                className="w-full h-14 rounded-2xl text-lg font-semibold bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
                 onClick={handleSubmit}
               >
                 Créer l'évaluation
