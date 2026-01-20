@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,8 @@ import {
   ChevronRight,
   LayoutDashboard,
   Timer,
-  Settings
+  Settings,
+  Keyboard
 } from 'lucide-react';
 import { PedagogicalUnit, Student, Evaluation, Period } from '@/types/enseinotes';
 import { useApp } from '@/contexts/AppContext';
@@ -37,6 +38,8 @@ import { useToast } from '@/hooks/use-toast';
 import CreateEvaluationDialog from './CreateEvaluationDialog';
 import CreatePeriodDialog from './CreatePeriodDialog';
 import EditUnitDialog from '../units/EditUnitDialog';
+import PeriodProgressBar from './PeriodProgressBar';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/lib/utils';
 
 interface GradeSheetProps {
@@ -115,6 +118,9 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   const allTableEvals = useMemo(() => [...interros, ...devoirs], [interros, devoirs]);
+
+  // hasGradesToSave - defined early for use in keyboard shortcuts
+  const hasGradesToSave = Object.keys(localGrades).some(key => localGrades[key] !== '');
 
   const getGrade = useCallback((studentId: string, evaluationId: string) => {
     return grades.find(g => g.studentId === studentId && g.evaluationId === evaluationId);
@@ -282,7 +288,26 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     return gradesForEval.length === 0 || gradesForEval.every(g => !g.isLocked);
   }, [isSaved, grades]);
 
-  const hasGradesToSave = Object.keys(localGrades).some(key => localGrades[key] !== '');
+  // Keyboard shortcuts (defined after handlers)
+  useKeyboardShortcuts({
+    onNewEvaluation: () => {
+      if (periods.find(p => p.id === activePeriod)?.status === 'active') {
+        setShowEvalDialog(true);
+      }
+    },
+    onSave: () => {
+      if (hasGradesToSave) {
+        handleSaveGrades();
+      }
+    },
+    onClose: () => {
+      if (showEvalDialog) setShowEvalDialog(false);
+      else if (showPeriodDialog) setShowPeriodDialog(false);
+      else if (showModifyDialog) setShowModifyDialog(false);
+      else if (showEditUnitDialog) setShowEditUnitDialog(false);
+    },
+    enabled: true,
+  });
 
   const renderGradeCell = (student: Student, evaluation: Evaluation, studentIndex: number) => {
     const grade = getGrade(student.id, evaluation.id);
@@ -392,6 +417,27 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
         </div>
       </div>
 
+      {/* Period Progress Bar */}
+      {activePeriod && periods.find(p => p.id === activePeriod) && (
+        <PeriodProgressBar 
+          period={periods.find(p => p.id === activePeriod)!} 
+          evaluations={filteredEvaluations} 
+        />
+      )}
+
+      {/* Keyboard Shortcuts Hint */}
+      <div className="flex items-center gap-4 px-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Keyboard size={12} />
+          <span className="font-medium">Raccourcis :</span>
+        </div>
+        <div className="flex gap-3">
+          <span><kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono text-[9px]">Ctrl+N</kbd> Nouvelle éval</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono text-[9px]">Ctrl+S</kbd> Enregistrer</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono text-[9px]">Esc</kbd> Fermer</span>
+        </div>
+      </div>
+
       {/* Period Selection / Glass Container */}
       <div className="glass-card rounded-[2.5rem] p-2">
         <div className="flex flex-col gap-2 p-1">
@@ -404,7 +450,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                     key={p.id}
                     onClick={() => setActivePeriod(p.id)}
                     className={cn(
-                      "px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 relative flex items-center gap-2",
+                      "px-5 py-2 rounded-xl text-xs font-medium transition-all duration-300 relative flex items-center gap-2",
                       activePeriod === p.id ? "bg-white text-primary shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-white/40"
                     )}
                   >
@@ -419,7 +465,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               </div>
             </div>
             
-            <Button variant="ghost" size="sm" onClick={() => setShowPeriodDialog(true)} className="rounded-xl text-[10px] uppercase tracking-widest font-bold text-muted-foreground hover:text-primary transition-colors">
+            <Button variant="ghost" size="sm" onClick={() => setShowPeriodDialog(true)} className="rounded-xl text-[10px] uppercase tracking-wide font-medium text-muted-foreground hover:text-primary transition-colors">
               Gérer les périodes
             </Button>
           </div>
