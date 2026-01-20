@@ -27,11 +27,11 @@ const ClassesPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-2">
           <div className="space-y-1">
-            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+            <h2 className="text-3xl font-semibold tracking-tight text-foreground leading-tight flex items-center gap-3">
               Mes <span className="text-primary">Classes</span>
-              <Users className="text-soft-purple-foreground" size={32} />
+              <Users className="text-soft-purple-foreground" size={28} />
             </h2>
-            <p className="text-muted-foreground font-medium">
+            <p className="text-muted-foreground">
               {activeYear 
                 ? `Liste des classes pour l'année ${activeYear.name}`
                 : 'Sélectionnez une année scolaire active.'
@@ -39,7 +39,7 @@ const ClassesPage: React.FC = () => {
             </p>
           </div>
           {activeYearId && (
-            <Button onClick={() => setShowCreateDialog(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+            <Button onClick={() => setShowCreateDialog(true)} className="h-11 px-6 rounded-2xl gap-2 font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all">
               <Plus size={18} />
               Nouvelle Classe
             </Button>
@@ -52,7 +52,7 @@ const ClassesPage: React.FC = () => {
              <div className="w-16 h-16 bg-soft-orange mx-auto rounded-3xl flex items-center justify-center text-soft-orange-foreground">
                <AlertCircle size={32} />
              </div>
-             <h3 className="text-xl font-bold">Configuration Requise</h3>
+             <h3 className="text-xl font-semibold">Configuration Requise</h3>
              <p className="text-muted-foreground max-w-sm mx-auto">Veuillez d'abord définir une année scolaire active dans les paramètres.</p>
           </div>
         ) : classes.length === 0 ? (
@@ -61,10 +61,10 @@ const ClassesPage: React.FC = () => {
               <Users size={40} />
             </div>
             <div>
-              <h3 className="text-2xl font-black italic">Bienvenue dans votre espace !</h3>
+              <h3 className="text-2xl font-semibold">Bienvenue dans votre espace !</h3>
               <p className="text-muted-foreground mt-2">Commencez par créer votre première classe (ex: 3ème A, Terminale S...)</p>
             </div>
-            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-12 px-8 font-bold">
+            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-11 px-6 font-medium">
               <Plus size={18} className="mr-2" /> Créer une classe
             </Button>
           </div>

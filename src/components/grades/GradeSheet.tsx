@@ -358,7 +358,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-3xl font-black tracking-tight">{unit.name}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">{unit.name}</h2>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -369,24 +369,24 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               </Button>
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{students.length} Élèves Actifs</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{students.length} Élèves Actifs</span>
               <div className="h-1 w-1 rounded-full bg-muted-foreground/30"></div>
-              <span className="text-xs font-bold text-primary uppercase tracking-widest">{unit.periodSystem}s</span>
+              <span className="text-xs font-medium text-primary uppercase tracking-wide">{unit.periodSystem}s</span>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
           {isSaved && !hasGradesToSave ? (
-             <div className="px-4 py-2 rounded-2xl bg-success/10 text-success text-xs font-bold border border-success/20 flex items-center gap-2">
+             <div className="px-4 py-2 rounded-2xl bg-success/10 text-success text-xs font-medium border border-success/20 flex items-center gap-2">
                <Check size={16} /> Verrouillé
              </div>
           ) : hasGradesToSave && (
-            <Button onClick={handleSaveGrades} className="h-11 px-8 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-all gap-2 font-bold">
+            <Button onClick={handleSaveGrades} className="h-11 px-6 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-all gap-2 font-medium">
               <Save size={18} /> Enregistrer
             </Button>
           )}
-          <Button onClick={() => setShowEvalDialog(true)} className="h-11 px-6 rounded-2xl bg-white text-foreground border-none shadow-sm hover:shadow-md transition-all gap-2 font-bold">
+          <Button onClick={() => setShowEvalDialog(true)} className="h-11 px-6 rounded-2xl bg-white text-foreground border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium">
             <Plus size={18} /> Nouvelle Éval
           </Button>
         </div>

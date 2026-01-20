@@ -72,7 +72,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="h-10 text-lg font-black rounded-xl bg-white border-primary/20"
+                      className="h-10 text-lg font-semibold rounded-xl bg-white border-primary/20"
                       autoFocus
                     />
                     <Button variant="ghost" size="icon" onClick={handleSaveEdit} className="h-10 w-10 hover:bg-soft-green text-soft-green-foreground">
@@ -84,10 +84,10 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-2xl font-black tracking-tight text-foreground truncate group-hover:text-primary transition-colors">
+                    <h3 className="text-xl font-semibold tracking-tight text-foreground truncate group-hover:text-primary transition-colors">
                       {classRoom.name}
                     </h3>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                    <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
                       <Calendar size={10} />
                       {new Date(classRoom.createdAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
                     </div>
@@ -110,12 +110,12 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
 
           <div className="grid grid-cols-2 gap-3 mb-6">
              <div className="p-4 rounded-[1.5rem] bg-soft-purple/30 border border-soft-purple-foreground/10 flex flex-col justify-center">
-                <span className="text-[10px] font-black uppercase tracking-widest text-soft-purple-foreground/70 mb-1">Élèves</span>
-                <p className="text-3xl font-black text-soft-purple-foreground">{classRoom.students.length}</p>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-soft-purple-foreground/70 mb-1">Élèves</span>
+                <p className="text-2xl font-semibold text-soft-purple-foreground">{classRoom.students.length}</p>
              </div>
              <div className="p-4 rounded-[1.5rem] bg-soft-blue/30 border border-soft-blue-foreground/10 flex flex-col justify-center">
-                <span className="text-[10px] font-black uppercase tracking-widest text-soft-blue-foreground/70 mb-1">Unités</span>
-                <p className="text-3xl font-black text-soft-blue-foreground">{units.length}</p>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-soft-blue-foreground/70 mb-1">Unités</span>
+                <p className="text-2xl font-semibold text-soft-blue-foreground">{units.length}</p>
              </div>
           </div>
 
@@ -123,19 +123,19 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
             <div className="mb-6 flex-1">
               <div className="flex items-center gap-2 mb-3">
                  <UserPlus size={12} className="text-muted-foreground" />
-                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Effectif</span>
+                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Effectif</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {classRoom.students.slice(0, 4).map((student) => (
                   <div
                     key={student.id}
-                    className="px-3 py-1.5 rounded-xl bg-white/60 text-[10px] font-bold text-foreground border border-white/40 shadow-sm"
+                    className="px-3 py-1.5 rounded-xl bg-white/60 text-[10px] font-medium text-foreground border border-white/40 shadow-sm"
                   >
                     {student.lastName}
                   </div>
                 ))}
                 {classRoom.students.length > 4 && (
-                  <div className="px-3 py-1.5 rounded-xl bg-muted/30 text-[10px] font-bold text-muted-foreground">
+                  <div className="px-3 py-1.5 rounded-xl bg-muted/30 text-[10px] font-medium text-muted-foreground">
                     +{classRoom.students.length - 4}
                   </div>
                 )}
@@ -145,14 +145,14 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
              <div className="mb-6 flex-1 flex flex-col items-center justify-center border-2 border-dashed border-muted/20 rounded-2xl py-4 group/add cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => navigate(`/students?class=${classRoom.id}`)}>
                 <UserPlus size={20} className="text-muted-foreground group-hover/add:text-primary transition-colors mb-2" />
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">Ajouter des élèves</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Ajouter des élèves</span>
              </div>
           )}
 
           <div className="mt-auto pt-4 flex gap-2">
             <Button 
               variant="default" 
-              className="flex-1 rounded-2xl h-11 font-bold shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-all gap-2"
+              className="flex-1 rounded-2xl h-11 font-medium shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-all gap-2"
               onClick={() => navigate(`/units?class=${classRoom.id}`)}
             >
               Gérer Unités
@@ -174,15 +174,15 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-soft-pink-foreground">Détruire cette classe ?</AlertDialogTitle>
-            <AlertDialogDescription className="font-medium text-muted-foreground py-2 leading-relaxed">
+            <AlertDialogTitle className="text-xl font-semibold text-soft-pink-foreground">Détruire cette classe ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground py-2 leading-relaxed">
               La classe <b>{classRoom.name}</b> sera effacée avec ses <b>{units.length} unités</b> et toutes les notes. 
               Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel className="rounded-xl border-none bg-secondary hover:bg-secondary/70">Oublier</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-soft-pink-foreground text-white hover:bg-soft-pink-foreground/90 shadow-lg shadow-soft-pink-foreground/20 font-bold px-8">
+            <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-soft-pink-foreground text-white hover:bg-soft-pink-foreground/90 shadow-lg shadow-soft-pink-foreground/20 font-medium px-8">
               Confirmer
             </AlertDialogAction>
           </AlertDialogFooter>
