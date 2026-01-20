@@ -2,10 +2,11 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, BookOpen, ChevronRight } from 'lucide-react';
+import { Calendar, Users, BookOpen, ChevronRight, Check } from 'lucide-react';
 import { SchoolYear } from '@/types/enseinotes';
 import { useApp } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface YearCardProps {
   year: SchoolYear;
@@ -29,54 +30,71 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
   const totalStudents = classes.reduce((sum, c) => sum + c.students.length, 0);
 
   return (
-    <Card className={`p-6 ${isActive ? 'ring-2 ring-primary' : ''}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <Calendar className="text-primary" size={24} />
+    <div className={cn(
+      "apple-card p-6 border transition-all duration-500 hover:-translate-y-1.5 flex flex-col justify-between h-full",
+      isActive 
+        ? "border-primary/50 bg-white ring-4 ring-primary/5 shadow-2xl shadow-primary/10" 
+        : "border-white/40 bg-white/70 backdrop-blur-md"
+    )}>
+      <div>
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "p-3.5 rounded-2xl shadow-inner transition-colors",
+              isActive ? "bg-primary text-white" : "bg-soft-orange text-soft-orange-foreground"
+            )}>
+              <Calendar size={24} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black tracking-tight text-foreground">{year.name}</h3>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                Système {year.mode === 'semester' ? 'Semestriel' : 'Trimestriel'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-display text-h3 font-semibold">{year.name}</h3>
-            <p className="text-small text-muted-foreground capitalize">
-              {year.mode === 'semester' ? 'Semestres' : 'Trimestres'}
-            </p>
+          {isActive && (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-black uppercase tracking-tighter border border-success/20">
+              <Check size={12} />
+              Active
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="p-4 rounded-2xl bg-secondary/30 flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Classes</span>
+            <p className="text-2xl font-black text-foreground">{classes.length}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-secondary/30 flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Élèves</span>
+            <p className="text-2xl font-black text-foreground">{totalStudents}</p>
           </div>
         </div>
-        {isActive && (
-          <Badge className="bg-success/10 text-success border-0">
-            Active
-          </Badge>
-        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Users size={18} />
-          <span className="text-small">{classes.length} classes</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <BookOpen size={18} />
-          <span className="text-small">{totalStudents} élèves</span>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         {!isActive && (
-          <Button variant="outline" size="sm" onClick={handleActivate} className="flex-1">
+          <Button 
+            variant="ghost" 
+            onClick={handleActivate} 
+            className="flex-1 rounded-xl h-12 font-bold hover:bg-white hover:shadow-sm"
+          >
             Activer
           </Button>
         )}
         <Button 
           variant={isActive ? "default" : "secondary"} 
-          size="sm" 
           onClick={handleViewClasses}
-          className="flex-1"
+          className={cn(
+            "flex-1 rounded-xl h-12 font-bold transition-all gap-2",
+            isActive && "shadow-lg shadow-primary/20 hover:scale-[1.02]"
+          )}
         >
-          Voir les classes
-          <ChevronRight size={16} />
+          {isActive ? 'Ouvrir' : 'Explorer'}
+          <ChevronRight size={18} />
         </Button>
       </div>
-    </Card>
+    </div>
   );
 };
 

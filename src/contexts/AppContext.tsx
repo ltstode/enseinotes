@@ -2,6 +2,11 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData, Period } from '@/types/enseinotes';
 import { useAuth } from '@/contexts/AuthContext';
 
+// ... (rest of the interface definitions and helper functions remain same)
+
+// I will now update the AppProvider's return statement to include all required functions.
+// I'll skip to the relevant part.
+
 interface AppState {
   schoolYears: SchoolYear[];
   classRooms: ClassRoom[];
@@ -21,9 +26,13 @@ interface AppContextType extends AppState {
   updateStudentInClass: (classRoomId: string, studentId: string, updates: Partial<Student>) => void;
   deleteStudentFromClass: (classRoomId: string, studentId: string) => void;
   addPedagogicalUnit: (unit: Omit<PedagogicalUnit, 'id' | 'createdAt'>) => void;
+  updatePedagogicalUnit: (unitId: string, updates: Partial<PedagogicalUnit>) => void;
+  deletePedagogicalUnit: (unitId: string) => void;
   addPeriod: (period: Omit<Period, 'id' | 'createdAt'>) => void;
-  updatePeriod: (periodId: string, updates: Partial<Pick<Period, 'name' | 'order'>>) => void;
+  updatePeriod: (periodId: string, updates: Partial<Pick<Period, 'name' | 'order' | 'status'>>) => void;
   deletePeriod: (periodId: string) => void;
+  completePeriod: (periodId: string) => void;
+  activatePeriod: (periodId: string) => void;
   getPeriodsByUnit: (unitId: string) => Period[];
   addEvaluation: (evaluation: Omit<Evaluation, 'id'>) => void;
   addGrade: (grade: Omit<Grade, 'id' | 'createdAt' | 'history' | 'isLocked'>) => void;
@@ -100,6 +109,7 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
         ...p,
         createdAt: new Date(p.createdAt),
         periodType: p.periodType || 'custom',
+        status: p.status || 'active',
         expectedDevoirs: p.expectedDevoirs ?? 2,
         expectedInterros: p.expectedInterros ?? 3,
       })),
@@ -337,13 +347,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   }, []);
 
+  const updatePedagogicalUnit = useCallback((unitId: string, updates: Partial<PedagogicalUnit>) => {
+    setState(prev => ({
+      ...prev,
+      pedagogicalUnits: prev.pedagogicalUnits.map(u =>
+        u.id === unitId ? { ...u, ...updates } : u
+      ),
+    }));
+  }, []);
+
+  const deletePedagogicalUnit = useCallback((unitId: string) => {
+    setState(prev => ({
+      ...prev,
+      pedagogicalUnits: prev.pedagogicalUnits.filter(u => u.id !== unitId),
+      periods: prev.periods.filter(p => p.pedagogicalUnitId !== unitId),
+      evaluations: prev.evaluations.filter(e => e.pedagogicalUnitId !== unitId),
+      grades: prev.grades.filter(g => {
+        const evaluation = prev.evaluations.find(e => e.id === g.evaluationId);
+        return evaluation?.pedagogicalUnitId !== unitId;
+      }),
+    }));
+  }, []);
+
   // Period management
   const addPeriod = useCallback((period: Omit<Period, 'id' | 'createdAt'>) => {
     const newPeriod: Period = {
       ...period,
       id: generateId(),
       createdAt: new Date(),
-      // Ensure defaults
+      status: period.status || 'locked',
       periodType: period.periodType || 'custom',
       expectedDevoirs: period.expectedDevoirs ?? 2,
       expectedInterros: period.expectedInterros ?? 3,
@@ -354,13 +386,58 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   }, []);
 
-  const updatePeriod = useCallback((periodId: string, updates: Partial<Pick<Period, 'name' | 'order'>>) => {
+  const activatePeriod = useCallback((periodId: string) => {
+    setState(prev => {
+      const targetPeriod = prev.periods.find(p => p.id === periodId);
+      if (!targetPeriod) return prev;
+      
+      return {
+        ...prev,
+        periods: prev.periods.map(p => {
+          if (p.pedagogicalUnitId === targetPeriod.pedagogicalUnitId) {
+            if (p.id === periodId) return { ...p, status: 'active' };
+            if (p.status === 'active') return { ...p, status: 'completed' };
+          }
+          return p;
+        })
+      };
+    });
+  }, []);
+
+  const updatePeriod = useCallback((periodId: string, updates: Partial<Pick<Period, 'name' | 'order' | 'status'>>) => {
     setState(prev => ({
       ...prev,
       periods: prev.periods.map(p =>
         p.id === periodId ? { ...p, ...updates } : p
       ),
     }));
+  }, []);
+
+  const completePeriod = useCallback((periodId: string) => {
+    setState(prev => {
+      const currentPeriod = prev.periods.find(p => p.id === periodId);
+      if (!currentPeriod) return prev;
+
+      const unitPeriods = prev.periods
+        .filter(p => p.pedagogicalUnitId === currentPeriod.pedagogicalUnitId)
+        .sort((a, b) => a.order - b.order);
+      
+      const currentIndex = unitPeriods.findIndex(p => p.id === periodId);
+      const nextPeriod = unitPeriods[currentIndex + 1];
+
+      return {
+        ...prev,
+        periods: prev.periods.map(p => {
+          if (p.id === periodId) {
+            return { ...p, status: 'completed' };
+          }
+          if (nextPeriod && p.id === nextPeriod.id) {
+            return { ...p, status: 'active' };
+          }
+          return p;
+        }),
+      };
+    });
   }, []);
 
   const deletePeriod = useCallback((periodId: string) => {
@@ -606,9 +683,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateStudentInClass,
         deleteStudentFromClass,
         addPedagogicalUnit,
+        updatePedagogicalUnit,
+        deletePedagogicalUnit,
         addPeriod,
         updatePeriod,
         deletePeriod,
+        completePeriod,
+        activatePeriod,
         getPeriodsByUnit,
         addEvaluation,
         addGrade,

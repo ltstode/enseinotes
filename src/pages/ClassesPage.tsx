@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import ClassCard from '@/components/classes/ClassCard';
 import CreateClassDialog from '@/components/classes/CreateClassDialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, AlertCircle } from 'lucide-react';
+import { Plus, Users, AlertCircle, Sparkles } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 
 const ClassesPage: React.FC = () => {
@@ -23,60 +23,58 @@ const ClassesPage: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-8">
+      <div className="no-scroll-container gap-8 py-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-h1 text-foreground">
-              Classes
-            </h1>
-            <p className="text-muted-foreground mt-2">
+        <div className="flex items-center justify-between px-2">
+          <div className="space-y-1">
+            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+              Mes <span className="text-primary">Classes</span>
+              <Users className="text-soft-purple-foreground" size={32} />
+            </h2>
+            <p className="text-muted-foreground font-medium">
               {activeYear 
-                ? `Année scolaire ${activeYear.name}`
-                : 'Sélectionnez une année scolaire'
+                ? `Liste des classes pour l'année ${activeYear.name}`
+                : 'Sélectionnez une année scolaire active.'
               }
             </p>
           </div>
           {activeYearId && (
-            <Button onClick={() => setShowCreateDialog(true)}>
+            <Button onClick={() => setShowCreateDialog(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
               <Plus size={18} />
-              Nouvelle classe
+              Nouvelle Classe
             </Button>
           )}
         </div>
 
         {/* Content */}
         {!activeYearId ? (
-          <div className="text-center py-16 border-2 border-dashed rounded-2xl">
-            <div className="p-4 rounded-full bg-warning/10 w-fit mx-auto mb-4">
-              <AlertCircle className="text-warning" size={48} />
-            </div>
-            <h2 className="font-display text-h2 mb-2">Aucune année active</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Veuillez d'abord créer et activer une année scolaire pour gérer vos classes.
-            </p>
+          <div className="apple-card p-20 text-center space-y-4">
+             <div className="w-16 h-16 bg-soft-orange mx-auto rounded-3xl flex items-center justify-center text-soft-orange-foreground">
+               <AlertCircle size={32} />
+             </div>
+             <h3 className="text-xl font-bold">Configuration Requise</h3>
+             <p className="text-muted-foreground max-w-sm mx-auto">Veuillez d'abord définir une année scolaire active dans les paramètres.</p>
           </div>
         ) : classes.length === 0 ? (
-          <div className="text-center py-16 border-2 border-dashed rounded-2xl">
-            <div className="p-4 rounded-full bg-success/10 w-fit mx-auto mb-4">
-              <Users className="text-success" size={48} />
+          <div className="apple-card p-20 text-center space-y-6">
+            <div className="w-20 h-20 bg-soft-purple mx-auto rounded-3xl flex items-center justify-center text-primary">
+              <Users size={40} />
             </div>
-            <h2 className="font-display text-h2 mb-2">Aucune classe</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Créez votre première classe pour commencer à gérer vos élèves et unités pédagogiques.
-            </p>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus size={18} />
-              Créer une classe
+            <div>
+              <h3 className="text-2xl font-black italic">Bienvenue dans votre espace !</h3>
+              <p className="text-muted-foreground mt-2">Commencez par créer votre première classe (ex: 3ème A, Terminale S...)</p>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-12 px-8 font-bold">
+              <Plus size={18} className="mr-2" /> Créer une classe
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="dashboard-grid flex-1">
             {classes.map((classRoom, index) => (
               <div 
                 key={classRoom.id} 
                 className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <ClassCard classRoom={classRoom} />
               </div>

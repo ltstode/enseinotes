@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import UnitCard from '@/components/units/UnitCard';
 import CreateUnitDialog from '@/components/units/CreateUnitDialog';
 import { Button } from '@/components/ui/button';
-import { Plus, BookOpen, AlertCircle } from 'lucide-react';
+import { Plus, BookOpen, AlertCircle, Sparkles } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 
 const UnitsPage: React.FC = () => {
@@ -14,11 +14,7 @@ const UnitsPage: React.FC = () => {
 
   const activeYear = schoolYears.find(y => y.id === activeYearId);
   const classes = activeYearId ? getClassesByYear(activeYearId) : [];
-  
-  // Filter units by active year
   const filteredUnits = pedagogicalUnits.filter(u => u.schoolYearId === activeYearId);
-  
-  // Check if there's a preselected class from URL
   const preselectedClassId = searchParams.get('class') || undefined;
 
   useEffect(() => {
@@ -29,70 +25,66 @@ const UnitsPage: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-8">
+      <div className="no-scroll-container gap-8 py-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-h1 text-foreground">
-              Unités pédagogiques
-            </h1>
-            <p className="text-muted-foreground mt-2">
+        <div className="flex items-center justify-between px-2">
+          <div className="space-y-1">
+            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+              Unités <span className="text-primary">Pédagogiques</span>
+              <BookOpen className="text-soft-blue-foreground" size={32} />
+            </h2>
+            <p className="text-muted-foreground font-medium">
               {activeYear 
-                ? `Année scolaire ${activeYear.name}`
-                : 'Sélectionnez une année scolaire'
+                ? `Programmes pour l'année scolaire ${activeYear.name}`
+                : 'Sélectionnez une année dans les paramètres pour commencer.'
               }
             </p>
           </div>
           {activeYearId && classes.length > 0 && (
-            <Button onClick={() => setShowCreateDialog(true)}>
+            <Button onClick={() => setShowCreateDialog(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
               <Plus size={18} />
-              Nouvelle unité
+              Nouvelle Unité
             </Button>
           )}
         </div>
 
         {/* Content */}
         {!activeYearId ? (
-          <div className="text-center py-16 border-2 border-dashed rounded-2xl">
-            <div className="p-4 rounded-full bg-warning/10 w-fit mx-auto mb-4">
-              <AlertCircle className="text-warning" size={48} />
+          <div className="apple-card p-20 text-center space-y-4">
+            <div className="w-16 h-16 bg-soft-orange mx-auto rounded-3xl flex items-center justify-center text-soft-orange-foreground">
+              <AlertCircle size={32} />
             </div>
-            <h2 className="font-display text-h2 mb-2">Aucune année active</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Veuillez d'abord créer et activer une année scolaire.
-            </p>
+            <h3 className="text-xl font-bold">Année Scolaire Requise</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto">Veuillez d'abord créer et activer une année scolaire pour gérer vos unités.</p>
           </div>
         ) : classes.length === 0 ? (
-          <div className="text-center py-16 border-2 border-dashed rounded-2xl">
-            <div className="p-4 rounded-full bg-warning/10 w-fit mx-auto mb-4">
-              <AlertCircle className="text-warning" size={48} />
+          <div className="apple-card p-20 text-center space-y-4">
+            <div className="w-16 h-16 bg-soft-purple mx-auto rounded-3xl flex items-center justify-center text-soft-purple-foreground">
+              <Sparkles size={32} />
             </div>
-            <h2 className="font-display text-h2 mb-2">Aucune classe disponible</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Créez d'abord au moins une classe avant de pouvoir créer des unités pédagogiques.
-            </p>
+            <h3 className="text-xl font-bold">Classes Manquantes</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto">Créez d'abord au moins une classe pour y associer des unités pédagogiques.</p>
           </div>
         ) : filteredUnits.length === 0 ? (
-          <div className="text-center py-16 border-2 border-dashed rounded-2xl">
-            <div className="p-4 rounded-full bg-primary/10 w-fit mx-auto mb-4">
-              <BookOpen className="text-primary" size={48} />
+          <div className="apple-card p-20 text-center space-y-6">
+            <div className="w-20 h-20 bg-soft-blue mx-auto rounded-3xl flex items-center justify-center text-primary">
+              <BookOpen size={40} />
             </div>
-            <h2 className="font-display text-h2 mb-2">Aucune unité pédagogique</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Créez votre première unité pédagogique pour commencer à saisir les notes.
-            </p>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus size={18} />
-              Créer une unité
+            <div>
+              <h3 className="text-2xl font-black italic">Lancez votre programme !</h3>
+              <p className="text-muted-foreground mt-2">Créez votre première unité pédagogique (Français, Mathématiques...) pour commencer à suivre vos élèves.</p>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-12 px-8 font-bold">
+              <Plus size={18} className="mr-2" /> Créer une unité
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="dashboard-grid flex-1">
             {filteredUnits.map((unit, index) => (
               <div 
                 key={unit.id} 
                 className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <UnitCard unit={unit} />
               </div>

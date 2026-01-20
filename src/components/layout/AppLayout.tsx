@@ -11,7 +11,10 @@ import {
   PanelLeft,
   UserCog,
   LogOut,
-  Settings
+  Settings,
+  Bell,
+  Search,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -31,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 
 interface NavItemProps {
   to: string;
@@ -45,15 +49,20 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive, isCollapse
     <Link
       to={to}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-lg text-label transition-all duration-200",
+        "group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 relative",
         isCollapsed && "justify-center px-2",
         isActive
-          ? "bg-primary/10 text-primary font-medium"
-          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          ? "bg-primary text-white shadow-lg shadow-primary/25"
+          : "text-muted-foreground hover:bg-white hover:text-foreground hover:shadow-sm"
       )}
     >
-      {icon}
-      {!isCollapsed && <span>{label}</span>}
+      <div className={cn("transition-transform duration-300 group-hover:scale-110", isActive && "text-white")}>
+        {React.cloneElement(icon as React.ReactElement, { size: 20 })}
+      </div>
+      {!isCollapsed && <span className="text-sm font-medium">{label}</span>}
+      {isActive && !isCollapsed && (
+        <ChevronRight size={14} className="ml-auto opacity-50" />
+      )}
     </Link>
   );
 
@@ -63,7 +72,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive, isCollapse
         <TooltipTrigger asChild>
           {content}
         </TooltipTrigger>
-        <TooltipContent side="right">
+        <TooltipContent side="right" className="bg-foreground text-background border-none">
           {label}
         </TooltipContent>
       </Tooltip>
@@ -96,80 +105,43 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   const navItems = [
-    { to: '/', icon: <LayoutDashboard size={20} />, label: 'Tableau de bord' },
-    { to: '/years', icon: <Calendar size={20} />, label: 'Années scolaires' },
-    { to: '/classes', icon: <Users size={20} />, label: 'Classes' },
-    { to: '/students', icon: <UserCog size={20} />, label: 'Élèves' },
-    { to: '/units', icon: <BookOpen size={20} />, label: 'Unités pédagogiques' },
-    { to: '/grades', icon: <ClipboardList size={20} />, label: 'Notes' },
-    { to: '/settings', icon: <Settings size={20} />, label: 'Paramètres' },
+    { to: '/', icon: <LayoutDashboard />, label: 'Tableau de bord' },
+    { to: '/years', icon: <Calendar />, label: 'Années scolaires' },
+    { to: '/classes', icon: <Users />, label: 'Classes' },
+    { to: '/students', icon: <UserCog />, label: 'Élèves' },
+    { to: '/units', icon: <BookOpen />, label: 'Unités pédagogiques' },
+    { to: '/grades', icon: <ClipboardList />, label: 'Notes' },
+    { to: '/settings', icon: <Settings />, label: 'Paramètres' },
   ];
 
   return (
     <TooltipProvider>
-      <div className="h-screen flex bg-background overflow-hidden">
+      <div className="h-screen flex bg-[#F8F9FD] overflow-hidden font-body">
         {/* Sidebar */}
         <aside className={cn(
-          "h-screen border-r bg-card flex flex-col transition-all duration-300 flex-shrink-0",
-          isCollapsed ? "w-16" : "w-64"
+          "h-screen glass-sidebar flex flex-col transition-all duration-500 ease-in-out z-30",
+          isCollapsed ? "w-[80px]" : "w-[260px]"
         )}>
-          {/* Logo */}
-          <div className="p-4 border-b">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-soft flex-shrink-0">
-                <GraduationCap className="text-primary-foreground" size={22} />
+          {/* Logo Section */}
+          <div className="p-6">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
+                <GraduationCap className="text-white" size={24} />
               </div>
               {!isCollapsed && (
-                <div>
-                  <h1 className="font-display text-xl font-bold text-foreground">EnseiNotes</h1>
-                  <p className="text-small text-muted-foreground">Gestion scolaire</p>
+                <div className="animate-fade-in">
+                  <h1 className="font-display text-xl font-black tracking-tight text-foreground leading-none">EnseiNotes</h1>
+                  <p className="text-[10px] uppercase tracking-widest text-primary font-bold mt-1">Smart Management</p>
                 </div>
               )}
             </Link>
           </div>
 
-          {/* Toggle Button */}
-          <div className={cn("p-2 border-b", isCollapsed && "flex justify-center")}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className={cn("w-full justify-start gap-2", isCollapsed && "w-auto justify-center px-2")}
-            >
-              {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-              {!isCollapsed && <span className="text-small">Réduire</span>}
-            </Button>
-          </div>
-
-          {/* Active Year Badge */}
-          {activeYear && !isCollapsed && (
-            <div className="px-4 py-3 border-b">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
-                <p className="text-xs text-muted-foreground">Année active</p>
-                <p className="font-display font-semibold text-foreground text-sm">{activeYear.name}</p>
-                <p className="text-xs text-primary capitalize">{activeYear.mode === 'semester' ? 'Semestres' : 'Trimestres'}</p>
-              </div>
-            </div>
-          )}
-          
-          {activeYear && isCollapsed && (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <div className="px-2 py-3 border-b flex justify-center">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <Calendar size={18} className="text-primary" />
-                  </div>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p className="font-semibold">{activeYear.name}</p>
-                <p className="text-xs">{activeYear.mode === 'semester' ? 'Semestres' : 'Trimestres'}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
           {/* Navigation */}
-          <nav className="flex-1 p-2 space-y-1 overflow-y-auto scrollbar-thin">
+          <nav className="flex-1 px-4 py-2 space-y-2 overflow-y-auto compact-scrollbar">
+            <div className={cn("px-3 mb-4 transition-opacity duration-300", isCollapsed ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Menu Principal</p>
+            </div>
             {navItems.map(item => (
               <NavItem
                 key={item.to}
@@ -180,51 +152,97 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             ))}
           </nav>
 
-          {/* User Menu */}
-          <div className={cn("p-3 border-t", isCollapsed && "flex justify-center")}>
+          {/* User & Toggle Section */}
+          <div className="p-4 border-t border-white/20">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className={cn("w-full h-10 rounded-xl hover:bg-white/50 transition-colors mb-4", isCollapsed && "px-0 justify-center")}
+            >
+              {isCollapsed ? <PanelLeft size={18} /> : (
+                <div className="flex items-center gap-2">
+                  <PanelLeftClose size={18} />
+                  <span className="text-xs font-semibold">Réduire le menu</span>
+                </div>
+              )}
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className={cn(
-                    "w-full justify-start gap-3 h-auto py-2",
-                    isCollapsed && "w-auto justify-center px-2"
-                  )}
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                <button className={cn(
+                  "w-full flex items-center gap-3 p-2 rounded-2xl bg-white/50 border border-white/20 hover:bg-white transition-all duration-300 shadow-sm",
+                  isCollapsed && "justify-center p-1.5"
+                )}>
+                  <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-xs font-bold">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  {!isCollapsed && teacher && (
-                    <div className="text-left">
-                      <p className="text-sm font-medium truncate">{teacher.firstName} {teacher.lastName}</p>
-                      <p className="text-xs text-muted-foreground truncate">{teacher.email}</p>
+                  {!isCollapsed && (
+                    <div className="text-left flex-1 min-w-0">
+                      <p className="text-xs font-bold text-foreground truncate">{teacher?.firstName} {teacher?.lastName}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{teacher?.email}</p>
                     </div>
                   )}
-                </Button>
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={isCollapsed ? "center" : "start"} side="top" className="w-56">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{teacher?.firstName} {teacher?.lastName}</p>
-                  <p className="text-xs text-muted-foreground">{teacher?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                  <LogOut size={16} className="mr-2" />
-                  Se déconnecter
+              <DropdownMenuContent align={isCollapsed ? "center" : "start"} side="top" className="w-[220px] rounded-2xl border-none shadow-2xl p-2">
+                <DropdownMenuItem className="rounded-xl p-3 focus:bg-primary/5">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold">{teacher?.firstName} {teacher?.lastName}</span>
+                    <span className="text-[10px] text-muted-foreground">Profil Enseignant</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-2 bg-muted/50" />
+                <DropdownMenuItem onClick={handleLogout} className="rounded-xl p-3 text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer">
+                  <LogOut size={16} className="mr-3" />
+                  <span className="text-xs font-bold">Se déconnecter</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 h-screen overflow-auto">
-          <div className="p-8 animate-fade-in">
-            {children}
-          </div>
-        </main>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Bar */}
+          <header className="h-[70px] flex items-center justify-between px-8 bg-white/30 backdrop-blur-md border-b border-white/20 z-20">
+            <div className="flex items-center gap-6 flex-1 max-w-2xl">
+              <div className="relative flex-1 group">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input 
+                  placeholder="Recherche rapide..." 
+                  className="w-full h-10 pl-11 rounded-xl bg-white/50 border-none shadow-inner group-focus-within:bg-white group-focus-within:shadow-md transition-all text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {activeYear && (
+                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-white/20 shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></div>
+                  <span className="text-xs font-bold text-foreground">{activeYear.name}</span>
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase opacity-50 px-2 py-0.5 rounded-md bg-secondary">
+                    {activeYear.mode === 'semester' ? 'Semestres' : 'Trimestres'}
+                  </span>
+                </div>
+              )}
+              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl relative hover:bg-white">
+                <Bell size={20} className="text-muted-foreground" />
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-destructive border-2 border-white"></span>
+              </Button>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-hidden">
+            <div className="h-full scrollable-content p-8">
+              <div className="max-w-[1400px] mx-auto animate-page-transition">
+                {children}
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </TooltipProvider>
   );

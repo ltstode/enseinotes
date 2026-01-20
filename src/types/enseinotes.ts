@@ -60,6 +60,7 @@ export interface Period {
   // For trimesters/custom: teacher defines
   expectedDevoirs: number;
   expectedInterros: number;
+  status: 'active' | 'locked' | 'completed'; // active = can add evaluations, locked = future period, completed = past period
   createdAt: Date;
 }
 

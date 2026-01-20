@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -34,21 +36,25 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Plus, 
+  Search, 
+  UserPlus, 
+  Download, 
   Upload, 
-  Archive, 
-  ArchiveRestore, 
-  Trash2, 
   Pencil, 
-  Users,
-  Check,
+  Trash2, 
+  Users, 
+  Check, 
   X,
-  Search
+  GraduationCap,
+  Plus,
+  Archive,
+  ArchiveRestore
 } from 'lucide-react';
 import { Student } from '@/types/enseinotes';
 import { toast } from 'sonner';
 
 const StudentsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     classRooms, 
     activeYearId, 
@@ -218,311 +224,293 @@ const StudentsPage: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-heading font-display font-bold text-foreground">
-              Gestion des élèves
-            </h1>
-            <p className="text-muted-foreground">
-              Ajoutez, modifiez, archivez ou supprimez des élèves
-            </p>
+      <div className="no-scroll-container gap-6 py-4">
+        {/* Header */}
+        <div className="flex items-center justify-between px-2">
+          <div className="space-y-1">
+            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+              Gestion <span className="text-primary">Élèves</span>
+              <Users className="text-soft-purple-foreground" size={32} />
+            </h2>
+            <p className="text-muted-foreground font-medium">Administrez vos listes d'élèves par classe.</p>
+          </div>
+          <div className="flex gap-3">
+             {selectedClass && (
+               <>
+                 <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-bold hover:bg-white transition-all shadow-sm">
+                   <Upload size={18} />
+                   Import massif
+                 </Button>
+                 <Button onClick={() => setIsAddDialogOpen(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+                   <Plus size={18} />
+                   Ajouter un élève
+                 </Button>
+               </>
+             )}
           </div>
         </div>
 
-        {/* Class Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users size={20} className="text-primary" />
-              Sélectionner une classe
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger className="w-full max-w-sm">
-                <SelectValue placeholder="Choisir une classe..." />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name} ({c.students.length} élèves)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+        {/* Class Selection - Horizontal Pills */}
+        <div className="glass-card p-4 rounded-3xl flex items-center gap-4 overflow-x-auto compact-scrollbar shrink-0">
+          <div className="flex items-center gap-2 px-3 border-r border-white/20 shrink-0">
+            <Users size={16} className="text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Classes</span>
+          </div>
+          <div className="flex gap-2">
+            {classes.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedClassId(c.id)}
+                className={cn(
+                  "px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 shrink-0",
+                  selectedClassId === c.id 
+                    ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                    : "bg-white/50 text-muted-foreground hover:bg-white hover:text-foreground shadow-sm"
+                )}
+              >
+                {c.name}
+                <span className="ml-2 opacity-50 font-medium">({c.students.length})</span>
+              </button>
+            ))}
+            {classes.length === 0 && (
+              <p className="text-xs text-muted-foreground italic px-4">Aucune classe disponible. Créez-en une d'abord.</p>
+            )}
+          </div>
+        </div>
 
-        {selectedClass && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <CardTitle>
-                  Élèves - {selectedClass.name}
-                </CardTitle>
-                
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Add Student */}
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="gap-2">
-                        <Plus size={16} />
-                        Ajouter
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Ajouter un élève</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Nom *</Label>
-                          <Input
-                            id="lastName"
-                            placeholder="DUPONT"
-                            value={newLastName}
-                            onChange={e => setNewLastName(e.target.value)}
-                            className="uppercase"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">Prénoms</Label>
-                          <Input
-                            id="firstName"
-                            placeholder="Jean Pierre"
-                            value={newFirstName}
-                            onChange={e => setNewFirstName(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleAddStudent()}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                          Annuler
-                        </Button>
-                        <Button onClick={handleAddStudent} disabled={!newLastName.trim()}>
-                          Ajouter
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Import Students */}
-                  <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" className="gap-2">
-                        <Upload size={16} />
-                        Importer
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Importer des élèves</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <p className="text-sm text-muted-foreground">
-                          Collez la liste des élèves (un nom par ligne, format: NOM Prénom(s))
-                        </p>
-                        <Textarea
-                          placeholder="DUPONT Jean&#10;MARTIN Marie Claire&#10;..."
-                          value={importText}
-                          onChange={e => setImportText(e.target.value)}
-                          rows={10}
-                        />
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
-                          Annuler
-                        </Button>
-                        <Button onClick={handleImportStudents} disabled={!importText.trim()}>
-                          Importer
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Bulk Archive */}
-                  {selectedStudents.size > 0 && (
-                    <Button 
-                      size="sm" 
-                      variant="secondary" 
-                      className="gap-2"
-                      onClick={handleBulkArchive}
-                    >
-                      <Archive size={16} />
-                      Archiver ({selectedStudents.size})
-                    </Button>
-                  )}
-                </div>
+        {selectedClass ? (
+          <div className="flex-1 min-h-0 flex flex-col gap-6">
+            {/* Filters Bar */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-md group">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input
+                  placeholder="Rechercher un élève par nom ou prénom..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-11 h-12 rounded-2xl bg-white border-none shadow-sm group-focus-within:shadow-md transition-all font-medium"
+                />
               </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              {/* Filters */}
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="relative flex-1 max-w-sm">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher un élève..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
+              
+              <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-white/50 border border-white/20 shadow-sm">
+                <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer select-none">
                   <Checkbox
                     checked={showArchived}
                     onCheckedChange={(checked) => setShowArchived(checked as boolean)}
+                    className="rounded-md border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
-                  Afficher les archivés
+                  <span>Afficher les archivés</span>
                 </label>
+                
+                {selectedStudents.size > 0 && (
+                  <div className="h-6 w-px bg-muted-foreground/20"></div>
+                )}
+                
+                {selectedStudents.size > 0 && (
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="h-8 gap-2 text-soft-pink-foreground hover:bg-soft-pink hover:text-soft-pink-foreground font-bold rounded-xl px-4"
+                    onClick={handleBulkArchive}
+                  >
+                    <Archive size={14} />
+                    Archiver ({selectedStudents.size})
+                  </Button>
+                )}
               </div>
+            </div>
 
-              {/* Students List */}
-              {filteredStudents.length > 0 ? (
-                <div className="border rounded-lg overflow-hidden">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 border-b">
-                    <Checkbox
-                      checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                    <span className="font-medium text-sm flex-1">Nom</span>
-                    <span className="text-sm text-muted-foreground w-24 text-center">Statut</span>
-                    <span className="text-sm text-muted-foreground w-32 text-center">Actions</span>
-                  </div>
-                  
-                  {/* Rows */}
-                  {filteredStudents.map(student => (
-                    <div 
-                      key={student.id}
-                      className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 hover:bg-muted/30 transition-colors"
-                    >
-                      <Checkbox
-                        checked={selectedStudents.has(student.id)}
-                        onCheckedChange={() => {
-                          toggleStudentSelection(student.id);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      
-                      {editingStudent?.id === student.id ? (
-                        <div className="flex items-center gap-2 flex-1">
-                          <Input
-                            value={editLastName}
-                            onChange={e => setEditLastName(e.target.value)}
-                            className="h-8 w-32 uppercase"
-                            placeholder="Nom"
-                            autoFocus
+            {/* Students Table - Clean Apple Style */}
+            <div className="apple-card flex-1 min-h-0 flex flex-col overflow-hidden border border-white/40">
+              <div className="flex-1 overflow-y-auto compact-scrollbar">
+                {filteredStudents.length > 0 ? (
+                  <table className="w-full border-separate border-spacing-0">
+                    <thead className="sticky top-0 bg-white/95 backdrop-blur-md z-20">
+                      <tr className="border-b border-muted/50">
+                        <th className="px-6 py-4 text-left w-12">
+                          <Checkbox
+                            checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                            className="rounded-md"
                           />
-                          <Input
-                            value={editFirstName}
-                            onChange={e => setEditFirstName(e.target.value)}
-                            className="h-8 flex-1"
-                            placeholder="Prénoms"
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') handleSaveEdit();
-                              if (e.key === 'Escape') setEditingStudent(null);
-                            }}
-                          />
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSaveEdit}>
-                            <Check size={16} className="text-success" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingStudent(null)}>
-                            <X size={16} className="text-destructive" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="flex-1 text-sm">{student.lastName} {student.firstName}</span>
-                      )}
-                      
-                      <div className="w-24 flex justify-center">
-                        <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
-                          {student.status === 'active' ? 'Actif' : 'Archivé'}
-                        </Badge>
-                      </div>
-                      
-                      <div className="w-32 flex justify-center gap-1">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8"
-                          onClick={() => handleEditStudent(student)}
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-left">Nom de l'élève</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center w-32">Statut</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center w-32">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-muted/30">
+                      {filteredStudents.map(student => (
+                        <tr 
+                          key={student.id}
+                          className="group hover:bg-primary/5 transition-colors duration-200"
                         >
-                          <Pencil size={14} className="text-primary" />
-                        </Button>
-                        
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8"
-                          onClick={() => handleArchiveStudent(student)}
-                        >
-                          {student.status === 'active' ? (
-                            <Archive size={14} className="text-warning" />
-                          ) : (
-                            <ArchiveRestore size={14} className="text-success" />
-                          )}
-                        </Button>
-                        
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8"
-                          onClick={() => setStudentToDelete(student)}
-                        >
-                          <Trash2 size={14} className="text-destructive" />
-                        </Button>
-                      </div>
+                          <td className="px-6 py-4">
+                            <Checkbox
+                              checked={selectedStudents.has(student.id)}
+                              onCheckedChange={() => toggleStudentSelection(student.id)}
+                              className="rounded-md"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            {editingStudent?.id === student.id ? (
+                              <div className="flex items-center gap-2 animate-fade-in">
+                                <Input
+                                  value={editLastName}
+                                  onChange={e => setEditLastName(e.target.value)}
+                                  className="h-9 w-40 uppercase font-black text-xs rounded-xl shadow-inner border-primary/20"
+                                  placeholder="NOM"
+                                  autoFocus
+                                />
+                                <Input
+                                  value={editFirstName}
+                                  onChange={e => setEditFirstName(e.target.value)}
+                                  className="h-9 flex-1 text-xs font-bold rounded-xl shadow-inner border-primary/20"
+                                  placeholder="Prénoms"
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') handleSaveEdit();
+                                    if (e.key === 'Escape') setEditingStudent(null);
+                                  }}
+                                />
+                                <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-soft-green" onClick={handleSaveEdit}>
+                                  <Check size={16} className="text-soft-green-foreground" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-soft-pink" onClick={() => setEditingStudent(null)}>
+                                  <X size={16} className="text-soft-pink-foreground" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                <span className="font-black text-foreground uppercase text-sm">{student.lastName}</span>
+                                <span className="font-medium text-muted-foreground text-sm">{student.firstName}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className={cn(
+                              "inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase",
+                              student.status === 'active' ? "bg-soft-green text-soft-green-foreground" : "bg-muted/10 text-muted-foreground"
+                            )}>
+                              {student.status === 'active' ? 'Actif' : 'Archivé'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-9 w-9 rounded-xl hover:bg-primary/10 text-primary"
+                                onClick={() => handleEditStudent(student)}
+                              >
+                                <Pencil size={16} />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className={cn(
+                                  "h-9 w-9 rounded-xl hover:bg-soft-orange/50 transition-colors",
+                                  student.status === 'active' ? "text-soft-orange-foreground" : "text-soft-blue-foreground hover:bg-soft-blue/50"
+                                )}
+                                onClick={() => handleArchiveStudent(student)}
+                              >
+                                {student.status === 'active' ? <Archive size={16} /> : <ArchiveRestore size={16} />}
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-9 w-9 rounded-xl hover:bg-soft-pink text-soft-pink-foreground"
+                                onClick={() => setStudentToDelete(student)}
+                              >
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="h-64 flex flex-col items-center justify-center text-center p-8 space-y-4">
+                    <div className="w-16 h-16 bg-muted/10 rounded-full flex items-center justify-center">
+                      <Search size={24} className="text-muted-foreground opacity-30" />
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  {searchTerm ? 'Aucun élève trouvé' : 'Aucun élève dans cette classe'}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {!selectedClass && classes.length > 0 && (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Sélectionnez une classe pour gérer ses élèves
-            </CardContent>
-          </Card>
-        )}
-
-        {classes.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Aucune classe créée. Créez d'abord une classe pour ajouter des élèves.
-            </CardContent>
-          </Card>
+                    <p className="text-sm font-medium text-muted-foreground italic">
+                      {searchTerm ? 'Aucun résultat ne correspond à votre recherche.' : 'Cette classe ne contient aucun élève pour le moment.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center animate-fade-in text-center p-12">
+             <div className="w-24 h-24 bg-soft-purple-foreground/5 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-inner">
+               <Users size={48} className="text-soft-purple-foreground opacity-50" />
+             </div>
+             <h3 className="text-2xl font-black mb-2 italic">Où sont les élèves ?</h3>
+             <p className="text-muted-foreground max-w-sm mb-8 font-medium">Sélectionnez une classe dans la barre ci-dessus pour gérer vos listes d'appel et les notes des élèves.</p>
+             <div className="flex gap-4">
+                <Button variant="outline" onClick={() => navigate('/classes?new=true')} className="rounded-2xl h-12 px-6 font-bold border-dashed hover:bg-white transition-all">
+                  Créer une nouvelle classe
+                </Button>
+             </div>
+          </div>
         )}
       </div>
 
+      {/* Dialogs - Consistent Styling */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+          <div className="h-1 w-full bg-primary"></div>
+          <DialogHeader className="p-8 pb-4">
+            <DialogTitle className="text-2xl font-black items-center flex gap-3">
+              <Plus className="text-primary" /> Nouvel Élève
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-8 py-4 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Nom de famille</Label>
+              <Input
+                placeholder="Ex: DUPONT"
+                value={newLastName}
+                onChange={e => setNewLastName(e.target.value)}
+                className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-lg shadow-inner focus:bg-white transition-all uppercase"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Prénoms</Label>
+              <Input
+                placeholder="Ex: Jean Pierre"
+                value={newFirstName}
+                onChange={e => setNewFirstName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddStudent()}
+                className="h-14 rounded-2xl bg-secondary/30 border-none font-bold shadow-inner focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+          <DialogFooter className="p-8 pt-4 gap-3 bg-secondary/10">
+            <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="rounded-xl font-bold">Annuler</Button>
+            <Button onClick={handleAddStudent} disabled={!newLastName.trim()} className="rounded-xl bg-primary px-10 font-bold shadow-lg shadow-primary/20">Ajouter</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!studentToDelete} onOpenChange={() => setStudentToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer définitivement ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. L'élève{' '}
-              <strong>{studentToDelete?.lastName} {studentToDelete?.firstName}</strong>{' '}
-              sera supprimé définitivement ainsi que toutes ses notes.
+            <AlertDialogTitle className="text-2xl font-black text-soft-pink-foreground">Supprimer définitivement ?</AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-muted-foreground py-2">
+              L'élève <b>{studentToDelete?.lastName} {studentToDelete?.firstName}</b> ainsi que toutes ses notes seront effacés de manière irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl border-none bg-secondary hover:bg-secondary/70">Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteStudent}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-xl bg-soft-pink-foreground text-white hover:bg-soft-pink-foreground/90 shadow-lg shadow-soft-pink-foreground/20 font-bold px-8"
             >
-              Supprimer
+              Confirmer la suppression
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

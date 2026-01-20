@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -20,7 +17,19 @@ import {
 } from '@/components/ui/select';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Users, Settings2, Calendar, GraduationCap } from 'lucide-react';
+import { 
+  BookOpen, 
+  School, 
+  Settings2, 
+  Calculator, 
+  CalendarDays, 
+  Sparkles,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  GraduationCap
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CreateUnitDialogProps {
   open: boolean;
@@ -30,413 +39,263 @@ interface CreateUnitDialogProps {
 
 const CreateUnitDialog: React.FC<CreateUnitDialogProps> = ({ 
   open, 
-  onOpenChange, 
+  onOpenChange,
   preselectedClassId 
 }) => {
+  const [step, setStep] = useState(0);
   const [name, setName] = useState('');
-  const [selectedClassId, setSelectedClassId] = useState(preselectedClassId || '');
-  const [periodSystem, setPeriodSystem] = useState<'semester' | 'trimester' | 'none'>('semester');
-  const [coefficientEnabled, setCoefficientEnabled] = useState(true);
-  const [coefficient, setCoefficient] = useState('1');
-  const [minInterros, setMinInterros] = useState('0');
-  const [minDevoirs, setMinDevoirs] = useState('0');
+  const [classRoomId, setClassRoomId] = useState('');
+  const [periodSystem, setPeriodSystem] = useState<'semester' | 'trimester'>('semester');
   const [interroWeight, setInterroWeight] = useState('1');
   const [devoirWeight, setDevoirWeight] = useState('2');
-  const [displayMode, setDisplayMode] = useState<'numeric' | 'letter' | 'percentage'>('numeric');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [coefficient, setCoefficient] = useState('1');
   
-  const { addPedagogicalUnit, activeYearId, schoolYears, getClassesByYear, getStudentsByClass } = useApp();
+  const { addPedagogicalUnit, getClassesByYear, activeYearId } = useApp();
   const { toast } = useToast();
 
-  const activeYear = schoolYears.find(y => y.id === activeYearId);
   const classes = activeYearId ? getClassesByYear(activeYearId) : [];
-  const selectedClass = classes.find(c => c.id === selectedClassId);
-  const students = selectedClassId ? getStudentsByClass(selectedClassId) : [];
 
-  // Generate formula based on weights
-  const formula = `(MoyInterros * ${interroWeight} + MoyDevoirs * ${devoirWeight}) / ${parseInt(interroWeight) + parseInt(devoirWeight)}`;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!activeYearId) {
-      toast({
-        title: 'Erreur',
-        description: "Veuillez d'abord sélectionner une année scolaire active",
-        variant: 'destructive',
-      });
-      return;
+  useEffect(() => {
+    if (open) {
+      setStep(0);
+      setName('');
+      const initialClassId = preselectedClassId || (classes[0]?.id || '');
+      setClassRoomId(initialClassId);
+      setPeriodSystem('semester');
+      setInterroWeight('1');
+      setDevoirWeight('2');
+      setCoefficient('1');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, preselectedClassId]);
 
+  const handleSubmit = () => {
     if (!name.trim()) {
-      toast({
-        title: 'Erreur',
-        description: "Veuillez saisir un nom pour l'unité pédagogique",
-        variant: 'destructive',
-      });
+      toast({ title: 'Erreur', description: "Veuillez saisir le nom de l'unité", variant: 'destructive' });
       return;
     }
-
-    if (!selectedClassId) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez sélectionner une classe',
-        variant: 'destructive',
-      });
+    if (!classRoomId) {
+      toast({ title: 'Erreur', description: 'Veuillez sélectionner une classe', variant: 'destructive' });
       return;
     }
 
     addPedagogicalUnit({
       name: name.trim(),
-      classRoomId: selectedClassId,
-      schoolYearId: activeYearId,
+      classRoomId,
+      schoolYearId: activeYearId!,
       periodSystem,
       rules: {
         coefficient: parseFloat(coefficient) || 1,
-        coefficientEnabled,
-        expectedInterros: parseInt(minInterros) || 0,
-        expectedDevoirs: parseInt(minDevoirs) || 0,
-        formula,
-        displayMode,
+        coefficientEnabled: true,
+        expectedInterros: 0,
+        expectedDevoirs: periodSystem === 'semester' ? 2 : 3,
+        formula: 'weighted',
+        displayMode: 'numeric',
         interroWeight: parseFloat(interroWeight) || 1,
         devoirWeight: parseFloat(devoirWeight) || 2,
       },
     });
 
     toast({
-      title: 'Unité créée',
-      description: `L'unité ${name} a été créée pour la classe ${selectedClass?.name}`,
+      title: 'Unité créée ✨',
+      description: `L'unité "${name}" a été ajoutée avec succès.`,
     });
 
-    resetForm();
     onOpenChange(false);
   };
 
-  const resetForm = () => {
-    setName('');
-    setSelectedClassId(preselectedClassId || '');
-    setPeriodSystem('semester');
-    setCoefficientEnabled(true);
-    setCoefficient('1');
-    setMinInterros('0');
-    setMinDevoirs('0');
-    setInterroWeight('1');
-    setDevoirWeight('2');
-    setDisplayMode('numeric');
-    setShowAdvanced(false);
-  };
-
-  if (!activeYear) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aucune année active</DialogTitle>
-            <DialogDescription>
-              Veuillez d'abord créer et activer une année scolaire.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => onOpenChange(false)}>Fermer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (classes.length === 0) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aucune classe disponible</DialogTitle>
-            <DialogDescription>
-              Veuillez d'abord créer au moins une classe dans l'année {activeYear.name}.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => onOpenChange(false)}>Fermer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const steps = [
+    { title: "Matière & Classe", icon: <BookOpen size={18} /> },
+    { title: "Périodes & Coefficient", icon: <CalendarDays size={18} /> },
+    { title: "Pondération", icon: <Calculator size={18} /> }
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 rounded-xl bg-primary/10">
-              <BookOpen className="text-primary" size={24} />
-            </div>
-            <div>
-              <DialogTitle className="font-display text-h3">
-                Nouvelle unité pédagogique
-              </DialogTitle>
-              <DialogDescription>
-                Année scolaire : {activeYear.name}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[480px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
+        {/* Progress Bar */}
+        <div className="flex w-full h-1.5 bg-secondary/30">
+          <div 
+            className="h-full bg-primary transition-all duration-500 ease-out" 
+            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
+          />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="unitName">Nom de l'unité</Label>
-            <Input
-              id="unitName"
-              placeholder="Ex: Informatique – Algorithmique"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-12"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Classe concernée</Label>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="Sélectionnez une classe" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name} ({c.students.length} élèves)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="p-8 space-y-8">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+             <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                   {steps[step].icon}
+                </div>
+                <div>
+                   <h3 className="text-xl font-black tracking-tight uppercase text-primary/40 text-[10px] leading-none mb-1">Étape {step + 1}/{steps.length}</h3>
+                   <h2 className="text-lg font-bold tracking-tight text-foreground leading-none">{steps[step].title}</h2>
+                </div>
+             </div>
+             {step > 0 && (
+               <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => setStep(step - 1)}>
+                  <ChevronLeft size={20} />
+               </Button>
+             )}
           </div>
 
-          {selectedClassId && students.length > 0 && (
-            <div className="p-4 rounded-xl bg-success/5 border border-success/20 animate-fade-in">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="text-success" size={18} />
-                <span className="font-medium text-success">
-                  {students.length} élèves préremplis
-                </span>
-              </div>
-              <p className="text-small text-muted-foreground">
-                La liste des élèves de la classe {selectedClass?.name} sera automatiquement utilisée.
-              </p>
-            </div>
-          )}
-
-          {/* Period System Selection - Desktop-first design */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <Calendar size={16} className="text-muted-foreground" />
-              Système de périodes
-            </Label>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setPeriodSystem('semester')}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  periodSystem === 'semester'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                }`}
-              >
-                <BookOpen className={`mb-2 ${periodSystem === 'semester' ? 'text-primary' : 'text-muted-foreground'}`} size={20} />
-                <p className={`font-medium text-sm ${periodSystem === 'semester' ? 'text-primary' : 'text-foreground'}`}>
-                  Semestre
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  2 devoirs/sem. obligatoires
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriodSystem('trimester')}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  periodSystem === 'trimester'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                }`}
-              >
-                <GraduationCap className={`mb-2 ${periodSystem === 'trimester' ? 'text-primary' : 'text-muted-foreground'}`} size={20} />
-                <p className={`font-medium text-sm ${periodSystem === 'trimester' ? 'text-primary' : 'text-foreground'}`}>
-                  Trimestre
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Vous définissez le nombre
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriodSystem('none')}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  periodSystem === 'none'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                }`}
-              >
-                <Settings2 className={`mb-2 ${periodSystem === 'none' ? 'text-primary' : 'text-muted-foreground'}`} size={20} />
-                <p className={`font-medium text-sm ${periodSystem === 'none' ? 'text-primary' : 'text-foreground'}`}>
-                  Personnalisé
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Périodes libres
-                </p>
-              </button>
-            </div>
-            
-            {periodSystem === 'semester' && (
-              <div className="p-3 rounded-lg bg-info/10 border border-info/20 text-sm">
-                <p className="text-info font-medium">Mode semestriel</p>
-                <p className="text-muted-foreground text-xs mt-1">
-                  Chaque semestre comprendra obligatoirement 2 devoirs. Nombre d'interrogations libre.
-                </p>
-              </div>
-            )}
-            
-            {periodSystem === 'trimester' && (
-              <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm">
-                <p className="text-warning font-medium">Mode trimestriel</p>
-                <p className="text-muted-foreground text-xs mt-1">
-                  Vous définirez le nombre d'évaluations par trimestre lors de la création des périodes.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Coefficient settings */}
-          <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="coeffEnabled" className="cursor-pointer">Coefficient activé</Label>
-                <p className="text-small text-muted-foreground">
-                  Appliquer un coefficient global à cette unité
-                </p>
-              </div>
-              <Switch
-                id="coeffEnabled"
-                checked={coefficientEnabled}
-                onCheckedChange={setCoefficientEnabled}
-              />
-            </div>
-            {coefficientEnabled && (
-              <div className="space-y-2 animate-fade-in">
-                <Label htmlFor="coefficient">Valeur du coefficient</Label>
-                <Input
-                  id="coefficient"
-                  type="number"
-                  min="0.5"
-                  max="10"
-                  step="0.5"
-                  value={coefficient}
-                  onChange={(e) => setCoefficient(e.target.value)}
-                  className="h-12 w-32"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Advanced settings toggle */}
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-          >
-            <Settings2 size={18} className="mr-2" />
-            {showAdvanced ? 'Masquer' : 'Afficher'} les paramètres avancés
-          </Button>
-
-          {showAdvanced && (
-            <div className="space-y-6 animate-fade-in">
-              {/* Nombre d'évaluations attendu (indicatif) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="minInterros">Interrogations prévues (global)</Label>
+          {/* Step 1: Identity */}
+          {step === 0 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+               <div className="space-y-3">
+                <Label className="text-sm font-bold ml-1 text-muted-foreground">Nom de la matière</Label>
+                <div className="relative">
                   <Input
-                    id="minInterros"
-                    type="number"
-                    min="0"
-                    value={minInterros}
-                    onChange={(e) => setMinInterros(e.target.value)}
-                    className="h-12"
-                    placeholder="Optionnel"
+                    autoFocus
+                    placeholder="Ex: Français, Mathématiques..."
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="h-14 rounded-2xl bg-secondary/10 border-none shadow-inner font-bold text-lg"
                   />
-                  <p className="text-xs text-muted-foreground">0 = pas de limite</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="minDevoirs">Devoirs prévus (global)</Label>
-                  <Input
-                    id="minDevoirs"
-                    type="number"
-                    min="0"
-                    value={minDevoirs}
-                    onChange={(e) => setMinDevoirs(e.target.value)}
-                    className="h-12"
-                    placeholder="Optionnel"
-                  />
-                  <p className="text-xs text-muted-foreground">0 = pas de limite</p>
+                  <Sparkles size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30" />
                 </div>
               </div>
 
-              {/* Formula weights */}
-              <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border">
-                <Label>Formule de moyenne</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="interroWeight" className="text-small">Poids des interrogations</Label>
-                    <Input
-                      id="interroWeight"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={interroWeight}
-                      onChange={(e) => setInterroWeight(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="devoirWeight" className="text-small">Poids des devoirs</Label>
-                    <Input
-                      id="devoirWeight"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={devoirWeight}
-                      onChange={(e) => setDevoirWeight(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                </div>
-                <div className="p-3 rounded-lg bg-card border font-mono text-small text-muted-foreground">
-                  {formula}
-                </div>
-              </div>
-
-              {/* Display mode */}
-              <div className="space-y-2">
-                <Label>Mode d'affichage</Label>
-                <Select value={displayMode} onValueChange={(v: any) => setDisplayMode(v)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
+              <div className="space-y-3">
+                <Label className="text-sm font-bold ml-1 text-muted-foreground">Classe concernée</Label>
+                <Select value={classRoomId} onValueChange={setClassRoomId}>
+                  <SelectTrigger className="h-14 rounded-2xl bg-secondary/10 border-none shadow-inner font-bold text-primary">
+                    <SelectValue placeholder="Sélectionnez une classe" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="numeric">Note /20</SelectItem>
-                    <SelectItem value="percentage">Pourcentage</SelectItem>
-                    <SelectItem value="letter">Lettre (A-F)</SelectItem>
+                  <SelectContent className="rounded-2xl border-none shadow-xl">
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id} className="rounded-xl my-1">
+                        {cls.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
-            </Button>
-            <Button type="submit">
-              Créer l'unité
-            </Button>
-          </DialogFooter>
-        </form>
+          {/* Step 2: Period & Coef */}
+          {step === 1 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="space-y-3">
+                <Label className="text-sm font-bold ml-1 text-muted-foreground">Système de périodes</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setPeriodSystem('semester')}
+                    className={cn(
+                      "p-5 rounded-3xl border-2 transition-all flex flex-col items-center gap-2",
+                      periodSystem === 'semester' ? "border-primary bg-primary/5" : "border-secondary/50 bg-secondary/10"
+                    )}
+                  >
+                    <CalendarDays className={periodSystem === 'semester' ? "text-primary" : "text-muted-foreground"} size={24} />
+                    <p className={cn("font-bold text-xs", periodSystem === 'semester' ? "text-primary" : "text-muted-foreground")}>Semestres</p>
+                  </button>
+                  <button
+                    onClick={() => setPeriodSystem('trimester')}
+                    className={cn(
+                      "p-5 rounded-3xl border-2 transition-all flex flex-col items-center gap-2",
+                      periodSystem === 'trimester' ? "border-primary bg-primary/5" : "border-secondary/50 bg-secondary/10"
+                    )}
+                  >
+                    <GraduationCap className={periodSystem === 'trimester' ? "text-primary" : "text-muted-foreground"} size={24} />
+                    <p className={cn("font-bold text-xs", periodSystem === 'trimester' ? "text-primary" : "text-muted-foreground")}>Trimestres</p>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-bold ml-1 text-muted-foreground">Coefficient global</Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={coefficient}
+                    onChange={(e) => setCoefficient(e.target.value)}
+                    className="h-14 rounded-2xl bg-secondary/10 border-none shadow-inner font-black text-center text-xl"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white shadow-sm">
+                    <Sparkles size={14} className="text-primary" />
+                  </div>
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground font-medium px-4">
+                  Ce poids sera utilisé pour calculer la moyenne générale de l'élève.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Weights */}
+          {step === 2 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="space-y-4">
+                 <Label className="text-sm font-bold ml-1 text-muted-foreground">Poids des évaluations internes</Label>
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2 text-center">
+                       <Label className="text-[10px] uppercase font-black text-muted-foreground/50">Interro</Label>
+                       <Input
+                         type="number"
+                         value={interroWeight}
+                         onChange={(e) => setInterroWeight(e.target.value)}
+                         className="h-16 rounded-2xl bg-secondary/10 border-none text-center font-black text-xl shadow-inner"
+                       />
+                    </div>
+                    <div className="space-y-2 text-center">
+                       <Label className="text-[10px] uppercase font-black text-muted-foreground/50">Devoir</Label>
+                       <Input
+                         type="number"
+                         value={devoirWeight}
+                         onChange={(e) => setDevoirWeight(e.target.value)}
+                         className="h-16 rounded-2xl bg-secondary/10 border-none text-center font-black text-xl shadow-inner"
+                       />
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 text-center">
+                 <p className="text-xs font-bold text-primary mb-1">Moyenne de la période</p>
+                 <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Les interros comptent pour <b>{interroWeight}</b> et les devoirs pour <b>{devoirWeight}</b>.<br/>
+                    Formule : <i>(Interros × {interroWeight} + Devoirs × {devoirWeight}) / {parseFloat(interroWeight) + parseFloat(devoirWeight)}</i>
+                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Footer Navigation */}
+          <div className="flex gap-3 pt-4">
+            {step < steps.length - 1 ? (
+              <Button 
+                className="w-full h-14 rounded-2xl text-lg font-black bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                onClick={() => setStep(step + 1)}
+              >
+                Continuer
+                <ChevronRight size={20} />
+              </Button>
+            ) : (
+              <Button 
+                className="w-full h-14 rounded-2xl text-lg font-black bg-gradient-to-r from-primary to-info text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                onClick={handleSubmit}
+              >
+                Créer l'unité
+                <CheckCircle2 size={20} />
+              </Button>
+            )}
+          </div>
+          
+          {/* Progress Dots */}
+          <div className="flex justify-center gap-1.5">
+            {steps.map((_, i) => (
+              <div 
+                key={i} 
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  step === i ? "w-6 bg-primary" : "w-1.5 bg-secondary"
+                )} 
+              />
+            ))}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

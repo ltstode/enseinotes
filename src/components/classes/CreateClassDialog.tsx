@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -13,8 +11,19 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, Trash2 } from 'lucide-react';
-import { Student } from '@/types/enseinotes';
+import { 
+  Users, 
+  Plus, 
+  Trash2, 
+  Upload, 
+  UserPlus, 
+  ChevronRight, 
+  ChevronLeft, 
+  CheckCircle2,
+  Sparkles,
+  Search
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CreateClassDialogProps {
   open: boolean;
@@ -28,6 +37,7 @@ interface StudentInput {
 }
 
 const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChange }) => {
+  const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [students, setStudents] = useState<StudentInput[]>([
     { firstName: '', lastName: '', studentId: '' }
@@ -39,6 +49,16 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
   const { toast } = useToast();
 
   const activeYear = schoolYears.find(y => y.id === activeYearId);
+
+  useEffect(() => {
+    if (open) {
+      setStep(0);
+      setName('');
+      setStudents([{ firstName: '', lastName: '', studentId: '' }]);
+      setBulkInput('');
+      setInputMode('individual');
+    }
+  }, [open]);
 
   const addStudentRow = () => {
     setStudents([...students, { firstName: '', lastName: '', studentId: '' }]);
@@ -68,29 +88,20 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!activeYearId) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez d\'abord sélectionner une année scolaire active',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!name.trim()) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez saisir un nom pour la classe',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleSubmit = () => {
+    if (!activeYearId || !name.trim()) return;
 
     const finalStudents = inputMode === 'bulk' ? parseBulkInput() : students;
     const validStudents = finalStudents.filter(s => s.firstName.trim() && s.lastName.trim());
+
+    if (validStudents.length === 0) {
+      toast({
+        title: 'Aucun élève valide',
+        description: 'Veuillez ajouter au moins un élève avec un nom et un prénom.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const now = Date.now().toString(36);
 
@@ -98,8 +109,6 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
       name: name.trim(),
       schoolYearId: activeYearId,
       students: validStudents.map((s, idx) => ({
-        // NOTE: ids were previously saved as empty string and broke grade entry.
-        // We still normalize again in AppContext for safety.
         id: `${now}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
         firstName: s.firstName.trim(),
         lastName: s.lastName.trim(),
@@ -109,161 +118,212 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
     });
 
     toast({
-      title: 'Classe créée',
-      description: `La classe ${name} a été créée avec ${validStudents.length} élèves`,
+      title: 'Classe créée ✨',
+      description: `La classe "${name}" a été créée avec ${validStudents.length} élèves.`,
     });
 
-    resetForm();
     onOpenChange(false);
-  };
-
-  const resetForm = () => {
-    setName('');
-    setStudents([{ firstName: '', lastName: '', studentId: '' }]);
-    setBulkInput('');
-    setInputMode('individual');
   };
 
   if (!activeYear) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aucune année active</DialogTitle>
-            <DialogDescription>
-              Veuillez d'abord créer et activer une année scolaire avant de créer des classes.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => onOpenChange(false)}>Fermer</Button>
-          </DialogFooter>
+        <DialogContent className="sm:max-w-[460px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+          <div className="h-1.5 w-full bg-destructive/50" />
+          <div className="p-8 space-y-6 text-center">
+            <div className="p-4 rounded-3xl bg-destructive/10 text-destructive mx-auto w-fit">
+              <Plus size={40} />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-black tracking-tight">Aucune année active</h2>
+              <p className="text-muted-foreground">Veuillez d'abord créer et activer une année scolaire.</p>
+            </div>
+            <Button className="w-full h-12 rounded-2xl font-bold" onClick={() => onOpenChange(false)}>
+              Fermer
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     );
   }
 
+  const steps = [
+    { title: "Nom de la classe", icon: <Users size={18} /> },
+    { title: "Mode d'importation", icon: <Upload size={18} /> },
+    { title: "Liste des élèves", icon: <UserPlus size={18} /> }
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 rounded-xl bg-success/10">
-              <Users className="text-success" size={24} />
-            </div>
-            <div>
-              <DialogTitle className="font-display text-h3">
-                Nouvelle classe
-              </DialogTitle>
-              <DialogDescription>
-                Année scolaire : {activeYear.name}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
+        <div className="flex w-full h-1.5 bg-secondary/30">
+          <div 
+            className="h-full bg-primary transition-all duration-500 ease-out" 
+            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
+          />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="className">Nom de la classe</Label>
-            <Input
-              id="className"
-              placeholder="Ex: Tle D, 2nde A..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-12"
-            />
+        <div className="p-8 space-y-8">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+             <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-success/10 text-success">
+                   {steps[step].icon}
+                </div>
+                <div>
+                   <h3 className="text-xl font-black tracking-tight uppercase text-success/40 text-[10px] leading-none mb-1">Étape {step + 1}/{steps.length}</h3>
+                   <h2 className="text-lg font-bold tracking-tight text-foreground leading-none">{steps[step].title}</h2>
+                </div>
+             </div>
+             {step > 0 && (
+               <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => setStep(step - 1)}>
+                  <ChevronLeft size={20} />
+               </Button>
+             )}
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Liste des élèves</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={inputMode === 'individual' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setInputMode('individual')}
-                >
-                  Individuel
-                </Button>
-                <Button
-                  type="button"
-                  variant={inputMode === 'bulk' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setInputMode('bulk')}
-                >
-                  En masse
-                </Button>
+          {/* Step 1: Class Name */}
+          {step === 0 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+               <div className="space-y-3">
+                <Label className="text-sm font-bold ml-1 text-muted-foreground">Quel est le nom de la classe ?</Label>
+                <div className="relative">
+                  <Input
+                    autoFocus
+                    placeholder="Ex: Terminale D, 3ème A..."
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="h-16 rounded-2xl bg-secondary/10 border-none shadow-inner font-black text-xl text-center"
+                  />
+                  <Sparkles size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-success/30" />
+                </div>
               </div>
             </div>
+          )}
 
-            {inputMode === 'individual' ? (
-              <div className="space-y-3">
-                {students.map((student, index) => (
-                  <div key={index} className="flex gap-2 items-center animate-fade-in">
-                    <Input
-                      placeholder="Nom"
-                      value={student.lastName}
-                      onChange={(e) => updateStudent(index, 'lastName', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      placeholder="Prénom"
-                      value={student.firstName}
-                      onChange={(e) => updateStudent(index, 'firstName', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      placeholder="ID (optionnel)"
-                      value={student.studentId}
-                      onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
-                      className="w-32"
-                    />
+          {/* Step 2: Import Mode */}
+          {step === 1 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => { setInputMode('individual'); setStep(2); }}
+                  className="p-8 rounded-[2rem] border-2 border-secondary/50 bg-secondary/10 hover:border-success/50 hover:bg-success/5 transition-all text-center space-y-3 group"
+                >
+                  <div className="p-4 rounded-2xl bg-white shadow-sm mx-auto w-fit group-hover:scale-110 transition-transform">
+                    <UserPlus className="text-success" size={28} />
+                  </div>
+                  <p className="font-black text-sm text-foreground">Individuel</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Un par un</p>
+                </button>
+                <button
+                  onClick={() => { setInputMode('bulk'); setStep(2); }}
+                  className="p-8 rounded-[2rem] border-2 border-secondary/50 bg-secondary/10 hover:border-success/50 hover:bg-success/5 transition-all text-center space-y-3 group"
+                >
+                  <div className="p-4 rounded-2xl bg-white shadow-sm mx-auto w-fit group-hover:scale-110 transition-transform">
+                    <Upload className="text-success" size={28} />
+                  </div>
+                  <p className="font-black text-sm text-foreground">En masse</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Copier-Coller</p>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Student Entry */}
+          {step === 2 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+               {inputMode === 'individual' ? (
+                  <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                    {students.map((student, index) => (
+                      <div key={index} className="flex gap-2 items-center p-3 rounded-2xl bg-secondary/10 border border-secondary/20">
+                        <Input
+                          placeholder="Nom"
+                          value={student.lastName}
+                          onChange={(e) => updateStudent(index, 'lastName', e.target.value)}
+                          className="h-10 rounded-xl bg-white border-none shadow-sm font-bold text-xs"
+                        />
+                        <Input
+                          placeholder="Prénom"
+                          value={student.firstName}
+                          onChange={(e) => updateStudent(index, 'firstName', e.target.value)}
+                          className="h-10 rounded-xl bg-white border-none shadow-sm font-bold text-xs"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeStudentRow(index)}
+                          disabled={students.length === 1}
+                          className="h-10 w-10 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    ))}
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeStudentRow(index)}
-                      disabled={students.length === 1}
+                      variant="outline"
+                      onClick={addStudentRow}
+                      className="w-full h-12 rounded-2xl border-dashed border-2 hover:bg-success/5 hover:border-success/30 font-bold gap-2"
                     >
-                      <Trash2 size={18} className="text-destructive" />
+                      <Plus size={18} />
+                      Ajouter un élève
                     </Button>
                   </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addStudentRow}
-                  className="w-full"
+               ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-success/5 border border-success/10 border-dashed">
+                      <Textarea
+                        autoFocus
+                        placeholder="DUPONT, Jean, STU-001&#10;MARTIN, Marie, STU-002"
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 font-mono text-xs leading-relaxed"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 text-[10px] font-bold text-muted-foreground uppercase">
+                      <Search size={14} />
+                      Format : Nom, Prénom, ID (par ligne)
+                    </div>
+                  </div>
+               )}
+            </div>
+          )}
+
+          {/* Footer Navigation */}
+          <div className="flex gap-3 pt-2">
+            {step < steps.length - 1 ? (
+              step === 1 ? null : ( // Hide button on mode choice step as buttons inside handle it
+                <Button 
+                  className="w-full h-14 rounded-2xl text-lg font-black bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                  onClick={() => setStep(step + 1)}
+                  disabled={step === 0 && !name.trim()}
                 >
-                  <Plus size={18} />
-                  Ajouter un élève
+                  Continuer
+                  <ChevronRight size={20} />
                 </Button>
-              </div>
+              )
             ) : (
-              <div className="space-y-2">
-                <Textarea
-                  placeholder="Collez la liste des élèves (Nom, Prénom, ID par ligne)&#10;Exemple:&#10;DUPONT, Jean, STU-001&#10;MARTIN, Marie, STU-002"
-                  value={bulkInput}
-                  onChange={(e) => setBulkInput(e.target.value)}
-                  rows={8}
-                  className="font-mono text-small"
-                />
-                <p className="text-small text-muted-foreground">
-                  Format: Nom, Prénom, ID (séparés par virgule, point-virgule ou tabulation)
-                </p>
-              </div>
+              <Button 
+                className="w-full h-14 rounded-2xl text-lg font-black bg-success text-white shadow-lg shadow-success/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                onClick={handleSubmit}
+              >
+                Créer la classe
+                <CheckCircle2 size={20} />
+              </Button>
             )}
           </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
-            </Button>
-            <Button type="submit">
-              Créer la classe
-            </Button>
-          </DialogFooter>
-        </form>
+          
+          <div className="flex justify-center gap-1.5">
+            {steps.map((_, i) => (
+              <div 
+                key={i} 
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  step === i ? "w-6 bg-success" : "w-1.5 bg-secondary"
+                )} 
+              />
+            ))}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
