@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTheme } from 'next-themes';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -14,7 +15,9 @@ import {
   Settings,
   Bell,
   Search,
-  ChevronRight
+  ChevronRight,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -52,11 +55,11 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive, isCollapse
         "group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 relative",
         isCollapsed && "justify-center px-2",
         isActive
-          ? "bg-primary text-white shadow-lg shadow-primary/25"
-          : "text-muted-foreground hover:bg-white hover:text-foreground hover:shadow-sm"
+          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+          : "text-muted-foreground hover:bg-card hover:text-foreground hover:shadow-sm"
       )}
     >
-      <div className={cn("transition-transform duration-300 group-hover:scale-110", isActive && "text-white")}>
+      <div className={cn("transition-transform duration-300 group-hover:scale-110", isActive && "text-primary-foreground")}>
         {React.cloneElement(icon as React.ReactElement, { size: 20 })}
       </div>
       {!isCollapsed && <span className="text-sm font-medium">{label}</span>}
@@ -91,8 +94,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const { schoolYears, activeYearId } = useApp();
   const { teacher, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const activeYear = schoolYears.find(y => y.id === activeYearId);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const handleLogout = () => {
     logout();
@@ -116,10 +124,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <TooltipProvider>
-      <div className="h-screen flex bg-[#F8F9FD] overflow-hidden font-body">
+      <div className="h-screen flex bg-background overflow-hidden font-body">
         {/* Sidebar */}
         <aside className={cn(
-          "h-screen glass-sidebar flex flex-col transition-all duration-500 ease-in-out z-30",
+          "h-screen glass-sidebar flex flex-col transition-all duration-500 ease-in-out z-30 bg-card/40",
           isCollapsed ? "w-[80px]" : "w-[260px]"
         )}>
           {/* Logo Section */}
@@ -158,7 +166,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               variant="ghost"
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className={cn("w-full h-10 rounded-xl hover:bg-white/50 transition-colors mb-4", isCollapsed && "px-0 justify-center")}
+              className={cn("w-full h-10 rounded-xl hover:bg-card/50 transition-colors mb-4", isCollapsed && "px-0 justify-center")}
             >
               {isCollapsed ? <PanelLeft size={18} /> : (
                 <div className="flex items-center gap-2">
@@ -171,7 +179,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className={cn(
-                  "w-full flex items-center gap-3 p-2 rounded-2xl bg-white/50 border border-white/20 hover:bg-white transition-all duration-300 shadow-sm",
+                  "w-full flex items-center gap-3 p-2 rounded-2xl bg-card/50 border border-border/20 hover:bg-card transition-all duration-300 shadow-sm",
                   isCollapsed && "justify-center p-1.5"
                 )}>
                   <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
@@ -207,20 +215,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
-          <header className="h-[70px] flex items-center justify-between px-8 bg-white/30 backdrop-blur-md border-b border-white/20 z-20">
+          <header className="h-[70px] flex items-center justify-between px-8 bg-card/30 backdrop-blur-md border-b border-border/20 z-20">
             <div className="flex items-center gap-6 flex-1 max-w-2xl">
               <div className="relative flex-1 group">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input 
                   placeholder="Recherche rapide..." 
-                  className="w-full h-10 pl-11 rounded-xl bg-white/50 border-none shadow-inner group-focus-within:bg-white group-focus-within:shadow-md transition-all text-sm"
+                  className="w-full h-10 pl-11 rounded-xl bg-card/50 border-none shadow-inner group-focus-within:bg-card group-focus-within:shadow-md transition-all text-sm"
                 />
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               {activeYear && (
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-white/20 shadow-sm">
+                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border/20 shadow-sm">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></div>
                   <span className="text-xs font-medium text-foreground">{activeYear.name}</span>
                   <span className="text-[10px] font-medium text-muted-foreground uppercase opacity-50 px-2 py-0.5 rounded-md bg-secondary">
@@ -228,9 +236,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </span>
                 </div>
               )}
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl relative hover:bg-white">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="w-10 h-10 rounded-xl hover:bg-card"
+                onClick={toggleTheme}
+              >
+                {theme === 'dark' ? (
+                  <Sun size={20} className="text-muted-foreground" />
+                ) : (
+                  <Moon size={20} className="text-muted-foreground" />
+                )}
+              </Button>
+              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl relative hover:bg-card">
                 <Bell size={20} className="text-muted-foreground" />
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-destructive border-2 border-white"></span>
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-destructive border-2 border-card"></span>
               </Button>
             </div>
           </header>

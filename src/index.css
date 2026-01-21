@@ -53,6 +53,52 @@
     --soft-orange-foreground: 25 90% 55%;
   }
 
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 20% 98%;
+
+    --card: 224 71% 6%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 71% 6%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 246 80% 65%;
+    --primary-foreground: 224 71% 4%;
+
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 10% 64%;
+
+    --accent: 246 80% 65%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 246 80% 65%;
+
+    /* Soft palettes - dark mode */
+    --soft-pink: 350 50% 15%;
+    --soft-pink-foreground: 350 80% 70%;
+    
+    --soft-blue: 210 50% 15%;
+    --soft-blue-foreground: 210 80% 65%;
+    
+    --soft-purple: 270 50% 15%;
+    --soft-purple-foreground: 270 70% 70%;
+    
+    --soft-green: 150 50% 12%;
+    --soft-green-foreground: 150 70% 55%;
+
+    --soft-orange: 25 50% 15%;
+    --soft-orange-foreground: 25 90% 65%;
+  }
+
   * {
     @apply border-border;
   }
@@ -68,15 +114,15 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+    @apply bg-card/70 backdrop-blur-xl border border-border/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
   }
   
   .glass-sidebar {
-    @apply bg-white/40 backdrop-blur-2xl border-r border-white/20;
+    @apply bg-card/40 backdrop-blur-2xl border-r border-border/20;
   }
 
   .apple-card {
-    @apply bg-white rounded-[2rem] border-none shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08)] transition-all duration-500;
+    @apply bg-card rounded-[2rem] border-none shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.4)] transition-all duration-500;
   }
 
   .btn-vibrant {

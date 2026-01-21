@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from 'next-themes';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,12 +9,13 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, Download, Upload, Shield, Save } from 'lucide-react';
+import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { teacher, updateProfile, updatePassword } = useAuth();
   const { exportData, importData } = useApp();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [firstName, setFirstName] = useState(teacher?.firstName || '');
   const [lastName, setLastName] = useState(teacher?.lastName || '');
@@ -256,6 +258,53 @@ const SettingsPage: React.FC = () => {
               <Shield size={16} className="mr-2" />
               {isUpdatingPassword ? 'Modification...' : 'Modifier le mot de passe'}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette size={20} />
+              Apparence
+            </CardTitle>
+            <CardDescription>
+              Personnalisez l'apparence de l'application
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Thème</Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Choisissez le thème qui vous convient le mieux
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <Button
+                  variant={theme === 'light' ? 'default' : 'outline'}
+                  onClick={() => setTheme('light')}
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                >
+                  <Sun size={20} />
+                  <span className="text-xs">Clair</span>
+                </Button>
+                <Button
+                  variant={theme === 'dark' ? 'default' : 'outline'}
+                  onClick={() => setTheme('dark')}
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                >
+                  <Moon size={20} />
+                  <span className="text-xs">Sombre</span>
+                </Button>
+                <Button
+                  variant={theme === 'system' ? 'default' : 'outline'}
+                  onClick={() => setTheme('system')}
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                >
+                  <Monitor size={20} />
+                  <span className="text-xs">Système</span>
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
