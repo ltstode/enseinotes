@@ -30,16 +30,21 @@ import {
   LayoutDashboard,
   Timer,
   Settings,
-  Keyboard
+  Keyboard,
+  Download,
+  BarChart3
 } from 'lucide-react';
 import { PedagogicalUnit, Student, Evaluation, Period } from '@/types/enseinotes';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import CreateEvaluationDialog from './CreateEvaluationDialog';
 import CreatePeriodDialog from './CreatePeriodDialog';
 import EditUnitDialog from '../units/EditUnitDialog';
 import PeriodProgressBar from './PeriodProgressBar';
+import ClassStatistics from './ClassStatistics';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { generateClassBulletins } from '@/services/pdfService';
 import { cn } from '@/lib/utils';
 
 interface GradeSheetProps {
@@ -64,10 +69,15 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     updateGradeValue,
     saveGrades,
     isUnitSaved,
+    classRooms,
+    schoolYears,
   } = useApp();
   
+  const { teacher } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  const [showStatistics, setShowStatistics] = useState(false);
   
   const students = useMemo(() => {
     return getStudentsByClass(unit.classRoomId)
@@ -260,7 +270,45 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     saveGrades(unit.id);
     setLocalGrades({});
     toast({ title: 'Succès ✨', description: 'Notes enregistrées et synchronisées.' });
-  }, [localGrades, getGrade, updateGradeValue, addGrade, saveGrades, unit.id, toast]);
+  }, [localGrades, getGrade, updateGradeValue, addGrade, saveGrades, unit.id, toast, evaluations]);
+
+  const handleExportPDF = useCallback(() => {
+    const period = periods.find(p => p.id === activePeriod);
+    const classroom = classRooms.find(c => c.id === unit.classRoomId);
+    const schoolYear = schoolYears.find(y => y.id === unit.schoolYearId);
+    
+    if (!period || !classroom || !schoolYear) {
+      toast({ 
+        title: 'Erreur', 
+        description: 'Impossible de générer les bulletins. Données manquantes.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Enseignant';
+
+    generateClassBulletins(
+      students,
+      filteredEvaluations,
+      grades,
+      {
+        unit,
+        classroom,
+        schoolYear,
+        period,
+        teacherName
+      },
+      calculateTypeAverage,
+      calculateFinalAverage,
+      studentRankings
+    );
+
+    toast({ 
+      title: 'Bulletins générés 📄', 
+      description: `${students.length} bulletins exportés en PDF.` 
+    });
+  }, [periods, activePeriod, classRooms, schoolYears, unit, teacher, students, filteredEvaluations, grades, calculateTypeAverage, calculateFinalAverage, studentRankings, toast]);
 
   const handleModifyGrade = useCallback((studentId: string, evaluationId: string, newValue: string) => {
     const existingGrade = getGrade(studentId, evaluationId);
@@ -402,6 +450,22 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
         </div>
         
         <div className="flex items-center gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => setShowStatistics(!showStatistics)} 
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-white/80"
+          >
+            <BarChart3 size={18} />
+            {showStatistics ? 'Masquer stats' : 'Statistiques'}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={filteredEvaluations.length === 0}
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-white/80"
+          >
+            <Download size={18} /> Bulletins PDF
+          </Button>
           {isSaved && !hasGradesToSave ? (
              <div className="px-4 py-2 rounded-2xl bg-success/10 text-success text-xs font-medium border border-success/20 flex items-center gap-2">
                <Check size={16} /> Verrouillé
@@ -416,6 +480,16 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           </Button>
         </div>
       </div>
+
+      {/* Statistics Panel */}
+      {showStatistics && activePeriod && (
+        <ClassStatistics
+          students={students}
+          evaluations={filteredEvaluations}
+          calculateFinalAverage={calculateFinalAverage}
+          periodName={periods.find(p => p.id === activePeriod)?.name || ''}
+        />
+      )}
 
       {/* Period Progress Bar */}
       {activePeriod && periods.find(p => p.id === activePeriod) && (
