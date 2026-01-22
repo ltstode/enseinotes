@@ -416,7 +416,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   if (students.length === 0) return (
     <div className="apple-card p-12 text-center bg-white/50 backdrop-blur-md border border-white/40">
       <AlertCircle className="mx-auto text-primary mb-4" size={48} />
-      <h3 className="text-xl font-bold mb-2">Classe vide</h3>
+      <h3 className="text-xl font-semibold mb-2">Classe vide</h3>
       <p className="text-muted-foreground mb-6">Ajoutez des élèves à la classe {unit.classRoomId} pour commencer.</p>
     </div>
   );
@@ -552,7 +552,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                 </div>
                 <p className="text-sm font-medium text-muted-foreground">Aucune évaluation pour cette période.</p>
                 {periods.find(p => p.id === activePeriod)?.status === 'active' ? (
-                  <Button variant="outline" size="sm" onClick={() => setShowEvalDialog(true)} className="rounded-xl font-bold">Créer maintenant</Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowEvalDialog(true)} className="rounded-xl font-medium">Créer maintenant</Button>
                 ) : (
                   <div className="space-y-4">
                     <p className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-xl max-w-xs mx-auto">
@@ -562,7 +562,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                       variant="default" 
                       size="sm" 
                       onClick={() => activatePeriod(activePeriod!)} 
-                      className="rounded-xl font-bold bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+                      className="rounded-xl font-medium bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
                     >
                       Activer la période
                     </Button>
@@ -573,23 +573,23 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               <table className="w-full border-separate border-spacing-y-2 border-spacing-x-0">
                 <thead>
                   <tr className="text-left">
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-12 text-center">Rang</th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground sticky left-0 glass-card border-none z-10 w-48">Étudiant</th>
+                    <th className="px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center">Rang</th>
+                    <th className="px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 glass-card border-none z-10 w-48">Étudiant</th>
                     {interros.map(e => (
                       <th key={e.id} className="px-1 py-2 text-center">
-                        <div className="text-[10px] font-black uppercase text-soft-blue-foreground">{e.name}</div>
-                        <div className="text-[8px] font-bold text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
+                        <div className="text-[10px] font-medium uppercase text-soft-blue-foreground">{e.name}</div>
+                        <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center text-[10px] font-black text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl">Moy. Int</th>
+                    <th className="px-2 py-2 text-center text-[10px] font-medium text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl">Moy. Int</th>
                     {devoirs.map(e => (
                       <th key={e.id} className="px-1 py-2 text-center">
-                        <div className="text-[10px] font-black uppercase text-soft-pink-foreground">{e.name}</div>
-                        <div className="text-[8px] font-bold text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
+                        <div className="text-[10px] font-medium uppercase text-soft-pink-foreground">{e.name}</div>
+                        <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center text-[10px] font-black text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl">Moy. Dev</th>
-                    <th className="px-6 py-2 text-center text-[10px] font-black uppercase text-primary">Moyenne Finale</th>
+                    <th className="px-2 py-2 text-center text-[10px] font-medium text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl">Moy. Dev</th>
+                    <th className="px-6 py-2 text-center text-[10px] font-medium uppercase text-primary">Moyenne Finale</th>
                   </tr>
                 </thead>
                 <tbody className="before:block before:h-2">
@@ -603,22 +603,22 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                       <tr key={student.id} className="group hover:translate-x-1 transition-transform duration-300">
                         <td className="text-center">
                           <div className={cn(
-                            "w-8 h-8 mx-auto rounded-xl flex items-center justify-center text-[10px] font-black",
+                            "w-8 h-8 mx-auto rounded-xl flex items-center justify-center text-[10px] font-semibold",
                             rank === 1 ? "bg-soft-orange text-soft-orange-foreground border border-soft-orange-foreground/20" : "bg-muted/10 text-muted-foreground"
                           )}>
                             {rank || '-'}
                           </div>
                         </td>
-                        <td className="sticky left-0 glass-card border-none z-10 px-4 py-2 font-bold text-xs truncate">
+                        <td className="sticky left-0 glass-card border-none z-10 px-4 py-2 font-medium text-xs truncate">
                           {student.lastName} <span className="text-muted-foreground font-medium">{student.firstName}</span>
                         </td>
                         {interros.map(e => renderGradeCell(student, e, studentIdx))}
-                        <td className="bg-soft-blue/10 px-2 text-center font-bold text-xs text-soft-blue-foreground">{moyInt?.toFixed(1) ?? '-'}</td>
+                        <td className="bg-soft-blue/10 px-2 text-center font-medium text-xs text-soft-blue-foreground">{moyInt?.toFixed(1) ?? '-'}</td>
                         {devoirs.map(e => renderGradeCell(student, e, studentIdx))}
-                        <td className="bg-soft-pink/10 px-2 text-center font-bold text-xs text-soft-pink-foreground">{moyDev?.toFixed(1) ?? '-'}</td>
+                        <td className="bg-soft-pink/10 px-2 text-center font-medium text-xs text-soft-pink-foreground">{moyDev?.toFixed(1) ?? '-'}</td>
                         <td className="px-6 text-center">
                           <div className={cn(
-                             "inline-flex px-4 py-1 rounded-full text-xs font-black shadow-inner",
+                             "inline-flex px-4 py-1 rounded-full text-xs font-semibold shadow-inner",
                              final && final >= 10 ? "bg-soft-green text-soft-green-foreground" : final ? "bg-soft-pink text-soft-pink-foreground" : "bg-muted/10 text-muted-foreground"
                           )}>
                              {final?.toFixed(2) ?? '--'}
@@ -642,11 +642,11 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                  <Trophy size={24} />
               </div>
               <div>
-                <h4 className="font-black text-sm text-foreground">Clôturer la période ?</h4>
+                <h4 className="font-semibold text-sm text-foreground">Clôturer la période ?</h4>
                 <p className="text-xs text-muted-foreground">Une fois clôturé, le {periods.find(p=>p.id===activePeriod)?.name} sera archivé et verrouillé.</p>
               </div>
            </div>
-           <Button onClick={() => completePeriod(activePeriod)} className="rounded-xl px-8 h-10 bg-soft-blue-foreground text-white font-bold hover:bg-soft-blue-foreground/90 transition-all shadow-lg active:scale-95">
+           <Button onClick={() => completePeriod(activePeriod)} className="rounded-xl px-8 h-10 bg-soft-blue-foreground text-white font-medium hover:bg-soft-blue-foreground/90 transition-all shadow-lg active:scale-95">
              Valider le semestre
            </Button>
         </div>
@@ -668,7 +668,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           </DialogHeader>
           <div className="py-4 space-y-4">
              <div className="p-4 rounded-2xl bg-muted/30">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Motif de la rectification</p>
+                <p className="text-[10px] uppercase font-medium text-muted-foreground mb-1">Motif de la rectification</p>
                 <textarea className="w-full bg-transparent border-none text-xs focus:ring-0 h-24 font-medium" placeholder="Ex: Erreur de report, recalcul après vérification..." value={modifyReason} onChange={e => setModifyReason(e.target.value)} />
              </div>
           </div>

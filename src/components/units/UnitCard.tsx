@@ -52,7 +52,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
               <BookOpen className="text-primary" size={26} />
             </div>
             <div>
-              <h3 className="font-display text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+              <h3 className="font-display text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                 {unit.name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -67,7 +67,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge className="rounded-xl bg-primary/10 text-primary border-none shadow-none font-bold">
+            <Badge className="rounded-xl bg-primary/10 text-primary border-none shadow-none font-semibold">
               Coef. {unit.rules.coefficient}
             </Badge>
             <Button 
@@ -88,7 +88,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
               <Users size={16} className="text-muted-foreground" />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Effectif</span>
             </div>
-            <p className="font-display text-2xl font-bold text-foreground">{students.length}</p>
+            <p className="font-display text-2xl font-semibold text-foreground">{students.length}</p>
             <p className="text-[10px] text-muted-foreground">élèves inscrits</p>
           </div>
           
@@ -97,7 +97,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
               <ClipboardList size={16} className="text-muted-foreground" />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Évals</span>
             </div>
-            <p className="font-display text-2xl font-bold text-foreground">{evaluations.length}</p>
+            <p className="font-display text-2xl font-semibold text-foreground">{evaluations.length}</p>
             <p className="text-[10px] text-muted-foreground">notes saisies</p>
           </div>
         </div>
@@ -121,7 +121,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
 
         <Button 
           variant="default" 
-          className="w-full h-12 rounded-2xl font-display font-bold shadow-soft hover:shadow-lg transition-all duration-300 gap-2 group-hover:gap-4 bg-gradient-to-r from-primary to-info border-none"
+          className="w-full h-12 rounded-2xl font-display font-medium shadow-soft hover:shadow-lg transition-all duration-300 gap-2 group-hover:gap-4 bg-gradient-to-r from-primary to-info border-none"
           onClick={() => navigate(`/grades?unit=${unit.id}`)}
         >
           <LayoutDashboard size={18} />

@@ -109,7 +109,7 @@ const EditUnitDialog: React.FC<EditUnitDialogProps> = ({
               <Settings2 className="text-soft-orange-foreground" size={28} />
             </div>
             <div>
-              <DialogTitle className="font-display text-2xl font-bold tracking-tight text-foreground">
+              <DialogTitle className="font-display text-2xl font-semibold tracking-tight text-foreground">
                 Modifier l'Unité
               </DialogTitle>
               <DialogDescription className="text-muted-foreground font-body">
@@ -185,7 +185,7 @@ const EditUnitDialog: React.FC<EditUnitDialogProps> = ({
           <div className="flex items-center justify-between pt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="button" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl gap-2 font-bold">
+                <Button type="button" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl gap-2 font-medium">
                   <Trash2 size={18} />
                   Supprimer l'unité
                 </Button>

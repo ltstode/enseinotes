@@ -24,13 +24,13 @@ const YearsPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-2">
           <div className="space-y-1">
-            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+              <h2 className="text-4xl font-semibold tracking-tighter text-foreground leading-tight flex items-center gap-3">
               Années <span className="text-primary">Scolaires</span>
               <Calendar className="text-soft-orange-foreground" size={32} />
             </h2>
             <p className="text-muted-foreground font-medium">Gérez la chronologie de votre enseignement.</p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+            <Button onClick={() => setShowCreateDialog(true)} className="h-12 px-8 rounded-2xl gap-2 font-medium shadow-xl shadow-primary/20 hover:scale-105 transition-all">
             <Plus size={18} />
             Nouvelle Année
           </Button>
@@ -43,10 +43,10 @@ const YearsPage: React.FC = () => {
               <Calendar size={40} />
             </div>
             <div>
-              <h3 className="text-2xl font-black italic">Une nouvelle aventure commence ?</h3>
+              <h3 className="text-2xl font-semibold italic">Une nouvelle aventure commence ?</h3>
               <p className="text-muted-foreground mt-2">Initialisez votre première année scolaire pour configurer vos classes.</p>
             </div>
-            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-12 px-8 font-bold">
+            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-12 px-8 font-medium">
               <Plus size={18} className="mr-2" /> Créer une année
             </Button>
           </div>
