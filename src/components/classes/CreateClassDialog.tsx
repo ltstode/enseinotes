@@ -135,10 +135,10 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
               <Plus size={40} />
             </div>
             <div className="space-y-1">
-              <h2 className="text-2xl font-black tracking-tight">Aucune année active</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">Aucune année active</h2>
               <p className="text-muted-foreground">Veuillez d'abord créer et activer une année scolaire.</p>
             </div>
-            <Button className="w-full h-12 rounded-2xl font-bold" onClick={() => onOpenChange(false)}>
+            <Button className="w-full h-12 rounded-2xl font-medium" onClick={() => onOpenChange(false)}>
               Fermer
             </Button>
           </div>
@@ -171,8 +171,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
                    {steps[step].icon}
                 </div>
                 <div>
-                   <h3 className="text-xl font-black tracking-tight uppercase text-success/40 text-[10px] leading-none mb-1">Étape {step + 1}/{steps.length}</h3>
-                   <h2 className="text-lg font-bold tracking-tight text-foreground leading-none">{steps[step].title}</h2>
+                   <h3 className="text-xl font-medium tracking-tight uppercase text-success/40 text-[10px] leading-none mb-1">Étape {step + 1}/{steps.length}</h3>
+                   <h2 className="text-lg font-semibold tracking-tight text-foreground leading-none">{steps[step].title}</h2>
                 </div>
              </div>
              {step > 0 && (
@@ -186,14 +186,14 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
           {step === 0 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                <div className="space-y-3">
-                <Label className="text-sm font-bold ml-1 text-muted-foreground">Quel est le nom de la classe ?</Label>
+                <Label className="text-sm font-medium ml-1 text-muted-foreground">Quel est le nom de la classe ?</Label>
                 <div className="relative">
                   <Input
                     autoFocus
                     placeholder="Ex: Terminale D, 3ème A..."
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="h-16 rounded-2xl bg-secondary/10 border-none shadow-inner font-black text-xl text-center"
+                    className="h-16 rounded-2xl bg-secondary/10 border-none shadow-inner font-semibold text-xl text-center"
                   />
                   <Sparkles size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-success/30" />
                 </div>
@@ -212,8 +212,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
                   <div className="p-4 rounded-2xl bg-white shadow-sm mx-auto w-fit group-hover:scale-110 transition-transform">
                     <UserPlus className="text-success" size={28} />
                   </div>
-                  <p className="font-black text-sm text-foreground">Individuel</p>
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Un par un</p>
+                  <p className="font-semibold text-sm text-foreground">Individuel</p>
+                  <p className="text-[10px] uppercase font-medium text-muted-foreground">Un par un</p>
                 </button>
                 <button
                   onClick={() => { setInputMode('bulk'); setStep(2); }}
@@ -222,8 +222,8 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
                   <div className="p-4 rounded-2xl bg-white shadow-sm mx-auto w-fit group-hover:scale-110 transition-transform">
                     <Upload className="text-success" size={28} />
                   </div>
-                  <p className="font-black text-sm text-foreground">En masse</p>
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Copier-Coller</p>
+                  <p className="font-semibold text-sm text-foreground">En masse</p>
+                  <p className="text-[10px] uppercase font-medium text-muted-foreground">Copier-Coller</p>
                 </button>
               </div>
             </div>
@@ -240,13 +240,13 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
                           placeholder="Nom"
                           value={student.lastName}
                           onChange={(e) => updateStudent(index, 'lastName', e.target.value)}
-                          className="h-10 rounded-xl bg-white border-none shadow-sm font-bold text-xs"
+                          className="h-10 rounded-xl bg-white border-none shadow-sm font-medium text-xs"
                         />
                         <Input
                           placeholder="Prénom"
                           value={student.firstName}
                           onChange={(e) => updateStudent(index, 'firstName', e.target.value)}
-                          className="h-10 rounded-xl bg-white border-none shadow-sm font-bold text-xs"
+                          className="h-10 rounded-xl bg-white border-none shadow-sm font-medium text-xs"
                         />
                         <Button
                           variant="ghost"
@@ -262,7 +262,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
                     <Button
                       variant="outline"
                       onClick={addStudentRow}
-                      className="w-full h-12 rounded-2xl border-dashed border-2 hover:bg-success/5 hover:border-success/30 font-bold gap-2"
+                      className="w-full h-12 rounded-2xl border-dashed border-2 hover:bg-success/5 hover:border-success/30 font-medium gap-2"
                     >
                       <Plus size={18} />
                       Ajouter un élève
@@ -279,7 +279,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
                         className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 font-mono text-xs leading-relaxed"
                       />
                     </div>
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 text-[10px] font-bold text-muted-foreground uppercase">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 text-[10px] font-medium text-muted-foreground uppercase">
                       <Search size={14} />
                       Format : Nom, Prénom, ID (par ligne)
                     </div>
@@ -293,7 +293,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
             {step < steps.length - 1 ? (
               step === 1 ? null : ( // Hide button on mode choice step as buttons inside handle it
                 <Button 
-                  className="w-full h-14 rounded-2xl text-lg font-black bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                  className="w-full h-14 rounded-2xl text-lg font-medium bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
                   onClick={() => setStep(step + 1)}
                   disabled={step === 0 && !name.trim()}
                 >
@@ -303,7 +303,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({ open, onOpenChang
               )
             ) : (
               <Button 
-                className="w-full h-14 rounded-2xl text-lg font-black bg-success text-white shadow-lg shadow-success/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
+                className="w-full h-14 rounded-2xl text-lg font-medium bg-success text-white shadow-lg shadow-success/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
                 onClick={handleSubmit}
               >
                 Créer la classe

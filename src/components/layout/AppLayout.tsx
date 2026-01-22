@@ -180,7 +180,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               {isCollapsed ? <PanelLeft size={18} /> : (
                 <div className="flex items-center gap-2">
                   <PanelLeftClose size={18} />
-                  <span className="text-xs font-semibold">Réduire le menu</span>
+                   <span className="text-xs font-medium">Réduire le menu</span>
                 </div>
               )}
             </Button>
@@ -192,7 +192,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   isCollapsed && "justify-center p-1.5"
                 )}>
                   <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-xs font-bold">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-xs font-medium">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>

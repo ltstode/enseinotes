@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
             <div className="p-4 bg-white/80 backdrop-blur-md rounded-[2rem] shadow-xl border border-white/40 mb-4 animate-float">
                <GraduationCap className="h-12 w-12 text-primary" />
             </div>
-            <h1 className="text-4xl font-black tracking-tighter text-foreground">
+            <h1 className="text-4xl font-semibold tracking-tighter text-foreground">
                 Ensei<span className="text-primary font-serif italic">Notes</span>
             </h1>
             <p className="text-muted-foreground font-medium mt-2">L'excellence au service de votre enseignement.</p>
@@ -89,7 +89,7 @@ const LoginPage: React.FC = () => {
         <Card className="apple-card border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-2xl">
           <div className="h-2 w-full bg-gradient-to-r from-primary via-info to-primary"></div>
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-black tracking-tight">
+            <CardTitle className="text-2xl font-semibold tracking-tight">
               {isLogin ? 'Ravis de vous revoir' : 'Rejoindre EnseiNotes'}
             </CardTitle>
             <CardDescription className="font-medium">
@@ -103,7 +103,7 @@ const LoginPage: React.FC = () => {
               {!isLogin && (
                 <div className="grid grid-cols-2 gap-4 animate-fade-in">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Prénom</Label>
+                    <Label htmlFor="firstName" className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground ml-1">Prénom</Label>
                     <div className="relative">
                         <User className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -118,7 +118,7 @@ const LoginPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nom</Label>
+                    <Label htmlFor="lastName" className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground ml-1">Nom</Label>
                     <Input
                       id="lastName"
                       placeholder="DUPONT"
@@ -133,7 +133,7 @@ const LoginPage: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email professionnel</Label>
+                <Label htmlFor="email" className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground ml-1">Email professionnel</Label>
                 <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -151,9 +151,9 @@ const LoginPage: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between ml-1">
-                  <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mot de passe</Label>
+                  <Label htmlFor="password" className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Mot de passe</Label>
                   {isLogin && (
-                    <button type="button" className="text-[10px] font-bold text-primary hover:underline">Oublié ?</button>
+                    <button type="button" className="text-[10px] font-medium text-primary hover:underline">Oublié ?</button>
                   )}
                 </div>
                 <div className="relative">
@@ -172,7 +172,7 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-12 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all" disabled={isLoading}>
+              <Button type="submit" className="w-full h-12 rounded-2xl font-medium text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
@@ -188,7 +188,7 @@ const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto"
                 disabled={isLoading}
               >
                 {isLogin
@@ -199,7 +199,7 @@ const LoginPage: React.FC = () => {
           </CardContent>
         </Card>
         
-        <p className="text-center mt-8 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+        <p className="text-center mt-8 text-[10px] font-medium text-muted-foreground/40 uppercase tracking-[0.2em]">
             © 2024 EnseiNotes — Designed for Educators
         </p>
       </div>

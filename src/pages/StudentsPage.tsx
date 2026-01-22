@@ -228,7 +228,7 @@ const StudentsPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-2">
           <div className="space-y-1">
-            <h2 className="text-4xl font-black tracking-tighter text-foreground leading-tight flex items-center gap-3">
+            <h2 className="text-4xl font-semibold tracking-tighter text-foreground leading-tight flex items-center gap-3">
               Gestion <span className="text-primary">Élèves</span>
               <Users className="text-soft-purple-foreground" size={32} />
             </h2>
@@ -237,11 +237,11 @@ const StudentsPage: React.FC = () => {
           <div className="flex gap-3">
              {selectedClass && (
                <>
-                 <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-bold hover:bg-white transition-all shadow-sm">
+                  <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-medium hover:bg-white transition-all shadow-sm">
                    <Upload size={18} />
                    Import massif
                  </Button>
-                 <Button onClick={() => setIsAddDialogOpen(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+                  <Button onClick={() => setIsAddDialogOpen(true)} className="h-12 px-8 rounded-2xl gap-2 font-medium shadow-xl shadow-primary/20 hover:scale-105 transition-all">
                    <Plus size={18} />
                    Ajouter un élève
                  </Button>
@@ -254,7 +254,7 @@ const StudentsPage: React.FC = () => {
         <div className="glass-card p-4 rounded-3xl flex items-center gap-4 overflow-x-auto compact-scrollbar shrink-0">
           <div className="flex items-center gap-2 px-3 border-r border-white/20 shrink-0">
             <Users size={16} className="text-primary" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Classes</span>
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Classes</span>
           </div>
           <div className="flex gap-2">
             {classes.map(c => (
@@ -262,7 +262,7 @@ const StudentsPage: React.FC = () => {
                 key={c.id}
                 onClick={() => setSelectedClassId(c.id)}
                 className={cn(
-                  "px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 shrink-0",
+                  "px-5 py-2 rounded-xl text-xs font-medium transition-all duration-300 shrink-0",
                   selectedClassId === c.id 
                     ? "bg-primary text-white shadow-lg shadow-primary/20" 
                     : "bg-white/50 text-muted-foreground hover:bg-white hover:text-foreground shadow-sm"
@@ -293,7 +293,7 @@ const StudentsPage: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-white/50 border border-white/20 shadow-sm">
-                <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer select-none">
+                <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer select-none">
                   <Checkbox
                     checked={showArchived}
                     onCheckedChange={(checked) => setShowArchived(checked as boolean)}
@@ -310,7 +310,7 @@ const StudentsPage: React.FC = () => {
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="h-8 gap-2 text-soft-pink-foreground hover:bg-soft-pink hover:text-soft-pink-foreground font-bold rounded-xl px-4"
+                    className="h-8 gap-2 text-soft-pink-foreground hover:bg-soft-pink hover:text-soft-pink-foreground font-medium rounded-xl px-4"
                     onClick={handleBulkArchive}
                   >
                     <Archive size={14} />
@@ -334,9 +334,9 @@ const StudentsPage: React.FC = () => {
                             className="rounded-md"
                           />
                         </th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-left">Nom de l'élève</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center w-32">Statut</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center w-32">Actions</th>
+                        <th className="px-6 py-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-left">Nom de l'élève</th>
+                        <th className="px-6 py-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-center w-32">Statut</th>
+                        <th className="px-6 py-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-center w-32">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-muted/30">
@@ -358,14 +358,14 @@ const StudentsPage: React.FC = () => {
                                 <Input
                                   value={editLastName}
                                   onChange={e => setEditLastName(e.target.value)}
-                                  className="h-9 w-40 uppercase font-black text-xs rounded-xl shadow-inner border-primary/20"
+                                   className="h-9 w-40 uppercase font-semibold text-xs rounded-xl shadow-inner border-primary/20"
                                   placeholder="NOM"
                                   autoFocus
                                 />
                                 <Input
                                   value={editFirstName}
                                   onChange={e => setEditFirstName(e.target.value)}
-                                  className="h-9 flex-1 text-xs font-bold rounded-xl shadow-inner border-primary/20"
+                                   className="h-9 flex-1 text-xs font-medium rounded-xl shadow-inner border-primary/20"
                                   placeholder="Prénoms"
                                   onKeyDown={e => {
                                     if (e.key === 'Enter') handleSaveEdit();
@@ -381,14 +381,14 @@ const StudentsPage: React.FC = () => {
                               </div>
                             ) : (
                               <div className="flex items-center gap-3">
-                                <span className="font-black text-foreground uppercase text-sm">{student.lastName}</span>
+                                <span className="font-semibold text-foreground uppercase text-sm">{student.lastName}</span>
                                 <span className="font-medium text-muted-foreground text-sm">{student.firstName}</span>
                               </div>
                             )}
                           </td>
                           <td className="px-6 py-4 text-center">
                             <div className={cn(
-                              "inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase",
+                              "inline-flex px-3 py-1 rounded-full text-[10px] font-medium uppercase",
                               student.status === 'active' ? "bg-soft-green text-soft-green-foreground" : "bg-muted/10 text-muted-foreground"
                             )}>
                               {student.status === 'active' ? 'Actif' : 'Archivé'}
@@ -447,10 +447,10 @@ const StudentsPage: React.FC = () => {
              <div className="w-24 h-24 bg-soft-purple-foreground/5 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-inner">
                <Users size={48} className="text-soft-purple-foreground opacity-50" />
              </div>
-             <h3 className="text-2xl font-black mb-2 italic">Où sont les élèves ?</h3>
+             <h3 className="text-2xl font-semibold mb-2 italic">Où sont les élèves ?</h3>
              <p className="text-muted-foreground max-w-sm mb-8 font-medium">Sélectionnez une classe dans la barre ci-dessus pour gérer vos listes d'appel et les notes des élèves.</p>
              <div className="flex gap-4">
-                <Button variant="outline" onClick={() => navigate('/classes?new=true')} className="rounded-2xl h-12 px-6 font-bold border-dashed hover:bg-white transition-all">
+                 <Button variant="outline" onClick={() => navigate('/classes?new=true')} className="rounded-2xl h-12 px-6 font-medium border-dashed hover:bg-white transition-all">
                   Créer une nouvelle classe
                 </Button>
              </div>
@@ -463,43 +463,43 @@ const StudentsPage: React.FC = () => {
         <DialogContent className="rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
           <div className="h-1 w-full bg-primary"></div>
           <DialogHeader className="p-8 pb-4">
-            <DialogTitle className="text-2xl font-black items-center flex gap-3">
+            <DialogTitle className="text-2xl font-semibold items-center flex gap-3">
               <Plus className="text-primary" /> Nouvel Élève
             </DialogTitle>
           </DialogHeader>
           <div className="px-8 py-4 space-y-6">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Nom de famille</Label>
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground ml-1">Nom de famille</Label>
               <Input
                 placeholder="Ex: DUPONT"
                 value={newLastName}
                 onChange={e => setNewLastName(e.target.value)}
-                className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-lg shadow-inner focus:bg-white transition-all uppercase"
+                className="h-14 rounded-2xl bg-secondary/30 border-none font-semibold text-lg shadow-inner focus:bg-white transition-all uppercase"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Prénoms</Label>
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground ml-1">Prénoms</Label>
               <Input
                 placeholder="Ex: Jean Pierre"
                 value={newFirstName}
                 onChange={e => setNewFirstName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddStudent()}
-                className="h-14 rounded-2xl bg-secondary/30 border-none font-bold shadow-inner focus:bg-white transition-all"
+                className="h-14 rounded-2xl bg-secondary/30 border-none font-medium shadow-inner focus:bg-white transition-all"
               />
             </div>
           </div>
           <DialogFooter className="p-8 pt-4 gap-3 bg-secondary/10">
-            <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="rounded-xl font-bold">Annuler</Button>
-            <Button onClick={handleAddStudent} disabled={!newLastName.trim()} className="rounded-xl bg-primary px-10 font-bold shadow-lg shadow-primary/20">Ajouter</Button>
+            <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="rounded-xl font-medium">Annuler</Button>
+            <Button onClick={handleAddStudent} disabled={!newLastName.trim()} className="rounded-xl bg-primary px-10 font-medium shadow-lg shadow-primary/20">Ajouter</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!studentToDelete} onOpenChange={() => setStudentToDelete(null)}>
-        <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
+          <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-soft-pink-foreground">Supprimer définitivement ?</AlertDialogTitle>
+              <AlertDialogTitle className="text-2xl font-semibold text-soft-pink-foreground">Supprimer définitivement ?</AlertDialogTitle>
             <AlertDialogDescription className="font-medium text-muted-foreground py-2">
               L'élève <b>{studentToDelete?.lastName} {studentToDelete?.firstName}</b> ainsi que toutes ses notes seront effacés de manière irréversible.
             </AlertDialogDescription>
@@ -508,7 +508,7 @@ const StudentsPage: React.FC = () => {
             <AlertDialogCancel className="rounded-xl border-none bg-secondary hover:bg-secondary/70">Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteStudent}
-              className="rounded-xl bg-soft-pink-foreground text-white hover:bg-soft-pink-foreground/90 shadow-lg shadow-soft-pink-foreground/20 font-bold px-8"
+              className="rounded-xl bg-soft-pink-foreground text-white hover:bg-soft-pink-foreground/90 shadow-lg shadow-soft-pink-foreground/20 font-medium px-8"
             >
               Confirmer la suppression
             </AlertDialogAction>

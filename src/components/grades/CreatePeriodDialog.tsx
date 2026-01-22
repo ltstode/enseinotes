@@ -108,7 +108,7 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
               <Calendar className="text-primary" size={28} />
             </div>
             <div>
-              <DialogTitle className="font-display text-2xl font-bold tracking-tight text-foreground">
+              <DialogTitle className="font-display text-2xl font-semibold tracking-tight text-foreground">
                 Configuration des Périodes
               </DialogTitle>
               <DialogDescription className="text-muted-foreground font-body">
@@ -169,7 +169,7 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
                         "w-2 h-2 rounded-full",
                         p.status === 'active' ? "bg-primary animate-pulse" : p.status === 'completed' ? "bg-success" : "bg-muted"
                       )} />
-                      <span className="font-bold text-xs">{p.name}</span>
+                      <span className="font-medium text-xs">{p.name}</span>
                       <span className="text-[10px] text-muted-foreground uppercase">{p.status}</span>
                     </div>
                     <div className="flex items-center gap-1">
