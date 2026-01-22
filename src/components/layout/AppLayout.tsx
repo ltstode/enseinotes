@@ -92,11 +92,20 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { schoolYears, activeYearId } = useApp();
+  const { schoolYears, activeYearId, syncStatus } = useApp();
   const { teacher, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const activeYear = schoolYears.find(y => y.id === activeYearId);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const syncLabel =
+    syncStatus.state === 'saving'
+      ? 'Enregistrement…'
+      : syncStatus.state === 'saved'
+        ? 'Enregistré'
+        : syncStatus.state === 'error'
+          ? 'Erreur de sauvegarde'
+          : '';
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -236,6 +245,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </span>
                 </div>
               )}
+
+              {syncLabel && (
+                <div
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm bg-card',
+                    syncStatus.state === 'error' && 'border-destructive/30',
+                    syncStatus.state !== 'error' && 'border-border/20',
+                  )}
+                  title={syncStatus.state === 'saved' && syncStatus.lastSavedAt ? `Dernière sauvegarde : ${syncStatus.lastSavedAt.toLocaleTimeString()}` : undefined}
+                >
+                  <div
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full',
+                      syncStatus.state === 'saving' && 'bg-muted-foreground animate-pulse',
+                      syncStatus.state === 'saved' && 'bg-success',
+                      syncStatus.state === 'error' && 'bg-destructive',
+                    )}
+                  />
+                  <span className="text-xs font-medium text-foreground">{syncLabel}</span>
+                </div>
+              )}
+
               <Button 
                 variant="ghost" 
                 size="icon" 

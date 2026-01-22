@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode, useCallback } from 'react';
 import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData, Period } from '@/types/enseinotes';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,6 +18,11 @@ interface AppState {
 }
 
 interface AppContextType extends AppState {
+  syncStatus: {
+    state: 'idle' | 'saving' | 'saved' | 'error';
+    lastSavedAt: Date | null;
+    error?: string;
+  };
   addSchoolYear: (year: Omit<SchoolYear, 'id' | 'createdAt'>) => void;
   addClassRoom: (classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => void;
   updateClassRoom: (classRoomId: string, updates: Partial<Pick<ClassRoom, 'name'>>) => void;
@@ -152,6 +157,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [savedUnits, setSavedUnits] = useState<Set<string>>(new Set());
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const [syncStatus, setSyncStatus] = useState<AppContextType['syncStatus']>({
+    state: 'idle',
+    lastSavedAt: null,
+  });
+
+  const saveTimeoutRef = useRef<number | null>(null);
+
+  const teacherDataToPersist = useMemo<TeacherData | null>(() => {
+    if (!teacher?.id || !isInitialized) return null;
+    return {
+      schoolYears: state.schoolYears,
+      classRooms: state.classRooms,
+      pedagogicalUnits: state.pedagogicalUnits,
+      periods: state.periods,
+      evaluations: state.evaluations,
+      grades: state.grades,
+      activeYearId: state.activeYearId,
+      savedUnits: Array.from(savedUnits),
+    };
+  }, [teacher?.id, isInitialized, state, savedUnits]);
+
+  const persistNow = useCallback(() => {
+    if (!teacher?.id || !teacherDataToPersist) return;
+
+    try {
+      saveTeacherData(teacher.id, teacherDataToPersist);
+      setSyncStatus({ state: 'saved', lastSavedAt: new Date() });
+    } catch (e) {
+      setSyncStatus({
+        state: 'error',
+        lastSavedAt: null,
+        error: e instanceof Error ? e.message : 'Erreur de sauvegarde',
+      });
+    }
+  }, [teacher?.id, teacherDataToPersist]);
+
   // Load data when teacher changes
   useEffect(() => {
     if (teacher?.id) {
@@ -172,29 +213,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSavedUnits(new Set());
       }
       setIsInitialized(true);
+      setSyncStatus({ state: 'idle', lastSavedAt: null });
     } else {
       setState(emptyState);
       setSavedUnits(new Set());
       setIsInitialized(false);
+      setSyncStatus({ state: 'idle', lastSavedAt: null });
     }
   }, [teacher?.id]);
 
-  // Save data whenever state changes (debounced)
+  // Auto-save (debounced) + sync status
   useEffect(() => {
-    if (!teacher?.id || !isInitialized) return;
+    if (!teacher?.id || !teacherDataToPersist) return;
 
-    const data: TeacherData = {
-      schoolYears: state.schoolYears,
-      classRooms: state.classRooms,
-      pedagogicalUnits: state.pedagogicalUnits,
-      periods: state.periods,
-      evaluations: state.evaluations,
-      grades: state.grades,
-      activeYearId: state.activeYearId,
-      savedUnits: Array.from(savedUnits),
+    setSyncStatus((prev) => ({
+      state: 'saving',
+      lastSavedAt: prev.lastSavedAt,
+    }));
+
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+      persistNow();
+    }, 600);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
     };
-    saveTeacherData(teacher.id, data);
-  }, [teacher?.id, state, savedUnits, isInitialized]);
+  }, [teacher?.id, teacherDataToPersist, persistNow]);
+
+  // Flush pending save on tab close/navigation
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      persistNow();
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [persistNow]);
 
   // Migration/normalization
   useEffect(() => {
@@ -675,6 +740,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     <AppContext.Provider
       value={{
         ...state,
+        syncStatus,
         addSchoolYear,
         addClassRoom,
         updateClassRoom,
