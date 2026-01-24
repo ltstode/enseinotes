@@ -31,12 +31,12 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
         <p className="text-xs font-medium uppercase tracking-wide opacity-70">{title}</p>
         <p className="text-3xl font-semibold">{value}</p>
       </div>
-      <div className="p-3 rounded-2xl bg-white/50 border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+      <div className="p-3 rounded-2xl bg-card/50 border border-border/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
         <Icon size={24} />
       </div>
     </div>
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/40 text-[10px] font-medium">
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-card/40 text-[10px] font-medium">
         <TrendingUp size={10} />
         <span>{subValue}</span>
       </div>
@@ -48,7 +48,7 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
 const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
   <Link to={to} className="group">
     <div className={cn(
-      "p-5 rounded-[2rem] border border-white/40 bg-white/40 backdrop-blur-md flex items-center gap-5 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
+      "p-5 rounded-[2rem] border border-border/40 bg-card/40 backdrop-blur-md flex items-center gap-5 hover:bg-card hover:shadow-xl hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
     )}>
       <div className={cn("p-4 rounded-2xl shadow-lg", colorClass)}>
         <Icon size={24} className="text-white" />
@@ -84,7 +84,7 @@ const Index = () => {
             <p className="text-muted-foreground">Voici un aperçu de vos activités scolaires pour aujourd'hui.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="h-11 px-6 rounded-2xl gap-2 font-medium hover:bg-white transition-all shadow-sm">
+            <Button variant="outline" className="h-11 px-6 rounded-2xl gap-2 font-medium hover:bg-card transition-all shadow-sm">
               <Calendar size={18} />
               Calendrier
             </Button>
@@ -175,8 +175,8 @@ const Index = () => {
             </div>
 
             {/* Recent Activity Table Sketch */}
-            <div className="apple-card flex-1 min-h-0 flex flex-col border border-white/40 bg-white/20 backdrop-blur-md mt-2">
-              <div className="p-6 border-b border-white/20 flex items-center justify-between">
+            <div className="apple-card flex-1 min-h-0 flex flex-col border border-border/40 bg-card/20 backdrop-blur-md mt-2">
+              <div className="p-6 border-b border-border/20 flex items-center justify-between">
                 <h4 className="font-medium">Dernières évaluations</h4>
                 <div className="flex gap-2">
                    <div className="w-8 h-8 rounded-full bg-soft-blue flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
@@ -225,7 +225,7 @@ const Index = () => {
                </div>
             </div>
 
-            <div className="apple-card p-6 border border-white/40 bg-white shadow-sm space-y-6">
+            <div className="apple-card p-6 border border-border/40 bg-card shadow-sm space-y-6">
                <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Conseils de productivité</h4>
                <div className="space-y-4">
                   {[

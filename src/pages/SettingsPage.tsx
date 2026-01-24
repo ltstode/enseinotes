@@ -6,14 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
+import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor } from 'lucide-react';
+import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor, Zap, Minimize2, Maximize2 } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { teacher, updateProfile, updatePassword } = useAuth();
   const { exportData, importData } = useApp();
+  const { reducedMotion, setReducedMotion, uiDensity, setUIDensity } = useUserPreferences();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
@@ -272,7 +275,8 @@ const SettingsPage: React.FC = () => {
               Personnalisez l'apparence de l'application
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Theme selection */}
             <div className="space-y-2">
               <Label>Thème</Label>
               <p className="text-sm text-muted-foreground mb-3">
@@ -302,6 +306,54 @@ const SettingsPage: React.FC = () => {
                 >
                   <Monitor size={20} />
                   <span className="text-xs">Système</span>
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Reduced Motion */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="reduced-motion" className="flex items-center gap-2">
+                  <Zap size={16} />
+                  Réduire les animations
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Désactive les animations pour améliorer le confort en classe
+                </p>
+              </div>
+              <Switch
+                id="reduced-motion"
+                checked={reducedMotion}
+                onCheckedChange={setReducedMotion}
+              />
+            </div>
+
+            <Separator />
+
+            {/* UI Density */}
+            <div className="space-y-2">
+              <Label>Densité de l'interface</Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Ajustez l'espacement pour afficher plus ou moins de contenu
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant={uiDensity === 'comfortable' ? 'default' : 'outline'}
+                  onClick={() => setUIDensity('comfortable')}
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                >
+                  <Maximize2 size={20} />
+                  <span className="text-xs">Confortable</span>
+                </Button>
+                <Button
+                  variant={uiDensity === 'compact' ? 'default' : 'outline'}
+                  onClick={() => setUIDensity('compact')}
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                >
+                  <Minimize2 size={20} />
+                  <span className="text-xs">Compact</span>
                 </Button>
               </div>
             </div>

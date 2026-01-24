@@ -205,7 +205,7 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-4 text-muted-foreground font-medium tracking-widest">
+              <span className="bg-card px-4 text-muted-foreground font-medium tracking-widest">
                 ou sur mesure
               </span>
             </div>
@@ -219,7 +219,7 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
                 placeholder="Ex: Période Spéciale, Module de Rattrapage..."
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-14 rounded-2xl bg-secondary/30 border-secondary-foreground/10 focus:bg-white transition-all shadow-inner"
+                className="h-14 rounded-2xl bg-secondary/30 border-secondary-foreground/10 focus:bg-card transition-all shadow-inner"
               />
             </div>
 

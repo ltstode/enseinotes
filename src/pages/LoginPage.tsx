@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-white">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-background">
       {/* Abstract Background Ornaments */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-soft-blue blur-[120px] rounded-full opacity-60"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-soft-purple blur-[120px] rounded-full opacity-60"></div>
@@ -77,7 +77,7 @@ const LoginPage: React.FC = () => {
       
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         <div className="text-center mb-8 flex flex-col items-center">
-            <div className="p-4 bg-white/80 backdrop-blur-md rounded-[2rem] shadow-xl border border-white/40 mb-4 animate-float">
+            <div className="p-4 bg-card/80 backdrop-blur-md rounded-[2rem] shadow-xl border border-border/40 mb-4 animate-float">
                <GraduationCap className="h-12 w-12 text-primary" />
             </div>
             <h1 className="text-4xl font-semibold tracking-tighter text-foreground">
@@ -86,7 +86,7 @@ const LoginPage: React.FC = () => {
             <p className="text-muted-foreground font-medium mt-2">L'excellence au service de votre enseignement.</p>
         </div>
 
-        <Card className="apple-card border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-2xl">
+        <Card className="apple-card border-none shadow-2xl overflow-hidden bg-card/80 backdrop-blur-2xl">
           <div className="h-2 w-full bg-gradient-to-r from-primary via-info to-primary"></div>
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-2xl font-semibold tracking-tight">
@@ -113,7 +113,7 @@ const LoginPage: React.FC = () => {
                           onChange={(e) => setFirstName(e.target.value)}
                           required={!isLogin}
                           disabled={isLoading}
-                          className="h-12 pl-10 rounded-xl bg-secondary/30 border-none focus:bg-white transition-all transition-duration-300"
+                          className="h-12 pl-10 rounded-xl bg-secondary/30 border-none focus:bg-card transition-all transition-duration-300"
                         />
                     </div>
                   </div>
@@ -126,7 +126,7 @@ const LoginPage: React.FC = () => {
                       onChange={(e) => setLastName(e.target.value)}
                       required={!isLogin}
                       disabled={isLoading}
-                      className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-white transition-all transition-duration-300"
+                      className="h-12 rounded-xl bg-secondary/30 border-none focus:bg-card transition-all transition-duration-300"
                     />
                   </div>
                 </div>
@@ -144,7 +144,7 @@ const LoginPage: React.FC = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-12 pl-10 rounded-xl bg-secondary/30 border-none focus:bg-white transition-all transition-duration-300"
+                      className="h-12 pl-10 rounded-xl bg-secondary/30 border-none focus:bg-card transition-all transition-duration-300"
                     />
                 </div>
               </div>
@@ -167,7 +167,7 @@ const LoginPage: React.FC = () => {
                       required
                       minLength={4}
                       disabled={isLoading}
-                      className="h-12 pl-10 rounded-xl bg-secondary/30 border-none focus:bg-white transition-all transition-duration-300"
+                      className="h-12 pl-10 rounded-xl bg-secondary/30 border-none focus:bg-card transition-all transition-duration-300"
                     />
                 </div>
               </div>

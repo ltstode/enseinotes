@@ -41,7 +41,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
   const activePeriod = periods.find(p => p.status === 'active');
 
   return (
-    <Card className="group overflow-hidden border-none shadow-soft hover:shadow-xl transition-all duration-500 rounded-3xl bg-white">
+    <Card className="group overflow-hidden border-none shadow-soft hover:shadow-xl transition-all duration-500 rounded-3xl bg-card">
       {/* Decorative top bar */}
       <div className="h-2 w-full bg-gradient-to-r from-primary/40 via-primary to-info/40 group-hover:via-info transition-all duration-500"></div>
       
@@ -83,7 +83,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 rounded-2xl bg-secondary/20 border border-secondary-foreground/5 space-y-1 group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+          <div className="p-4 rounded-2xl bg-secondary/20 border border-secondary-foreground/5 space-y-1 group-hover:bg-card group-hover:shadow-sm transition-all duration-300">
             <div className="flex items-center justify-between">
               <Users size={16} className="text-muted-foreground" />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Effectif</span>
@@ -92,7 +92,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
             <p className="text-[10px] text-muted-foreground">élèves inscrits</p>
           </div>
           
-          <div className="p-4 rounded-2xl bg-secondary/20 border border-secondary-foreground/5 space-y-1 group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+          <div className="p-4 rounded-2xl bg-secondary/20 border border-secondary-foreground/5 space-y-1 group-hover:bg-card group-hover:shadow-sm transition-all duration-300">
             <div className="flex items-center justify-between">
               <ClipboardList size={16} className="text-muted-foreground" />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Évals</span>

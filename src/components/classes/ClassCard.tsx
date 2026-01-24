@@ -56,7 +56,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
 
   return (
     <>
-      <div className="apple-card group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 overflow-hidden flex flex-col h-full border border-white/40 bg-white/70 backdrop-blur-md">
+      <div className="apple-card group hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 overflow-hidden flex flex-col h-full border border-border/40 bg-card/70 backdrop-blur-md">
         {/* Top Decorative Bar */}
         <div className="h-2 w-full bg-gradient-to-r from-soft-purple to-soft-blue"></div>
         
@@ -72,7 +72,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="h-10 text-lg font-semibold rounded-xl bg-white border-primary/20"
+                      className="h-10 text-lg font-semibold rounded-xl bg-card border-primary/20"
                       autoFocus
                     />
                     <Button variant="ghost" size="icon" onClick={handleSaveEdit} className="h-10 w-10 hover:bg-soft-green text-soft-green-foreground">
@@ -129,7 +129,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
                 {classRoom.students.slice(0, 4).map((student) => (
                   <div
                     key={student.id}
-                    className="px-3 py-1.5 rounded-xl bg-white/60 text-[10px] font-medium text-foreground border border-white/40 shadow-sm"
+                    className="px-3 py-1.5 rounded-xl bg-card/60 text-[10px] font-medium text-foreground border border-border/40 shadow-sm"
                   >
                     {student.lastName}
                   </div>

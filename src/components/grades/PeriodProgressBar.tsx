@@ -84,7 +84,7 @@ const PeriodProgressBar: React.FC<PeriodProgressBarProps> = ({ period, evaluatio
           "flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all",
           stats.devoirsComplete 
             ? "bg-success/10 text-success border border-success/20" 
-            : "bg-soft-pink/30 text-soft-pink-foreground border border-soft-pink-foreground/10"
+            : "bg-soft-pink/30 text-foreground border border-border/10"
         )}>
           <FileText size={14} />
           <span>Devoirs</span>
@@ -98,7 +98,7 @@ const PeriodProgressBar: React.FC<PeriodProgressBarProps> = ({ period, evaluatio
           "flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all",
           stats.interrosComplete 
             ? "bg-success/10 text-success border border-success/20" 
-            : "bg-soft-blue/30 text-soft-blue-foreground border border-soft-blue-foreground/10"
+            : "bg-soft-blue/30 text-foreground border border-border/10"
         )}>
           <HelpCircle size={14} />
           <span>Interros</span>

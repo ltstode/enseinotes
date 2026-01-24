@@ -110,6 +110,30 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-semibold tracking-tight;
   }
+
+  /* Reduced motion override */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* UI Density - Comfortable (default) */
+  .density-comfortable {
+    --density-padding: 1.5rem;
+    --density-gap: 1.5rem;
+    --density-cell-py: 1rem;
+  }
+
+  /* UI Density - Compact */
+  .density-compact {
+    --density-padding: 0.75rem;
+    --density-gap: 0.75rem;
+    --density-cell-py: 0.5rem;
+  }
 }
 
 @layer components {

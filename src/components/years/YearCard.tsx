@@ -33,8 +33,8 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
     <div className={cn(
       "apple-card p-6 border transition-all duration-500 hover:-translate-y-1.5 flex flex-col justify-between h-full",
       isActive 
-        ? "border-primary/50 bg-white ring-4 ring-primary/5 shadow-2xl shadow-primary/10" 
-        : "border-white/40 bg-white/70 backdrop-blur-md"
+        ? "border-primary/50 bg-card ring-4 ring-primary/5 shadow-2xl shadow-primary/10" 
+        : "border-border/40 bg-card/70 backdrop-blur-md"
     )}>
       <div>
         <div className="flex items-start justify-between mb-6">
@@ -77,7 +77,7 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
           <Button 
             variant="ghost" 
             onClick={handleActivate} 
-            className="flex-1 rounded-xl h-11 font-medium hover:bg-white hover:shadow-sm"
+            className="flex-1 rounded-xl h-11 font-medium hover:bg-card hover:shadow-sm"
           >
             Activer
           </Button>
