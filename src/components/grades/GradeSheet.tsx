@@ -383,7 +383,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               onKeyDown={(e) => handleKeyDown(e, student.id, evaluation.id)}
               className={cn(
                 "w-14 h-9 mx-auto border-none text-center text-xs font-bold rounded-lg transition-all",
-                isInvalid ? "bg-soft-pink text-soft-pink-foreground" : "bg-secondary/30 focus:bg-white"
+                isInvalid ? "bg-soft-pink text-soft-pink-foreground" : "bg-secondary/30 focus:bg-card"
               )}
             />
           ) : isEditing && !alreadyModified ? (
@@ -414,7 +414,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   };
 
   if (students.length === 0) return (
-    <div className="apple-card p-12 text-center bg-white/50 backdrop-blur-md border border-white/40">
+    <div className="apple-card p-12 text-center bg-card/50 backdrop-blur-md border border-border/40">
       <AlertCircle className="mx-auto text-primary mb-4" size={48} />
       <h3 className="text-xl font-semibold mb-2">Classe vide</h3>
       <p className="text-muted-foreground mb-6">Ajoutez des élèves à la classe {unit.classRoomId} pour commencer.</p>
@@ -435,7 +435,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary transition-colors hover:bg-white/50" 
+                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary transition-colors hover:bg-card/50" 
                 onClick={() => setShowEditUnitDialog(true)}
               >
                 <Settings size={16} />
@@ -453,7 +453,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           <Button 
             variant="outline"
             onClick={() => setShowStatistics(!showStatistics)} 
-            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-white/80"
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-card/80"
           >
             <BarChart3 size={18} />
             {showStatistics ? 'Masquer stats' : 'Statistiques'}
@@ -462,7 +462,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
             variant="outline"
             onClick={handleExportPDF}
             disabled={filteredEvaluations.length === 0}
-            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-white/80"
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-card/80"
           >
             <Download size={18} /> Bulletins PDF
           </Button>
@@ -475,7 +475,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               <Save size={18} /> Enregistrer
             </Button>
           )}
-          <Button onClick={() => setShowEvalDialog(true)} className="h-11 px-6 rounded-2xl bg-white text-foreground border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium">
+          <Button onClick={() => setShowEvalDialog(true)} className="h-11 px-6 rounded-2xl bg-card text-foreground border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium">
             <Plus size={18} /> Nouvelle Éval
           </Button>
         </div>
@@ -515,7 +515,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
       {/* Period Selection / Glass Container */}
       <div className="glass-card rounded-[2.5rem] p-2">
         <div className="flex flex-col gap-2 p-1">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/20">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/20">
             <div className="flex items-center gap-4">
               <Timer size={18} className="text-primary" />
               <div className="flex gap-2">
@@ -525,7 +525,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                     onClick={() => setActivePeriod(p.id)}
                     className={cn(
                       "px-5 py-2 rounded-xl text-xs font-medium transition-all duration-300 relative flex items-center gap-2",
-                      activePeriod === p.id ? "bg-white text-primary shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-white/40"
+                      activePeriod === p.id ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-card/40"
                     )}
                   >
                     {p.status === 'completed' && <Check size={12} className="text-success" />}

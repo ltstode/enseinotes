@@ -30,7 +30,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon, trend
   };
 
   return (
-    <div className="p-5 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/40 shadow-sm hover:shadow-md transition-all">
+    <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-all">
       <div className="flex items-start justify-between">
         <div className={cn("p-3 rounded-xl", colorClasses[color])}>
           {icon}
@@ -144,7 +144,7 @@ const ClassStatistics: React.FC<ClassStatisticsProps> = ({
 
   if (!statistics) {
     return (
-      <div className="p-8 text-center bg-white/50 rounded-2xl border border-white/40">
+      <div className="p-8 text-center bg-card/50 rounded-2xl border border-border/40">
         <Target className="mx-auto text-muted-foreground mb-3" size={32} />
         <p className="text-sm font-medium text-muted-foreground">
           Aucune note disponible pour calculer les statistiques.
@@ -207,7 +207,7 @@ const ClassStatistics: React.FC<ClassStatisticsProps> = ({
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Histogram */}
-        <Card className="border-none shadow-sm bg-white/60 backdrop-blur-sm">
+        <Card className="border-none shadow-sm bg-card/60 backdrop-blur-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Distribution des notes</CardTitle>
           </CardHeader>
@@ -237,7 +237,7 @@ const ClassStatistics: React.FC<ClassStatisticsProps> = ({
         </Card>
 
         {/* Pie Chart */}
-        <Card className="border-none shadow-sm bg-white/60 backdrop-blur-sm">
+        <Card className="border-none shadow-sm bg-card/60 backdrop-blur-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Répartition par niveau</CardTitle>
           </CardHeader>
@@ -286,7 +286,7 @@ const ClassStatistics: React.FC<ClassStatisticsProps> = ({
           </div>
           <div className="space-y-2">
             {statistics.topStudents.map((student, idx) => (
-              <div key={student.id} className="flex items-center justify-between p-2 rounded-xl bg-white/50">
+              <div key={student.id} className="flex items-center justify-between p-2 rounded-xl bg-card/50">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-soft-green text-soft-green-foreground text-xs font-bold flex items-center justify-center">
                     {idx + 1}
@@ -307,7 +307,7 @@ const ClassStatistics: React.FC<ClassStatisticsProps> = ({
           </div>
           <div className="space-y-2">
             {statistics.bottomStudents.map((student) => (
-              <div key={student.id} className="flex items-center justify-between p-2 rounded-xl bg-white/50">
+              <div key={student.id} className="flex items-center justify-between p-2 rounded-xl bg-card/50">
                 <span className="text-xs font-medium truncate max-w-40">{student.name}</span>
                 <span className={cn(
                   "text-xs font-bold",

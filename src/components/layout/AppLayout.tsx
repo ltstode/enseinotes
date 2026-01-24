@@ -170,7 +170,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </nav>
 
           {/* User & Toggle Section */}
-          <div className="p-4 border-t border-white/20">
+          <div className="p-4 border-t border-border/20">
             <Button
               variant="ghost"
               size="sm"

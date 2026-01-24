@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
+import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
 import Index from "./pages/Index";
 import YearsPage from "./pages/YearsPage";
 import ClassesPage from "./pages/ClassesPage";
@@ -140,13 +141,15 @@ const AppWithAuth = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="enseinotes-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <AppWithAuth />
-        </AuthProvider>
-      </TooltipProvider>
+      <UserPreferencesProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <AppWithAuth />
+          </AuthProvider>
+        </TooltipProvider>
+      </UserPreferencesProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

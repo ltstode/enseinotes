@@ -265,7 +265,7 @@ const StudentsPage: React.FC = () => {
                   "px-5 py-2 rounded-xl text-xs font-medium transition-all duration-300 shrink-0",
                   selectedClassId === c.id 
                     ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                    : "bg-white/50 text-muted-foreground hover:bg-white hover:text-foreground shadow-sm"
+                    : "bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground shadow-sm"
                 )}
               >
                 {c.name}
@@ -288,11 +288,11 @@ const StudentsPage: React.FC = () => {
                   placeholder="Rechercher un élève par nom ou prénom..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-11 h-12 rounded-2xl bg-white border-none shadow-sm group-focus-within:shadow-md transition-all font-medium"
+                  className="pl-11 h-12 rounded-2xl bg-card border-none shadow-sm group-focus-within:shadow-md transition-all font-medium"
                 />
               </div>
               
-              <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-white/50 border border-white/20 shadow-sm">
+              <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-card/50 border border-border/20 shadow-sm">
                 <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer select-none">
                   <Checkbox
                     checked={showArchived}
@@ -321,11 +321,11 @@ const StudentsPage: React.FC = () => {
             </div>
 
             {/* Students Table - Clean Apple Style */}
-            <div className="apple-card flex-1 min-h-0 flex flex-col overflow-hidden border border-white/40">
+            <div className="apple-card flex-1 min-h-0 flex flex-col overflow-hidden border border-border/40">
               <div className="flex-1 overflow-y-auto compact-scrollbar">
                 {filteredStudents.length > 0 ? (
                   <table className="w-full border-separate border-spacing-0">
-                    <thead className="sticky top-0 bg-white/95 backdrop-blur-md z-20">
+                    <thead className="sticky top-0 bg-card/95 backdrop-blur-md z-20">
                       <tr className="border-b border-muted/50">
                         <th className="px-6 py-4 text-left w-12">
                           <Checkbox
