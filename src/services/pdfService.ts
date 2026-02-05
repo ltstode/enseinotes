@@ -241,7 +241,8 @@ export const generateClassBulletins = (
   context: ReportContext,
   calculateTypeAverage: (studentId: string, evals: Evaluation[]) => number | null,
   calculateFinalAverage: (studentId: string) => number | null,
-  studentRankings: Record<string, number | null>
+  studentRankings: Record<string, number | null>,
+  customAppreciations?: Record<string, string>
 ): void => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const interros = evaluations.filter(e => e.type === 'interro');
@@ -273,7 +274,8 @@ export const generateClassBulletins = (
       moyInterros: calculateTypeAverage(student.id, interros),
       moyDevoirs: calculateTypeAverage(student.id, devoirs),
       moyFinale: calculateFinalAverage(student.id),
-      classAverage
+      classAverage,
+      appreciation: customAppreciations?.[student.id]
     };
 
     // Copy content from single bulletin to multi-page doc
