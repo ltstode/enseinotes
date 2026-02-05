@@ -327,16 +327,16 @@ const StudentsPage: React.FC = () => {
                   <table className="w-full border-separate border-spacing-0">
                     <thead className="sticky top-0 bg-card/95 backdrop-blur-md z-20">
                       <tr className="border-b border-muted/50">
-                        <th className="px-6 py-4 text-left w-12">
+                        <th className="px-6 text-left w-12" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>
                           <Checkbox
                             checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
                             onCheckedChange={toggleSelectAll}
                             className="rounded-md"
                           />
                         </th>
-                        <th className="px-6 py-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-left">Nom de l'élève</th>
-                        <th className="px-6 py-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-center w-32">Statut</th>
-                        <th className="px-6 py-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-center w-32">Actions</th>
+                        <th className="px-6 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-left" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>Nom de l'élève</th>
+                        <th className="px-6 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-center w-32" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>Statut</th>
+                        <th className="px-6 text-[10px] font-medium uppercase tracking-widest text-muted-foreground text-center w-32" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-muted/30">
@@ -345,14 +345,14 @@ const StudentsPage: React.FC = () => {
                           key={student.id}
                           className="group hover:bg-primary/5 transition-colors duration-200"
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-6" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>
                             <Checkbox
                               checked={selectedStudents.has(student.id)}
                               onCheckedChange={() => toggleStudentSelection(student.id)}
                               className="rounded-md"
                             />
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>
                             {editingStudent?.id === student.id ? (
                               <div className="flex items-center gap-2 animate-fade-in">
                                 <Input
@@ -386,7 +386,7 @@ const StudentsPage: React.FC = () => {
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-6 text-center" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>
                             <div className={cn(
                               "inline-flex px-3 py-1 rounded-full text-[10px] font-medium uppercase",
                               student.status === 'active' ? "bg-soft-green text-soft-green-foreground" : "bg-muted/10 text-muted-foreground"
@@ -394,7 +394,7 @@ const StudentsPage: React.FC = () => {
                               {student.status === 'active' ? 'Actif' : 'Archivé'}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>
                             <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button 
                                 size="icon" 

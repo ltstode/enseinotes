@@ -45,6 +45,7 @@ import PeriodProgressBar from './PeriodProgressBar';
 import ClassStatistics from './ClassStatistics';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { generateClassBulletins } from '@/services/pdfService';
+import BulletinPreviewDialog from './BulletinPreviewDialog';
 import { cn } from '@/lib/utils';
 
 interface GradeSheetProps {
@@ -78,6 +79,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   const { toast } = useToast();
   
   const [showStatistics, setShowStatistics] = useState(false);
+  const [showBulletinPreview, setShowBulletinPreview] = useState(false);
   
   const students = useMemo(() => {
     return getStudentsByClass(unit.classRoomId)
@@ -286,29 +288,9 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
       return;
     }
 
-    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Enseignant';
-
-    generateClassBulletins(
-      students,
-      filteredEvaluations,
-      grades,
-      {
-        unit,
-        classroom,
-        schoolYear,
-        period,
-        teacherName
-      },
-      calculateTypeAverage,
-      calculateFinalAverage,
-      studentRankings
-    );
-
-    toast({ 
-      title: 'Bulletins générés 📄', 
-      description: `${students.length} bulletins exportés en PDF.` 
-    });
-  }, [periods, activePeriod, classRooms, schoolYears, unit, teacher, students, filteredEvaluations, grades, calculateTypeAverage, calculateFinalAverage, studentRankings, toast]);
+    // Open the preview dialog instead of directly exporting
+    setShowBulletinPreview(true);
+  }, [periods, activePeriod, classRooms, schoolYears, unit, toast]);
 
   const handleModifyGrade = useCallback((studentId: string, evaluationId: string, newValue: string) => {
     const existingGrade = getGrade(studentId, evaluationId);
@@ -570,26 +552,26 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                 )}
               </div>
             ) : (
-              <table className="w-full border-separate border-spacing-y-2 border-spacing-x-0">
+              <table className="w-full border-separate border-spacing-x-0" style={{ borderSpacing: '0 var(--density-gap, 0.5rem)' }}>
                 <thead>
                   <tr className="text-left">
-                    <th className="px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center">Rang</th>
-                    <th className="px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 glass-card border-none z-10 w-48">Étudiant</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Rang</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 glass-card border-none z-10 w-48" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Étudiant</th>
                     {interros.map(e => (
-                      <th key={e.id} className="px-1 py-2 text-center">
+                      <th key={e.id} className="px-1 text-center" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>
                         <div className="text-[10px] font-medium uppercase text-soft-blue-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center text-[10px] font-medium text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl">Moy. Int</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Moy. Int</th>
                     {devoirs.map(e => (
-                      <th key={e.id} className="px-1 py-2 text-center">
+                      <th key={e.id} className="px-1 text-center" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>
                         <div className="text-[10px] font-medium uppercase text-soft-pink-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center text-[10px] font-medium text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl">Moy. Dev</th>
-                    <th className="px-6 py-2 text-center text-[10px] font-medium uppercase text-primary">Moyenne Finale</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Moy. Dev</th>
+                    <th className="px-6 text-center text-[10px] font-medium uppercase text-primary" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Moyenne Finale</th>
                   </tr>
                 </thead>
                 <tbody className="before:block before:h-2">
@@ -655,6 +637,35 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
       <CreateEvaluationDialog open={showEvalDialog} onOpenChange={setShowEvalDialog} unitId={unit.id} preselectedPeriodId={activePeriod} />
       <CreatePeriodDialog open={showPeriodDialog} onOpenChange={setShowPeriodDialog} unitId={unit.id} periodSystem={unit.periodSystem || 'semester'} />
       <EditUnitDialog unit={unit} open={showEditUnitDialog} onOpenChange={setShowEditUnitDialog} onDeleted={() => navigate('/units')} />
+
+      {/* Bulletin Preview Dialog */}
+      {(() => {
+        const period = periods.find(p => p.id === activePeriod);
+        const classroom = classRooms.find(c => c.id === unit.classRoomId);
+        const schoolYear = schoolYears.find(y => y.id === unit.schoolYearId);
+        const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Enseignant';
+        
+        if (period && classroom && schoolYear) {
+          return (
+            <BulletinPreviewDialog
+              open={showBulletinPreview}
+              onOpenChange={setShowBulletinPreview}
+              students={students}
+              evaluations={filteredEvaluations}
+              grades={grades}
+              unit={unit}
+              classroom={classroom}
+              schoolYear={schoolYear}
+              period={period}
+              teacherName={teacherName}
+              calculateTypeAverage={calculateTypeAverage}
+              calculateFinalAverage={calculateFinalAverage}
+              studentRankings={studentRankings}
+            />
+          );
+        }
+        return null;
+      })()}
 
       <Dialog open={showModifyDialog} onOpenChange={setShowModifyDialog}>
         <DialogContent className="rounded-3xl border-none shadow-2xl overflow-hidden">

@@ -17,11 +17,14 @@ import {
   Search,
   ChevronRight,
   Moon,
-  Sun
+  Sun,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePeriodNotifications } from '@/hooks/usePeriodNotifications';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -95,6 +98,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { schoolYears, activeYearId, syncStatus } = useApp();
   const { teacher, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { notifications, hasNotifications, urgentCount, totalCount } = usePeriodNotifications();
   const activeYear = schoolYears.find(y => y.id === activeYearId);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -279,10 +283,64 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <Moon size={20} className="text-muted-foreground" />
                 )}
               </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl relative hover:bg-card">
-                <Bell size={20} className="text-muted-foreground" />
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-destructive border-2 border-card"></span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl relative hover:bg-card">
+                    <Bell size={20} className="text-muted-foreground" />
+                    {hasNotifications && (
+                      <span className={cn(
+                        "absolute top-2 right-2 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center border-2 border-card",
+                        urgentCount > 0 ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
+                      )}>
+                        {totalCount}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 rounded-2xl border-none shadow-2xl p-2">
+                  <div className="px-3 py-2 border-b border-border/20 mb-2">
+                    <p className="text-xs font-medium text-foreground">Rappels de période</p>
+                    <p className="text-[10px] text-muted-foreground">Périodes proches de leur fin</p>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="px-3 py-6 text-center">
+                      <Clock size={24} className="mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="text-xs text-muted-foreground">Aucune période à clôturer prochainement</p>
+                    </div>
+                  ) : (
+                    notifications.map(notif => (
+                      <DropdownMenuItem 
+                        key={notif.periodId} 
+                        className="rounded-xl p-3 cursor-pointer focus:bg-muted/50"
+                        onClick={() => navigate(`/grades?unit=${notif.unitId}`)}
+                      >
+                        <div className="flex items-start gap-3 w-full">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                            notif.daysRemaining <= 3 ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                          )}>
+                            {notif.daysRemaining <= 3 ? <AlertTriangle size={14} /> : <Clock size={14} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{notif.unitName}</p>
+                            <p className="text-[10px] text-muted-foreground">{notif.periodName}</p>
+                            <p className={cn(
+                              "text-[10px] font-medium mt-1",
+                              notif.daysRemaining <= 3 ? "text-destructive" : "text-primary"
+                            )}>
+                              {notif.daysRemaining === 0 
+                                ? "Fin aujourd'hui !" 
+                                : notif.daysRemaining === 1 
+                                  ? "Fin demain" 
+                                  : `${notif.daysRemaining} jours restants`}
+                            </p>
+                          </div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 
