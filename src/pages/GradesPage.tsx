@@ -38,7 +38,7 @@ const GradesPage: React.FC = () => {
             </h1>
             <p className="text-muted-foreground mt-2">
               {activeYear 
-                ? `Année scolaire ${activeYear.name}`
+                ? 'Gérez les évaluations et notes de vos élèves.'
                 : 'Sélectionnez une année scolaire'
               }
             </p>

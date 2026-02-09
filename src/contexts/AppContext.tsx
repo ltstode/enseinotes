@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode, useCallback } from 'react';
-import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData, Period } from '@/types/enseinotes';
+import { SchoolYear, ClassRoom, PedagogicalUnit, Evaluation, Grade, Student, TeacherData, Period, CustomCalendarEvent } from '@/types/enseinotes';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ... (rest of the interface definitions and helper functions remain same)
@@ -14,6 +14,7 @@ interface AppState {
   periods: Period[];
   evaluations: Evaluation[];
   grades: Grade[];
+  customEvents: CustomCalendarEvent[];
   activeYearId: string | null;
 }
 
@@ -54,6 +55,9 @@ interface AppContextType extends AppState {
   isUnitSaved: (unitId: string) => boolean;
   exportData: () => string;
   importData: (jsonData: string) => { success: boolean; error?: string };
+  addCustomEvent: (event: Omit<CustomCalendarEvent, 'id' | 'createdAt'>) => void;
+  deleteCustomEvent: (eventId: string) => void;
+  customEvents: CustomCalendarEvent[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -113,6 +117,8 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
       periods: (parsed.periods || []).map((p: Period) => ({
         ...p,
         createdAt: new Date(p.createdAt),
+        startDate: p.startDate ? new Date(p.startDate) : undefined,
+        endDate: p.endDate ? new Date(p.endDate) : undefined,
         periodType: p.periodType || 'custom',
         status: p.status || 'active',
         expectedDevoirs: p.expectedDevoirs ?? 2,
@@ -131,6 +137,12 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
           modifiedAt: new Date(h.modifiedAt),
         })),
       })),
+      customEvents: (parsed.customEvents || []).map((e: CustomCalendarEvent) => ({
+        ...e,
+        date: new Date(e.date),
+        endDate: e.endDate ? new Date(e.endDate) : undefined,
+        createdAt: new Date(e.createdAt),
+      })),
     };
   } catch {
     return null;
@@ -148,6 +160,7 @@ const emptyState: AppState = {
   periods: [],
   evaluations: [],
   grades: [],
+  customEvents: [],
   activeYearId: null,
 };
 
@@ -173,6 +186,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       periods: state.periods,
       evaluations: state.evaluations,
       grades: state.grades,
+      customEvents: state.customEvents,
       activeYearId: state.activeYearId,
       savedUnits: Array.from(savedUnits),
     };
@@ -205,6 +219,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           periods: data.periods || [],
           evaluations: data.evaluations,
           grades: data.grades,
+          customEvents: data.customEvents || [],
           activeYearId: data.activeYearId,
         });
         setSavedUnits(new Set(data.savedUnits || []));
@@ -651,6 +666,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const isUnitSaved = useCallback((unitId: string) => savedUnits.has(unitId), [savedUnits]);
 
+  const addCustomEvent = useCallback((event: Omit<CustomCalendarEvent, 'id' | 'createdAt'>) => {
+    const newEvent: CustomCalendarEvent = {
+      ...event,
+      id: generateId(),
+      createdAt: new Date(),
+    };
+    setState(prev => ({
+      ...prev,
+      customEvents: [...prev.customEvents, newEvent],
+    }));
+  }, []);
+
+  const deleteCustomEvent = useCallback((eventId: string) => {
+    setState(prev => ({
+      ...prev,
+      customEvents: prev.customEvents.filter(e => e.id !== eventId),
+    }));
+  }, []);
+
   const exportData = useCallback((): string => {
     const data: TeacherData = {
       schoolYears: state.schoolYears,
@@ -659,6 +693,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       periods: state.periods,
       evaluations: state.evaluations,
       grades: state.grades,
+      customEvents: state.customEvents,
       activeYearId: state.activeYearId,
       savedUnits: Array.from(savedUnits),
     };
@@ -693,6 +728,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         periods: (parsed.periods || []).map((p: Period) => ({
           ...p,
           createdAt: new Date(p.createdAt),
+          startDate: p.startDate ? new Date(p.startDate) : undefined,
+          endDate: p.endDate ? new Date(p.endDate) : undefined,
           periodType: p.periodType || 'custom',
           expectedDevoirs: p.expectedDevoirs ?? 2,
           expectedInterros: p.expectedInterros ?? 3,
@@ -710,6 +747,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             modifiedAt: new Date(h.modifiedAt),
           })),
         })),
+        customEvents: (parsed.customEvents || []).map((e: CustomCalendarEvent) => ({
+          ...e,
+          date: new Date(e.date),
+          endDate: e.endDate ? new Date(e.endDate) : undefined,
+          createdAt: new Date(e.createdAt),
+        })),
         activeYearId: parsed.activeYearId,
         savedUnits: parsed.savedUnits || [],
       };
@@ -721,6 +764,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         periods: data.periods,
         evaluations: data.evaluations,
         grades: data.grades,
+        customEvents: data.customEvents || [],
         activeYearId: data.activeYearId,
       });
       setSavedUnits(new Set(data.savedUnits));
@@ -772,6 +816,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isUnitSaved,
         exportData,
         importData,
+        addCustomEvent,
+        deleteCustomEvent,
       }}
     >
       {children}
