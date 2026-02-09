@@ -11,12 +11,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor, Zap, Minimize2, Maximize2 } from 'lucide-react';
+import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor, Zap, Minimize2, Maximize2, PanelLeftClose } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { teacher, updateProfile, updatePassword } = useAuth();
   const { exportData, importData } = useApp();
-  const { reducedMotion, setReducedMotion, uiDensity, setUIDensity } = useUserPreferences();
+  const { reducedMotion, setReducedMotion, uiDensity, setUIDensity, collapsedSidebar, setCollapsedSidebar } = useUserPreferences();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
@@ -327,6 +327,26 @@ const SettingsPage: React.FC = () => {
                 id="reduced-motion"
                 checked={reducedMotion}
                 onCheckedChange={setReducedMotion}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Collapsed Sidebar */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="collapsed-sidebar" className="flex items-center gap-2">
+                  <PanelLeftClose size={16} />
+                  Réduire la sidebar
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Réduit la barre latérale pour gagner de l'espace
+                </p>
+              </div>
+              <Switch
+                id="collapsed-sidebar"
+                checked={collapsedSidebar}
+                onCheckedChange={setCollapsedSidebar}
               />
             </div>
 

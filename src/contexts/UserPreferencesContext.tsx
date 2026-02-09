@@ -5,11 +5,13 @@ export type UIDensity = 'compact' | 'comfortable';
 interface UserPreferences {
   reducedMotion: boolean;
   uiDensity: UIDensity;
+  collapsedSidebar: boolean;
 }
 
 interface UserPreferencesContextType extends UserPreferences {
   setReducedMotion: (value: boolean) => void;
   setUIDensity: (value: UIDensity) => void;
+  setCollapsedSidebar: (value: boolean) => void;
 }
 
 const STORAGE_KEY = 'enseinotes-user-preferences';
@@ -17,6 +19,7 @@ const STORAGE_KEY = 'enseinotes-user-preferences';
 const defaultPreferences: UserPreferences = {
   reducedMotion: false,
   uiDensity: 'comfortable',
+  collapsedSidebar: false,
 };
 
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined);
@@ -85,12 +88,17 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     setPreferences(prev => ({ ...prev, uiDensity: value }));
   };
 
+  const setCollapsedSidebar = (value: boolean) => {
+    setPreferences(prev => ({ ...prev, collapsedSidebar: value }));
+  };
+
   return (
     <UserPreferencesContext.Provider
       value={{
         ...preferences,
         setReducedMotion,
         setUIDensity,
+        setCollapsedSidebar,
       }}
     >
       {children}

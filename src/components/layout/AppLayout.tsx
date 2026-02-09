@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { 
@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { usePeriodNotifications } from '@/hooks/usePeriodNotifications';
 import { Button } from '@/components/ui/button';
 import {
@@ -97,9 +98,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { schoolYears, activeYearId, syncStatus } = useApp();
   const { teacher, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { collapsedSidebar, setCollapsedSidebar } = useUserPreferences();
   const { notifications, hasNotifications, urgentCount, totalCount } = usePeriodNotifications();
   const activeYear = schoolYears.find(y => y.id === activeYearId);
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const syncLabel =
     syncStatus.state === 'saving'
@@ -141,7 +142,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Sidebar */}
         <aside className={cn(
           "h-screen glass-sidebar flex flex-col transition-all duration-500 ease-in-out z-30 bg-card/40",
-          isCollapsed ? "w-[80px]" : "w-[260px]"
+          collapsedSidebar ? "w-[80px]" : "w-[260px]"
         )}>
           {/* Logo Section */}
           <div className="p-6">
@@ -149,7 +150,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
                 <GraduationCap className="text-white" size={24} />
               </div>
-              {!isCollapsed && (
+              {!collapsedSidebar && (
                 <div className="animate-fade-in">
                   <h1 className="font-display text-xl font-semibold tracking-tight text-foreground leading-none">EnseiNotes</h1>
                   <p className="text-[10px] uppercase tracking-wide text-primary font-medium mt-1">Smart Management</p>
@@ -160,7 +161,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-2 space-y-2 overflow-y-auto compact-scrollbar">
-            <div className={cn("px-3 mb-4 transition-opacity duration-300", isCollapsed ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+            <div className={cn("px-3 mb-4 transition-opacity duration-300", collapsedSidebar ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
               <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Menu Principal</p>
             </div>
             {navItems.map(item => (
@@ -168,7 +169,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 key={item.to}
                 {...item}
                 isActive={location.pathname === item.to}
-                isCollapsed={isCollapsed}
+                isCollapsed={collapsedSidebar}
               />
             ))}
           </nav>
@@ -178,10 +179,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className={cn("w-full h-10 rounded-xl hover:bg-card/50 transition-colors mb-4", isCollapsed && "px-0 justify-center")}
+              onClick={() => setCollapsedSidebar(!collapsedSidebar)}
+              className={cn("w-full h-10 rounded-xl hover:bg-card/50 transition-colors mb-4", collapsedSidebar && "px-0 justify-center")}
             >
-              {isCollapsed ? <PanelLeft size={18} /> : (
+              {collapsedSidebar ? <PanelLeft size={18} /> : (
                 <div className="flex items-center gap-2">
                   <PanelLeftClose size={18} />
                    <span className="text-xs font-medium">Réduire le menu</span>
@@ -193,14 +194,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <DropdownMenuTrigger asChild>
                 <button className={cn(
                   "w-full flex items-center gap-3 p-2 rounded-2xl bg-card/50 border border-border/20 hover:bg-card transition-all duration-300 shadow-sm",
-                  isCollapsed && "justify-center p-1.5"
+                  collapsedSidebar && "justify-center p-1.5"
                 )}>
                   <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
                     <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-xs font-medium">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  {!isCollapsed && (
+                  {!collapsedSidebar && (
                     <div className="text-left flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{teacher?.firstName} {teacher?.lastName}</p>
                       <p className="text-[10px] text-muted-foreground truncate">{teacher?.email}</p>
@@ -208,7 +209,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={isCollapsed ? "center" : "start"} side="top" className="w-[220px] rounded-2xl border-none shadow-2xl p-2">
+              <DropdownMenuContent align={collapsedSidebar ? "center" : "start"} side="top" className="w-[220px] rounded-2xl border-none shadow-2xl p-2">
                 <DropdownMenuItem className="rounded-xl p-3 focus:bg-primary/5">
                   <div className="flex flex-col">
                     <span className="text-xs font-medium">{teacher?.firstName} {teacher?.lastName}</span>
@@ -227,20 +228,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top Bar */}
-          <header className="h-[70px] flex items-center justify-between px-8 bg-card/30 backdrop-blur-md border-b border-border/20 z-20">
+          {/* Top Bar - with tint for contrast */}
+          <header className="h-[70px] flex items-center justify-between px-8 bg-card/60 backdrop-blur-xl border-b border-border/30 z-20 shadow-sm">
             <div className="flex items-center gap-6 flex-1 max-w-2xl">
               <GlobalSearchDialog />
             </div>
 
             <div className="flex items-center gap-4">
               {activeYear && (
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border/20 shadow-sm">
+                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 border border-primary/10">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></div>
                   <span className="text-xs font-medium text-foreground">{activeYear.name}</span>
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase opacity-50 px-2 py-0.5 rounded-md bg-secondary">
-                    {activeYear.mode === 'semester' ? 'Semestres' : 'Trimestres'}
-                  </span>
                 </div>
               )}
 

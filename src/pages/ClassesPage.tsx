@@ -33,7 +33,7 @@ const ClassesPage: React.FC = () => {
             </h2>
             <p className="text-muted-foreground">
               {activeYear 
-                ? `Liste des classes pour l'année ${activeYear.name}`
+                ? 'Gérez vos classes et leurs effectifs.'
                 : 'Sélectionnez une année scolaire active.'
               }
             </p>

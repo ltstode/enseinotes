@@ -56,11 +56,23 @@ export interface Period {
   pedagogicalUnitId: string;
   periodType: PeriodType;
   order: number;
-  // For semesters: fixed 2 devoirs, unlimited interros
-  // For trimesters/custom: teacher defines
   expectedDevoirs: number;
   expectedInterros: number;
-  status: 'active' | 'locked' | 'completed'; // active = can add evaluations, locked = future period, completed = past period
+  status: 'active' | 'locked' | 'completed';
+  startDate?: Date;
+  endDate?: Date;
+  createdAt: Date;
+}
+
+export type CustomEventType = 'reunion' | 'conseil' | 'formation' | 'sortie' | 'autre';
+
+export interface CustomCalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: Date;
+  endDate?: Date;
+  eventType: CustomEventType;
   createdAt: Date;
 }
 
@@ -118,6 +130,7 @@ export interface TeacherData {
   periods: Period[];
   evaluations: Evaluation[];
   grades: Grade[];
+  customEvents: CustomCalendarEvent[];
   activeYearId: string | null;
   savedUnits: string[];
 }
