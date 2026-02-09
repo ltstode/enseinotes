@@ -15,6 +15,7 @@ import UnitsPage from "./pages/UnitsPage";
 import GradesPage from "./pages/GradesPage";
 import StudentsPage from "./pages/StudentsPage";
 import SettingsPage from "./pages/SettingsPage";
+import CalendarPage from "./pages/CalendarPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -122,6 +123,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <SettingsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/calendar"
+      element={
+        <ProtectedRoute>
+          <CalendarPage />
         </ProtectedRoute>
       }
     />
