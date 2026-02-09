@@ -14,7 +14,6 @@ import {
   LogOut,
   Settings,
   Bell,
-  Search,
   ChevronRight,
   Moon,
   Sun,
@@ -40,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import GlobalSearchDialog from '@/components/search/GlobalSearchDialog';
 
 interface NavItemProps {
   to: string;
@@ -132,6 +131,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { to: '/students', icon: <UserCog />, label: 'Élèves' },
     { to: '/units', icon: <BookOpen />, label: 'Unités pédagogiques' },
     { to: '/grades', icon: <ClipboardList />, label: 'Notes' },
+    { to: '/calendar', icon: <Calendar />, label: 'Calendrier' },
     { to: '/settings', icon: <Settings />, label: 'Paramètres' },
   ];
 
@@ -230,13 +230,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {/* Top Bar */}
           <header className="h-[70px] flex items-center justify-between px-8 bg-card/30 backdrop-blur-md border-b border-border/20 z-20">
             <div className="flex items-center gap-6 flex-1 max-w-2xl">
-              <div className="relative flex-1 group">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input 
-                  placeholder="Recherche rapide..." 
-                  className="w-full h-10 pl-11 rounded-xl bg-card/50 border-none shadow-inner group-focus-within:bg-card group-focus-within:shadow-md transition-all text-sm"
-                />
-              </div>
+              <GlobalSearchDialog />
             </div>
 
             <div className="flex items-center gap-4">
