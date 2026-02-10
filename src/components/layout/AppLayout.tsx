@@ -18,7 +18,9 @@ import {
   Moon,
   Sun,
   AlertTriangle,
-  Clock
+  Clock,
+  CalendarClock,
+  TrendingDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -92,6 +94,19 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+const notifIcon = (type: string) => {
+  if (type === 'period-ending') return <Clock size={14} />;
+  if (type === 'upcoming-event') return <CalendarClock size={14} />;
+  if (type === 'low-grades') return <TrendingDown size={14} />;
+  return <Clock size={14} />;
+};
+
+const notifIconColor = (severity: string) => {
+  if (severity === 'urgent') return 'bg-destructive/10 text-destructive';
+  if (severity === 'warning') return 'bg-soft-orange/30 text-soft-orange-foreground';
+  return 'bg-primary/10 text-primary';
+};
+
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -125,6 +140,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return `${teacher.firstName.charAt(0)}${teacher.lastName.charAt(0)}`.toUpperCase();
   };
 
+  // Settings removed from sidebar nav - moved to header
   const navItems = [
     { to: '/', icon: <LayoutDashboard />, label: 'Tableau de bord' },
     { to: '/years', icon: <Calendar />, label: 'Années scolaires' },
@@ -133,7 +149,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { to: '/units', icon: <BookOpen />, label: 'Unités pédagogiques' },
     { to: '/grades', icon: <ClipboardList />, label: 'Notes' },
     { to: '/calendar', icon: <Calendar />, label: 'Calendrier' },
-    { to: '/settings', icon: <Settings />, label: 'Paramètres' },
   ];
 
   return (
@@ -228,7 +243,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top Bar - with tint for contrast */}
+          {/* Top Bar */}
           <header className="h-[70px] flex items-center justify-between px-8 bg-card/90 backdrop-blur-xl border-b border-border/60 z-20 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:bg-card/60 dark:border-border/30">
             <div className="flex items-center gap-6 flex-1 max-w-2xl">
               <GlobalSearchDialog />
@@ -275,6 +290,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <Moon size={20} className="text-muted-foreground" />
                 )}
               </Button>
+
+              {/* Settings icon - moved from sidebar */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn("w-10 h-10 rounded-xl hover:bg-card", location.pathname === '/settings' && "bg-primary/10 text-primary")}
+                    onClick={() => navigate('/settings')}
+                  >
+                    <Settings size={20} className="text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Paramètres</TooltipContent>
+              </Tooltip>
+
+              {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl relative hover:bg-card">
@@ -291,45 +323,44 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 rounded-2xl border-none shadow-2xl p-2">
                   <div className="px-3 py-2 border-b border-border/20 mb-2">
-                    <p className="text-xs font-medium text-foreground">Rappels de période</p>
-                    <p className="text-[10px] text-muted-foreground">Périodes proches de leur fin</p>
+                    <p className="text-xs font-medium text-foreground">Notifications</p>
+                    <p className="text-[10px] text-muted-foreground">Périodes, événements et alertes</p>
                   </div>
                   {notifications.length === 0 ? (
                     <div className="px-3 py-6 text-center">
                       <Clock size={24} className="mx-auto text-muted-foreground/40 mb-2" />
-                      <p className="text-xs text-muted-foreground">Aucune période à clôturer prochainement</p>
+                      <p className="text-xs text-muted-foreground">Aucune notification</p>
                     </div>
                   ) : (
-                    notifications.map(notif => (
-                      <DropdownMenuItem 
-                        key={notif.periodId} 
-                        className="rounded-xl p-3 cursor-pointer focus:bg-muted/50"
-                        onClick={() => navigate(`/grades?unit=${notif.unitId}`)}
-                      >
-                        <div className="flex items-start gap-3 w-full">
-                          <div className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                            notif.daysRemaining <= 3 ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-                          )}>
-                            {notif.daysRemaining <= 3 ? <AlertTriangle size={14} /> : <Clock size={14} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{notif.unitName}</p>
-                            <p className="text-[10px] text-muted-foreground">{notif.periodName}</p>
-                            <p className={cn(
-                              "text-[10px] font-medium mt-1",
-                              notif.daysRemaining <= 3 ? "text-destructive" : "text-primary"
+                    <div className="max-h-80 overflow-y-auto compact-scrollbar">
+                      {notifications.map(notif => (
+                        <DropdownMenuItem 
+                          key={notif.id} 
+                          className="rounded-xl p-3 cursor-pointer focus:bg-muted/50"
+                          onClick={() => notif.navigateTo && navigate(notif.navigateTo)}
+                        >
+                          <div className="flex items-start gap-3 w-full">
+                            <div className={cn(
+                              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                              notifIconColor(notif.severity)
                             )}>
-                              {notif.daysRemaining === 0 
-                                ? "Fin aujourd'hui !" 
-                                : notif.daysRemaining === 1 
-                                  ? "Fin demain" 
-                                  : `${notif.daysRemaining} jours restants`}
-                            </p>
+                              {notifIcon(notif.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{notif.title}</p>
+                              <p className={cn(
+                                "text-[10px] font-medium mt-0.5",
+                                notif.severity === 'urgent' ? "text-destructive" : 
+                                notif.severity === 'warning' ? "text-soft-orange-foreground" : 
+                                "text-muted-foreground"
+                              )}>
+                                {notif.subtitle}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>

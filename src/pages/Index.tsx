@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { differenceInDays } from 'date-fns';
 
 const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }: any) => (
   <div 
@@ -40,7 +41,6 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
         <TrendingUp size={10} />
         <span>{subValue}</span>
       </div>
-      <span className="text-[10px] font-medium opacity-50">Depuis la semaine dernière</span>
     </div>
   </div>
 );
@@ -66,11 +66,64 @@ const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
 
 const Index = () => {
   const { teacher } = useAuth();
-  const { classRooms, pedagogicalUnits, periods, grades } = useApp();
+  const { classRooms, pedagogicalUnits, evaluations, grades, periods, activeYearId } = useApp();
+  const navigate = useNavigate();
 
-  const totalStudents = classRooms.reduce((acc, cls) => acc + cls.students.length, 0);
-  const totalGrades = grades.length;
-  
+  // Real statistics computed from actual data
+  const stats = useMemo(() => {
+    const activeClasses = classRooms.filter(c => c.schoolYearId === activeYearId);
+    const totalStudents = activeClasses.reduce((acc, cls) => acc + cls.students.filter(s => s.status === 'active').length, 0);
+    const activeUnits = pedagogicalUnits.filter(u => u.schoolYearId === activeYearId);
+    const unitIds = new Set(activeUnits.map(u => u.id));
+    const activeEvals = evaluations.filter(e => unitIds.has(e.pedagogicalUnitId));
+    const activePeriods = periods.filter(p => unitIds.has(p.pedagogicalUnitId));
+    const activeGrades = grades.filter(g => activeEvals.some(e => e.id === g.evaluationId));
+
+    // Period progress
+    const totalPeriods = activePeriods.length;
+    const completedPeriods = activePeriods.filter(p => p.status === 'completed').length;
+    const periodProgress = totalPeriods > 0 ? Math.round((completedPeriods / totalPeriods) * 100) : 0;
+
+    // Current active period label
+    const currentActivePeriod = activePeriods.find(p => p.status === 'active');
+    let periodLabel = 'Aucune période active';
+    if (currentActivePeriod) {
+      if (currentActivePeriod.endDate) {
+        const daysLeft = differenceInDays(new Date(currentActivePeriod.endDate), new Date());
+        periodLabel = daysLeft > 0 ? `${daysLeft}j restants` : 'Se termine bientôt';
+      } else {
+        periodLabel = currentActivePeriod.name;
+      }
+    }
+
+    return {
+      totalStudents,
+      totalClasses: activeClasses.length,
+      totalUnits: activeUnits.length,
+      totalEvals: activeEvals.length,
+      totalGrades: activeGrades.length,
+      periodProgress,
+      periodLabel,
+      currentPeriodName: currentActivePeriod?.name || '',
+    };
+  }, [classRooms, pedagogicalUnits, evaluations, grades, periods, activeYearId]);
+
+  // Recent evaluations
+  const recentEvals = useMemo(() => {
+    const activeUnits = pedagogicalUnits.filter(u => u.schoolYearId === activeYearId);
+    const unitIds = new Set(activeUnits.map(u => u.id));
+    return evaluations
+      .filter(e => unitIds.has(e.pedagogicalUnitId))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5)
+      .map(ev => {
+        const unit = activeUnits.find(u => u.id === ev.pedagogicalUnitId);
+        const cls = classRooms.find(c => c.id === unit?.classRoomId);
+        const gradeCount = grades.filter(g => g.evaluationId === ev.id).length;
+        return { ...ev, unitName: unit?.name || '', className: cls?.name || '', gradeCount };
+      });
+  }, [evaluations, pedagogicalUnits, classRooms, grades, activeYearId]);
+
   return (
     <AppLayout>
       <div className="no-scroll-container gap-8 py-4">
@@ -84,47 +137,47 @@ const Index = () => {
             <p className="text-muted-foreground">Voici un aperçu de vos activités scolaires pour aujourd'hui.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="h-11 px-6 rounded-2xl gap-2 font-medium hover:bg-card transition-all shadow-sm">
+            <Button variant="outline" className="h-11 px-6 rounded-2xl gap-2 font-medium hover:bg-card transition-all shadow-sm" onClick={() => navigate('/calendar')}>
               <Calendar size={18} />
               Calendrier
             </Button>
-            <Button className="h-11 px-6 rounded-2xl gap-2 font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+            <Button className="h-11 px-6 rounded-2xl gap-2 font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all" onClick={() => navigate('/grades')}>
               <Plus size={18} />
               Nouvelle Note
             </Button>
           </div>
         </div>
 
-        {/* Quick Stats Grid - Top part of image */}
+        {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
             title="Total Élèves" 
-            value={totalStudents} 
-            subValue="+12" 
+            value={stats.totalStudents} 
+            subValue={`${stats.totalClasses} classe${stats.totalClasses !== 1 ? 's' : ''}`}
             icon={Users} 
             colorClass="bg-soft-blue"
             delay={0}
           />
           <StatCard 
             title="Classes Gérées" 
-            value={classRooms.length} 
-            subValue="+2" 
+            value={stats.totalClasses} 
+            subValue="Année en cours"
             icon={GraduationCap} 
             colorClass="bg-soft-purple"
             delay={100}
           />
           <StatCard 
             title="Matières (UP)" 
-            value={pedagogicalUnits.length} 
-            subValue="Actif" 
+            value={stats.totalUnits} 
+            subValue={`${stats.totalEvals} éval${stats.totalEvals !== 1 ? 's' : ''}`}
             icon={BookOpen} 
             colorClass="bg-soft-green"
             delay={200}
           />
           <StatCard 
-            title="Evaluations" 
-            value={totalGrades} 
-            subValue="+85" 
+            title="Notes saisies" 
+            value={stats.totalGrades} 
+            subValue={`${stats.totalEvals} évaluations`}
             icon={ClipboardList} 
             colorClass="bg-soft-pink"
             delay={300}
@@ -140,13 +193,13 @@ const Index = () => {
                 <Clock className="text-primary" size={18} />
                 Actions Rapides
               </h3>
-              <Button variant="link" className="text-primary font-medium hover:no-underline">Voir tout</Button>
+              <Button variant="link" className="text-primary font-medium hover:no-underline" onClick={() => navigate('/grades')}>Voir tout</Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <QuickAction 
                 title="Saisir des notes" 
-                desc="Ajoutez des évaluations S1/S2" 
+                desc="Ajoutez des évaluations" 
                 icon={Plus} 
                 to="/grades" 
                 colorClass="bg-primary"
@@ -174,7 +227,7 @@ const Index = () => {
               />
             </div>
 
-            {/* Recent Activity Table Sketch */}
+            {/* Recent Evaluations */}
             <div className="apple-card flex-1 min-h-0 flex flex-col border border-border/60 bg-card backdrop-blur-md mt-2">
               <div className="p-6 border-b border-border/20 flex items-center justify-between">
                 <h4 className="font-medium">Dernières évaluations</h4>
@@ -185,14 +238,37 @@ const Index = () => {
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto overflow-x-hidden compact-scrollbar p-1">
-                <div className="p-8 text-center space-y-4">
-                   <div className="w-20 h-20 bg-soft-blue mx-auto rounded-3xl flex items-center justify-center opacity-50">
-                     <ClipboardList size={32} className="text-primary" />
-                   </div>
-                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                     Aucun historique récent. Les dernières évaluations saisies apparaîtront ici pour un accès rapide.
-                   </p>
-                </div>
+                {recentEvals.length === 0 ? (
+                  <div className="p-8 text-center space-y-4">
+                     <div className="w-20 h-20 bg-soft-blue mx-auto rounded-3xl flex items-center justify-center opacity-50">
+                       <ClipboardList size={32} className="text-primary" />
+                     </div>
+                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                       Aucun historique récent. Les dernières évaluations saisies apparaîtront ici.
+                     </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/20">
+                    {recentEvals.map(ev => (
+                      <div key={ev.id} className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/grades?unit=${ev.pedagogicalUnitId}`)}>
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                          ev.type === 'devoir' ? 'bg-soft-purple' : 'bg-soft-blue'
+                        )}>
+                          <ClipboardList size={16} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{ev.name}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">{ev.unitName} · {ev.className}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-medium">{ev.gradeCount} note{ev.gradeCount !== 1 ? 's' : ''}</p>
+                          <p className="text-[10px] text-muted-foreground">{new Date(ev.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -213,13 +289,15 @@ const Index = () => {
                     <span className="text-xs font-medium text-white/90">Progression globale</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-semibold text-white">45%</p>
-                    <p className="text-[10px] font-medium text-white/70 uppercase tracking-wide leading-loose">Fin du 1er Semestre estimée</p>
+                    <p className="text-4xl font-semibold text-white">{stats.periodProgress}%</p>
+                    <p className="text-[10px] font-medium text-white/70 uppercase tracking-wide leading-loose">
+                      {stats.currentPeriodName ? `${stats.currentPeriodName} · ${stats.periodLabel}` : 'Aucune période active'}
+                    </p>
                   </div>
                   <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full w-[45%] bg-white rounded-full"></div>
+                    <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${stats.periodProgress}%` }}></div>
                   </div>
-                  <Button className="w-full bg-white text-primary rounded-xl font-medium hover:bg-white/90 shadow-lg">
+                  <Button className="w-full bg-white text-primary rounded-xl font-medium hover:bg-white/90 shadow-lg" onClick={() => navigate('/calendar')}>
                     Détails du Calendrier
                   </Button>
                </div>
@@ -229,7 +307,7 @@ const Index = () => {
                <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Conseils de productivité</h4>
                <div className="space-y-4">
                   {[
-                    { t: "Raccourcis clavier", d: "Appuyez sur 'N' pour ajouter une note", i: Sparkles },
+                    { t: "Raccourcis clavier", d: "Ctrl+K pour rechercher, N pour nouvelle note", i: Sparkles },
                     { t: "Suivi des moyennes", d: "L'UP calcule vos moyennes en temps réel", i: TrendingUp },
                   ].map((tip, idx) => (
                     <div key={idx} className="flex gap-4">
