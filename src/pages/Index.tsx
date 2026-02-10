@@ -48,7 +48,7 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
 const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
   <Link to={to} className="group">
     <div className={cn(
-      "p-5 rounded-[2rem] border border-border/40 bg-card/40 backdrop-blur-md flex items-center gap-5 hover:bg-card hover:shadow-xl hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
+      "p-5 rounded-[2rem] border border-border/60 bg-card backdrop-blur-md flex items-center gap-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
     )}>
       <div className={cn("p-4 rounded-2xl shadow-lg", colorClass)}>
         <Icon size={24} className="text-white" />
@@ -175,7 +175,7 @@ const Index = () => {
             </div>
 
             {/* Recent Activity Table Sketch */}
-            <div className="apple-card flex-1 min-h-0 flex flex-col border border-border/40 bg-card/20 backdrop-blur-md mt-2">
+            <div className="apple-card flex-1 min-h-0 flex flex-col border border-border/60 bg-card backdrop-blur-md mt-2">
               <div className="p-6 border-b border-border/20 flex items-center justify-between">
                 <h4 className="font-medium">Dernières évaluations</h4>
                 <div className="flex gap-2">
@@ -225,7 +225,7 @@ const Index = () => {
                </div>
             </div>
 
-            <div className="apple-card p-6 border border-border/40 bg-card shadow-sm space-y-6">
+            <div className="apple-card p-6 border border-border/60 bg-card shadow-sm space-y-6">
                <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Conseils de productivité</h4>
                <div className="space-y-4">
                   {[

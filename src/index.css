@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 230 40% 98%;
+    --background: 230 35% 96%;
     --foreground: 224 71.4% 4.1%;
 
     --card: 0 0% 100%;
@@ -15,14 +15,14 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 246 80% 60%; /* Vibrant Indigo/Azure */
+    --primary: 246 80% 60%;
     --primary-foreground: 210 20% 98%;
 
-    --secondary: 220 14.3% 95.9%;
+    --secondary: 220 14% 93%;
     --secondary-foreground: 220.9 39.3% 11%;
 
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 10% 40%;
 
     --accent: 246 80% 60%;
     --accent-foreground: 220.9 39.3% 11%;
@@ -30,27 +30,27 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    --border: 220 15% 87%;
+    --input: 220 15% 87%;
     --ring: 246 80% 60%;
 
     --radius: 1.25rem;
 
     /* Apple-like soft palettes */
-    --soft-pink: 350 100% 97%;
-    --soft-pink-foreground: 350 80% 60%;
+    --soft-pink: 350 80% 95%;
+    --soft-pink-foreground: 350 80% 45%;
     
-    --soft-blue: 210 100% 96%;
-    --soft-blue-foreground: 210 80% 55%;
+    --soft-blue: 210 80% 94%;
+    --soft-blue-foreground: 210 80% 42%;
     
-    --soft-purple: 270 100% 97%;
-    --soft-purple-foreground: 270 70% 60%;
+    --soft-purple: 270 80% 95%;
+    --soft-purple-foreground: 270 70% 50%;
     
-    --soft-green: 150 100% 96%;
-    --soft-green-foreground: 150 70% 45%;
+    --soft-green: 150 70% 93%;
+    --soft-green-foreground: 150 70% 35%;
 
-    --soft-orange: 25 100% 96%;
-    --soft-orange-foreground: 25 90% 55%;
+    --soft-orange: 25 80% 94%;
+    --soft-orange-foreground: 25 90% 45%;
   }
 
   .dark {
@@ -138,15 +138,15 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/70 backdrop-blur-xl border border-border/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+    @apply bg-card/80 backdrop-blur-xl border border-border/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:border-border/40 dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
   }
   
   .glass-sidebar {
-    @apply bg-card/40 backdrop-blur-2xl border-r border-border/20;
+    @apply bg-card/60 backdrop-blur-2xl border-r border-border/40 dark:bg-card/40 dark:border-border/20;
   }
 
   .apple-card {
-    @apply bg-card rounded-[2rem] border-none shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.4)] transition-all duration-500;
+    @apply bg-card rounded-[2rem] shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.4)] transition-all duration-500;
   }
 
   .btn-vibrant {
