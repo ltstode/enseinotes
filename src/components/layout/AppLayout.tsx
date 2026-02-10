@@ -141,7 +141,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <div className="h-screen flex bg-background overflow-hidden font-body">
         {/* Sidebar */}
         <aside className={cn(
-          "h-screen glass-sidebar flex flex-col transition-all duration-500 ease-in-out z-30 bg-card/40",
+          "h-screen glass-sidebar flex flex-col transition-all duration-500 ease-in-out z-30",
           collapsedSidebar ? "w-[80px]" : "w-[260px]"
         )}>
           {/* Logo Section */}
@@ -229,7 +229,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar - with tint for contrast */}
-          <header className="h-[70px] flex items-center justify-between px-8 bg-card/60 backdrop-blur-xl border-b border-border/30 z-20 shadow-sm">
+          <header className="h-[70px] flex items-center justify-between px-8 bg-card/90 backdrop-blur-xl border-b border-border/60 z-20 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:bg-card/60 dark:border-border/30">
             <div className="flex items-center gap-6 flex-1 max-w-2xl">
               <GlobalSearchDialog />
             </div>

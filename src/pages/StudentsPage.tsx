@@ -237,7 +237,7 @@ const StudentsPage: React.FC = () => {
           <div className="flex gap-3">
              {selectedClass && (
                <>
-                  <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-medium hover:bg-white transition-all shadow-sm">
+                  <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-medium hover:bg-secondary transition-all shadow-sm border-border">
                    <Upload size={18} />
                    Import massif
                  </Button>
@@ -284,15 +284,15 @@ const StudentsPage: React.FC = () => {
             <div className="flex items-center justify-between gap-4">
               <div className="relative flex-1 max-w-md group">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input
-                  placeholder="Rechercher un élève par nom ou prénom..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-11 h-12 rounded-2xl bg-card border-none shadow-sm group-focus-within:shadow-md transition-all font-medium"
-                />
+                 <Input
+                   placeholder="Rechercher un élève par nom ou prénom..."
+                   value={searchTerm}
+                   onChange={e => setSearchTerm(e.target.value)}
+                   className="pl-11 h-12 rounded-2xl bg-card border border-border/60 shadow-sm group-focus-within:shadow-md group-focus-within:border-primary/30 transition-all font-medium"
+                 />
               </div>
               
-              <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-card/50 border border-border/20 shadow-sm">
+              <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-card border border-border/60 shadow-sm">
                 <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer select-none">
                   <Checkbox
                     checked={showArchived}
@@ -321,7 +321,7 @@ const StudentsPage: React.FC = () => {
             </div>
 
             {/* Students Table - Clean Apple Style */}
-            <div className="apple-card flex-1 min-h-0 flex flex-col overflow-hidden border border-border/40">
+            <div className="apple-card flex-1 min-h-0 flex flex-col overflow-hidden border border-border/60">
               <div className="flex-1 overflow-y-auto compact-scrollbar">
                 {filteredStudents.length > 0 ? (
                   <table className="w-full border-separate border-spacing-0">
@@ -460,7 +460,7 @@ const StudentsPage: React.FC = () => {
 
       {/* Dialogs - Consistent Styling */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+        <DialogContent className="rounded-3xl border border-border/60 shadow-2xl p-0 overflow-hidden bg-card">
           <div className="h-1 w-full bg-primary"></div>
           <DialogHeader className="p-8 pb-4">
             <DialogTitle className="text-2xl font-semibold items-center flex gap-3">
@@ -474,7 +474,7 @@ const StudentsPage: React.FC = () => {
                 placeholder="Ex: DUPONT"
                 value={newLastName}
                 onChange={e => setNewLastName(e.target.value)}
-                className="h-14 rounded-2xl bg-secondary/30 border-none font-semibold text-lg shadow-inner focus:bg-white transition-all uppercase"
+                className="h-14 rounded-2xl bg-secondary border border-border font-semibold text-lg text-foreground placeholder:text-muted-foreground/60 focus:bg-background focus:border-primary/40 transition-all uppercase"
               />
             </div>
             <div className="space-y-2">
@@ -484,11 +484,11 @@ const StudentsPage: React.FC = () => {
                 value={newFirstName}
                 onChange={e => setNewFirstName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddStudent()}
-                className="h-14 rounded-2xl bg-secondary/30 border-none font-medium shadow-inner focus:bg-white transition-all"
+                className="h-14 rounded-2xl bg-secondary border border-border font-medium text-foreground placeholder:text-muted-foreground/60 focus:bg-background focus:border-primary/40 transition-all"
               />
             </div>
           </div>
-          <DialogFooter className="p-8 pt-4 gap-3 bg-secondary/10">
+          <DialogFooter className="p-8 pt-4 gap-3 bg-secondary/50">
             <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="rounded-xl font-medium">Annuler</Button>
             <Button onClick={handleAddStudent} disabled={!newLastName.trim()} className="rounded-xl bg-primary px-10 font-medium shadow-lg shadow-primary/20">Ajouter</Button>
           </DialogFooter>
@@ -497,7 +497,7 @@ const StudentsPage: React.FC = () => {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!studentToDelete} onOpenChange={() => setStudentToDelete(null)}>
-          <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
+          <AlertDialogContent className="rounded-[2.5rem] border border-border/60 shadow-2xl bg-card">
           <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl font-semibold text-soft-pink-foreground">Supprimer définitivement ?</AlertDialogTitle>
             <AlertDialogDescription className="font-medium text-muted-foreground py-2">
