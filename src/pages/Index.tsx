@@ -156,21 +156,21 @@ const Index = () => {
                 desc="Mise à jour des effectifs" 
                 icon={Users} 
                 to="/classes" 
-                colorClass="bg-soft-purple-foreground"
+                colorClass="bg-[hsl(270,70%,50%)]"
               />
               <QuickAction 
                 title="Unités Pédagogiques" 
                 desc="Configuration des coefficients" 
                 icon={BookOpen} 
                 to="/units" 
-                colorClass="bg-soft-green-foreground"
+                colorClass="bg-[hsl(150,70%,35%)]"
               />
               <QuickAction 
                 title="Années Scolaires" 
                 desc="Paramètres du système (Sem/Tri)" 
                 icon={Calendar} 
                 to="/years" 
-                colorClass="bg-soft-orange-foreground"
+                colorClass="bg-[hsl(25,90%,45%)]"
               />
             </div>
 
