@@ -91,6 +91,11 @@ export default {
         'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 16px -4px rgba(0, 0, 0, 0.08)',
         'card': '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06)',
         'elevated': '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 10px 20px -5px rgba(0, 0, 0, 0.1)',
+        'btn': '0 0 0 1px hsl(246 80% 60% / 1), 0 1px 2px 0 rgba(9,9,11,0.08), 0 2px 4px 0 rgba(9,9,11,0.16), inset 0 1px 20px 0 rgba(255,255,255,0.16)',
+        'btn-pressed': '0 0 0 1px hsl(246 80% 60% / 1), 0 1px 1px 0 rgba(9,9,11,0.12), inset 0 1px 20px 0 rgba(255,255,255,0.08)',
+        'btn-destructive': '0 0 0 1px hsl(0 84% 60% / 1), 0 1px 2px 0 rgba(9,9,11,0.08), 0 2px 4px 0 rgba(9,9,11,0.16), inset 0 1px 20px 0 rgba(255,255,255,0.16)',
+        'btn-success': '0 0 0 1px hsl(150 70% 35% / 1), 0 1px 2px 0 rgba(9,9,11,0.08), 0 2px 4px 0 rgba(9,9,11,0.16), inset 0 1px 20px 0 rgba(255,255,255,0.16)',
+        'btn-info': '0 0 0 1px hsl(270 70% 50% / 1), 0 1px 2px 0 rgba(9,9,11,0.08), 0 2px 4px 0 rgba(9,9,11,0.16), inset 0 1px 20px 0 rgba(255,255,255,0.16)',
       },
       keyframes: {
         "accordion-down": {
