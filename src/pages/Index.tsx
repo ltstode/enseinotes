@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
+import StaggerContainer, { staggerItemVariants } from '@/components/motion/StaggerContainer';
 import { 
   Users, 
   BookOpen, 
@@ -19,20 +22,30 @@ import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { differenceInDays } from 'date-fns';
 
-const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }: any) => (
-  <div 
+const AnimatedNumber = ({ value }: { value: number }) => {
+  const display = useAnimatedCounter(value);
+  return <>{display}</>;
+};
+
+const StatCard = ({ title, value, subValue, icon: Icon, colorClass }: any) => (
+  <motion.div
+    variants={staggerItemVariants}
     className={cn(
-      "apple-card p-6 flex flex-col justify-between group cursor-default animate-fade-in",
+      "rounded-2xl border border-white/25 p-6 flex flex-col justify-between group cursor-default",
+      "shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)]",
+      "hover:shadow-[0_0_0_1px_hsl(var(--border)),0_4px_8px_0_rgba(9,9,11,0.08),0_8px_16px_0_rgba(9,9,11,0.12),inset_0_1px_20px_0_rgba(255,255,255,0.16)]",
+      "hover:-translate-y-0.5 transition-all duration-500",
       colorClass
     )}
-    style={{ animationDelay: `${delay}ms` }}
   >
     <div className="flex justify-between items-start mb-8">
       <div className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide opacity-70">{title}</p>
-        <p className="text-3xl font-semibold">{value}</p>
+        <p className="text-3xl font-semibold tabular-nums">
+          <AnimatedNumber value={value} />
+        </p>
       </div>
-      <div className="p-3 rounded-2xl bg-card/50 border border-border/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+      <div className="p-3 rounded-2xl bg-card/50 border border-border/20 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
         <Icon size={24} />
       </div>
     </div>
@@ -42,26 +55,31 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
         <span>{subValue}</span>
       </div>
     </div>
-  </div>
+  </motion.div>
 );
 
 const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
-  <Link to={to} className="group">
-    <div className={cn(
-      "p-5 rounded-[2rem] border border-border/60 bg-card backdrop-blur-md flex items-center gap-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
-    )}>
-      <div className={cn("p-4 rounded-2xl shadow-lg", colorClass)}>
-        <Icon size={24} className="text-white" />
+  <motion.div variants={staggerItemVariants}>
+    <Link to={to} className="group">
+      <div className={cn(
+        "p-5 rounded-2xl border border-white/25 bg-card backdrop-blur-md flex items-center gap-5",
+        "shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)]",
+        "hover:shadow-[0_0_0_1px_hsl(var(--border)),0_4px_8px_0_rgba(9,9,11,0.08),0_8px_16px_0_rgba(9,9,11,0.12),inset_0_1px_20px_0_rgba(255,255,255,0.16)]",
+        "hover:-translate-y-0.5 transition-all duration-500 group-active:scale-[0.97]",
+      )}>
+        <div className={cn("p-4 rounded-2xl shadow-lg", colorClass)}>
+          <Icon size={24} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-sm text-foreground">{title}</h4>
+          <p className="text-xs text-muted-foreground truncate">{desc}</p>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-500 group-hover:translate-x-0.5">
+          <ArrowRight size={14} />
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm text-foreground">{title}</h4>
-        <p className="text-xs text-muted-foreground truncate">{desc}</p>
-      </div>
-      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-500">
-        <ArrowRight size={14} />
-      </div>
-    </div>
-  </Link>
+    </Link>
+  </motion.div>
 );
 
 const Index = () => {
@@ -79,12 +97,10 @@ const Index = () => {
     const activePeriods = periods.filter(p => unitIds.has(p.pedagogicalUnitId));
     const activeGrades = grades.filter(g => activeEvals.some(e => e.id === g.evaluationId));
 
-    // Period progress
     const totalPeriods = activePeriods.length;
     const completedPeriods = activePeriods.filter(p => p.status === 'completed').length;
     const periodProgress = totalPeriods > 0 ? Math.round((completedPeriods / totalPeriods) * 100) : 0;
 
-    // Current active period label
     const currentActivePeriod = activePeriods.find(p => p.status === 'active');
     let periodLabel = 'Aucune période active';
     if (currentActivePeriod) {
@@ -108,7 +124,6 @@ const Index = () => {
     };
   }, [classRooms, pedagogicalUnits, evaluations, grades, periods, activeYearId]);
 
-  // Recent evaluations
   const recentEvals = useMemo(() => {
     const activeUnits = pedagogicalUnits.filter(u => u.schoolYearId === activeYearId);
     const unitIds = new Set(activeUnits.map(u => u.id));
@@ -124,15 +139,28 @@ const Index = () => {
       });
   }, [evaluations, pedagogicalUnits, classRooms, grades, activeYearId]);
 
+  const progressAnimated = useAnimatedCounter(stats.periodProgress, 1200);
+
   return (
     <AppLayout>
       <div className="no-scroll-container gap-8 py-4">
         {/* Welcome Header */}
-        <div className="flex items-center justify-between px-2">
-          <div className="space-y-1 animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center justify-between px-2"
+        >
+          <div className="space-y-1">
             <h2 className="text-3xl font-semibold tracking-tight text-foreground leading-tight flex items-center gap-3">
               Ravi de vous revoir, <span className="text-primary">{teacher?.firstName}</span>
-              <Sparkles className="text-soft-orange-foreground" size={28} />
+              <motion.span
+                initial={{ rotate: -20, scale: 0 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ delay: 0.4, type: 'spring', stiffness: 400, damping: 12 }}
+              >
+                <Sparkles className="text-soft-orange-foreground" size={28} />
+              </motion.span>
             </h2>
             <p className="text-muted-foreground">Voici un aperçu de vos activités scolaires pour aujourd'hui.</p>
           </div>
@@ -146,17 +174,16 @@ const Index = () => {
               Nouvelle Note
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Quick Stats Grid - Staggered */}
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
           <StatCard 
             title="Total Élèves" 
             value={stats.totalStudents} 
             subValue={`${stats.totalClasses} classe${stats.totalClasses !== 1 ? 's' : ''}`}
             icon={Users} 
             colorClass="bg-soft-blue"
-            delay={0}
           />
           <StatCard 
             title="Classes Gérées" 
@@ -164,7 +191,6 @@ const Index = () => {
             subValue="Année en cours"
             icon={GraduationCap} 
             colorClass="bg-soft-purple"
-            delay={100}
           />
           <StatCard 
             title="Matières (UP)" 
@@ -172,7 +198,6 @@ const Index = () => {
             subValue={`${stats.totalEvals} éval${stats.totalEvals !== 1 ? 's' : ''}`}
             icon={BookOpen} 
             colorClass="bg-soft-green"
-            delay={200}
           />
           <StatCard 
             title="Notes saisies" 
@@ -180,9 +205,8 @@ const Index = () => {
             subValue={`${stats.totalEvals} évaluations`}
             icon={ClipboardList} 
             colorClass="bg-soft-pink"
-            delay={300}
           />
-        </div>
+        </StaggerContainer>
 
         {/* Lower Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0">
@@ -196,7 +220,7 @@ const Index = () => {
               <Button variant="link" className="text-primary font-medium hover:no-underline" onClick={() => navigate('/grades')}>Voir tout</Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-4" staggerDelay={0.08}>
               <QuickAction 
                 title="Saisir des notes" 
                 desc="Ajoutez des évaluations" 
@@ -225,10 +249,15 @@ const Index = () => {
                 to="/years" 
                 colorClass="bg-[hsl(25,90%,45%)]"
               />
-            </div>
+            </StaggerContainer>
 
             {/* Recent Evaluations */}
-            <div className="apple-card flex-1 min-h-0 flex flex-col border border-border/60 bg-card backdrop-blur-md mt-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-2xl border border-white/25 bg-card shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)] flex-1 min-h-0 flex flex-col mt-2"
+            >
               <div className="p-6 border-b border-border/20 flex items-center justify-between">
                 <h4 className="font-medium">Dernières évaluations</h4>
                 <div className="flex gap-2">
@@ -249,8 +278,15 @@ const Index = () => {
                   </div>
                 ) : (
                   <div className="divide-y divide-border/20">
-                    {recentEvals.map(ev => (
-                      <div key={ev.id} className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/grades?unit=${ev.pedagogicalUnitId}`)}>
+                    {recentEvals.map((ev, i) => (
+                      <motion.div
+                        key={ev.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 + i * 0.06, duration: 0.3 }}
+                        className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer rounded-xl"
+                        onClick={() => navigate(`/grades?unit=${ev.pedagogicalUnitId}`)}
+                      >
                         <div className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                           ev.type === 'devoir' ? 'bg-soft-purple' : 'bg-soft-blue'
@@ -265,21 +301,26 @@ const Index = () => {
                           <p className="text-xs font-medium">{ev.gradeCount} note{ev.gradeCount !== 1 ? 's' : ''}</p>
                           <p className="text-[10px] text-muted-foreground">{new Date(ev.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Side Info Panel */}
-          <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-6"
+          >
             <div className="flex items-center justify-between px-2">
               <h3 className="font-display font-semibold text-lg">Statut des Périodes</h3>
             </div>
             
-            <div className="apple-card p-6 border-none bg-gradient-to-br from-primary to-accent relative overflow-hidden group">
+            <div className="rounded-2xl p-6 bg-gradient-to-br from-primary to-accent relative overflow-hidden group shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.4)]">
                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                <div className="relative z-10 space-y-4">
                   <div className="flex items-center gap-3">
@@ -289,13 +330,18 @@ const Index = () => {
                     <span className="text-xs font-medium text-white/90">Progression globale</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-semibold text-white">{stats.periodProgress}%</p>
+                    <p className="text-4xl font-semibold text-white tabular-nums">{progressAnimated}%</p>
                     <p className="text-[10px] font-medium text-white/70 uppercase tracking-wide leading-loose">
                       {stats.currentPeriodName ? `${stats.currentPeriodName} · ${stats.periodLabel}` : 'Aucune période active'}
                     </p>
                   </div>
                   <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${stats.periodProgress}%` }}></div>
+                    <motion.div
+                      className="h-full bg-white rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${stats.periodProgress}%` }}
+                      transition={{ delay: 0.6, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                    />
                   </div>
                   <Button className="w-full bg-white text-primary rounded-xl font-medium hover:bg-white/90 shadow-lg" onClick={() => navigate('/calendar')}>
                     Détails du Calendrier
@@ -303,15 +349,15 @@ const Index = () => {
                </div>
             </div>
 
-            <div className="apple-card p-6 border border-border/60 bg-card shadow-sm space-y-6">
+            <div className="rounded-2xl border border-white/25 bg-card p-6 shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)] space-y-6">
                <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Conseils de productivité</h4>
                <div className="space-y-4">
                   {[
                     { t: "Raccourcis clavier", d: "Ctrl+K pour rechercher, N pour nouvelle note", i: Sparkles },
                     { t: "Suivi des moyennes", d: "L'UP calcule vos moyennes en temps réel", i: TrendingUp },
                   ].map((tip, idx) => (
-                    <div key={idx} className="flex gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                    <div key={idx} className="flex gap-4 group/tip">
+                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shrink-0 group-hover/tip:scale-110 transition-transform duration-300">
                         <tip.i size={18} className="text-primary" />
                       </div>
                       <div>
@@ -322,7 +368,7 @@ const Index = () => {
                   ))}
                </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </AppLayout>
