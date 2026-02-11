@@ -41,7 +41,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit }) => {
   const activePeriod = periods.find(p => p.status === 'active');
 
   return (
-    <Card className="group overflow-hidden border-none shadow-soft hover:shadow-xl transition-all duration-500 rounded-3xl bg-card">
+    <Card className="group overflow-hidden border-white/25 rounded-2xl bg-card shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)] hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.3),0_4px_8px_0_rgba(9,9,11,0.08),0_8px_16px_0_rgba(9,9,11,0.14),inset_0_1px_20px_0_rgba(255,255,255,0.18)] hover:-translate-y-1.5 transition-all duration-500">
       {/* Decorative top bar */}
       <div className="h-2 w-full bg-gradient-to-r from-primary/40 via-primary to-info/40 group-hover:via-info transition-all duration-500"></div>
       
