@@ -6,7 +6,7 @@ import { fr } from 'date-fns/locale';
 
 interface StudentReportData {
   student: Student;
-  rank: number | null;
+  rank: { rank: number; isExAequo: boolean } | null;
   totalStudents: number;
   interroGrades: { evaluation: Evaluation; value: number | null }[];
   devoirGrades: { evaluation: Evaluation; value: number | null }[];
@@ -80,12 +80,13 @@ export const generateStudentBulletin = (
   // Ranking badge
   if (data.rank) {
     const rankX = pageWidth - margin - 30;
-    doc.setFillColor(data.rank <= 3 ? 251 : 237, data.rank <= 3 ? 211 : 242, data.rank <= 3 ? 141 : 255);
+    doc.setFillColor(data.rank.rank <= 3 ? 251 : 237, data.rank.rank <= 3 ? 211 : 242, data.rank.rank <= 3 ? 141 : 255);
     doc.roundedRect(rankX, y + 5, 25, 25, 2, 2, 'F');
     doc.setTextColor(31, 31, 31);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${data.rank}`, rankX + 12.5, y + 16, { align: 'center' });
+    const rankLabel = `${data.rank.rank}${data.rank.isExAequo ? 'e' : ''}`;
+    doc.text(rankLabel, rankX + 12.5, y + 16, { align: 'center' });
     doc.setFontSize(7);
     doc.text(`/ ${data.totalStudents}`, rankX + 12.5, y + 24, { align: 'center' });
   }
@@ -241,7 +242,7 @@ export const generateClassBulletins = (
   context: ReportContext,
   calculateTypeAverage: (studentId: string, evals: Evaluation[]) => number | null,
   calculateFinalAverage: (studentId: string) => number | null,
-  studentRankings: Record<string, number | null>,
+  studentRankings: Record<string, { rank: number; isExAequo: boolean } | null>,
   customAppreciations?: Record<string, string>
 ): void => {
   const doc = new jsPDF('p', 'mm', 'a4');
@@ -334,12 +335,13 @@ const generateBulletinPage = (
   
   if (data.rank) {
     const rankX = pageWidth - margin - 30;
-    doc.setFillColor(data.rank <= 3 ? 251 : 237, data.rank <= 3 ? 211 : 242, data.rank <= 3 ? 141 : 255);
+    doc.setFillColor(data.rank.rank <= 3 ? 251 : 237, data.rank.rank <= 3 ? 211 : 242, data.rank.rank <= 3 ? 141 : 255);
     doc.roundedRect(rankX, y + 5, 25, 25, 2, 2, 'F');
     doc.setTextColor(31, 31, 31);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${data.rank}`, rankX + 12.5, y + 16, { align: 'center' });
+    const rankLabel = `${data.rank.rank}${data.rank.isExAequo ? 'e' : ''}`;
+    doc.text(rankLabel, rankX + 12.5, y + 16, { align: 'center' });
     doc.setFontSize(7);
     doc.text(`/ ${data.totalStudents}`, rankX + 12.5, y + 24, { align: 'center' });
   }
