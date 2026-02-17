@@ -19,13 +19,8 @@ import {
   LayoutDashboard,
   GraduationCap,
   Search,
-  Plus,
-  Moon,
-  Sun,
-  Zap,
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
 interface SearchResult {
@@ -41,8 +36,8 @@ const GlobalSearchDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { schoolYears, classRooms, pedagogicalUnits, evaluations, activeYearId } = useApp();
-  const { theme, setTheme } = useTheme();
 
+  // Listen for Cmd+K / Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -64,34 +59,6 @@ const GlobalSearchDialog: React.FC = () => {
 
   const results = useMemo<SearchResult[]>(() => {
     const items: SearchResult[] = [];
-
-    // Quick Actions
-    items.push(
-      {
-        id: 'action-new-eval',
-        label: 'Nouvelle évaluation',
-        sublabel: 'Créer une évaluation rapidement',
-        icon: <Plus size={16} />,
-        category: '⚡ Actions rapides',
-        action: () => go('/grades'),
-      },
-      {
-        id: 'action-new-class',
-        label: 'Nouvelle classe',
-        sublabel: 'Ajouter une classe',
-        icon: <Plus size={16} />,
-        category: '⚡ Actions rapides',
-        action: () => go('/classes'),
-      },
-      {
-        id: 'action-toggle-theme',
-        label: theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre',
-        sublabel: 'Changer le thème de l\'interface',
-        icon: theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />,
-        category: '⚡ Actions rapides',
-        action: () => { setTheme(theme === 'dark' ? 'light' : 'dark'); setOpen(false); },
-      },
-    );
 
     // Pages
     items.push(
@@ -132,6 +99,7 @@ const GlobalSearchDialog: React.FC = () => {
         action: () => go('/classes'),
       });
 
+      // Students in each class
       c.students.forEach((s) => {
         items.push({
           id: `student-${s.id}`,
@@ -175,7 +143,7 @@ const GlobalSearchDialog: React.FC = () => {
     });
 
     return items;
-  }, [schoolYears, classRooms, pedagogicalUnits, evaluations, activeYearId, go, theme, setTheme]);
+  }, [schoolYears, classRooms, pedagogicalUnits, evaluations, activeYearId, go]);
 
   // Group results by category
   const grouped = useMemo(() => {
@@ -189,6 +157,7 @@ const GlobalSearchDialog: React.FC = () => {
 
   return (
     <>
+      {/* Trigger button in header */}
       <button
         onClick={() => setOpen(true)}
         className="relative flex-1 group cursor-pointer text-left"
@@ -203,7 +172,7 @@ const GlobalSearchDialog: React.FC = () => {
       </button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Rechercher ou exécuter une action…" />
+        <CommandInput placeholder="Rechercher des élèves, classes, évaluations…" />
         <CommandList>
           <CommandEmpty>
             <div className="py-8 text-center space-y-2">
@@ -222,12 +191,7 @@ const GlobalSearchDialog: React.FC = () => {
                     onSelect={item.action}
                     className="flex items-center gap-3 py-2.5 px-3 cursor-pointer rounded-xl"
                   >
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                      item.category === '⚡ Actions rapides'
-                        ? "bg-primary/10 text-primary"
-                        : "bg-secondary text-muted-foreground"
-                    )}>
+                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-muted-foreground">
                       {item.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -236,9 +200,6 @@ const GlobalSearchDialog: React.FC = () => {
                         <p className="text-[11px] text-muted-foreground truncate">{item.sublabel}</p>
                       )}
                     </div>
-                    {item.category === '⚡ Actions rapides' && (
-                      <Zap size={12} className="text-primary/40 shrink-0" />
-                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
