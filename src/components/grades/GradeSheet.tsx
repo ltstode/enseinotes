@@ -47,6 +47,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { generateClassBulletins } from '@/services/pdfService';
 import BulletinPreviewDialog from './BulletinPreviewDialog';
 import { cn } from '@/lib/utils';
+import * as XLSX from 'xlsx';
 
 interface GradeSheetProps {
   unit: PedagogicalUnit;
@@ -313,6 +314,69 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     setShowBulletinPreview(true);
   }, [periods, activePeriod, classRooms, schoolYears, unit, toast]);
 
+  const handleExportExcel = useCallback(() => {
+    if (!activePeriod) {
+      toast({ title: 'Erreur', description: 'Veuillez sélectionner une période.', variant: 'destructive' });
+      return;
+    }
+
+    const period = periods.find(p => p.id === activePeriod);
+    const classroom = classRooms.find(c => c.id === unit.classRoomId);
+    
+    if (!period || !classroom) {
+      toast({ title: 'Erreur', description: 'Données manquantes.', variant: 'destructive' });
+      return;
+    }
+
+    // Préparer les en-têtes
+    const headers = [
+      'Nom',
+      'Prénom',
+      ...filteredEvaluations.map(e => `${e.name} (/${e.maxScore})`),
+      'Moy. Interros',
+      'Moy. Devoirs',
+      'Moyenne Générale',
+      'Rang'
+    ];
+
+    // Préparer les données des élèves
+    const data = students.map(student => {
+      const moyInterros = calculateTypeAverage(student.id, interros);
+      const moyDevoirs = calculateTypeAverage(student.id, devoirs);
+      const moyGenerale = calculateFinalAverage(student.id);
+      const ranking = studentRankings[student.id];
+      
+      return [
+        student.lastName,
+        student.firstName,
+        ...filteredEvaluations.map(evaluation => {
+          const grade = getGrade(student.id, evaluation.id);
+          return grade?.value ?? '-';
+        }),
+        moyInterros !== null ? moyInterros.toFixed(2) : '-',
+        moyDevoirs !== null ? moyDevoirs.toFixed(2) : '-',
+        moyGenerale !== null ? moyGenerale.toFixed(2) : '-',
+        ranking ? (ranking.isExAequo ? `${ranking.rank} ex` : ranking.rank.toString()) : '-'
+      ];
+    });
+
+    // Créer la feuille Excel
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    
+    // Créer le classeur
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, period.name);
+
+    // Nom du fichier
+    const fileName = `${classroom.name}_${unit.name}_${period.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    toast({ 
+      title: 'Export réussi ✨', 
+      description: `Feuille de notes exportée pour ${students.length} élève(s).` 
+    });
+  }, [activePeriod, periods, classRooms, unit, students, filteredEvaluations, calculateTypeAverage, calculateFinalAverage, studentRankings, getGrade, interros, devoirs, toast]);
+
   const handleModifyGrade = useCallback((studentId: string, evaluationId: string, newValue: string) => {
     const existingGrade = getGrade(studentId, evaluationId);
     const evaluation = evaluations.find(e => e.id === evaluationId);
@@ -458,29 +522,37 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           <Button 
             variant="outline"
             onClick={() => setShowStatistics(!showStatistics)} 
-            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-card/80"
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-bold bg-card/80"
           >
             <BarChart3 size={18} />
             {showStatistics ? 'Masquer stats' : 'Statistiques'}
           </Button>
           <Button 
             variant="outline"
+            onClick={handleExportExcel}
+            disabled={filteredEvaluations.length === 0}
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-bold bg-card/80 hover:bg-soft-green hover:text-soft-green-foreground"
+          >
+            <Download size={18} /> Export Excel
+          </Button>
+          <Button 
+            variant="outline"
             onClick={handleExportPDF}
             disabled={filteredEvaluations.length === 0}
-            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium bg-card/80"
+            className="h-11 px-5 rounded-2xl border-none shadow-sm hover:shadow-md transition-all gap-2 font-bold bg-card/80"
           >
             <Download size={18} /> Bulletins PDF
           </Button>
           {isSaved && !hasGradesToSave ? (
-             <div className="px-4 py-2 rounded-2xl bg-success/10 text-success text-xs font-medium border border-success/20 flex items-center gap-2">
+             <div className="px-4 py-2 rounded-2xl bg-success/10 text-success text-xs font-bold border border-success/20 flex items-center gap-2">
                <Check size={16} /> Verrouillé
              </div>
           ) : hasGradesToSave && (
-            <Button onClick={handleSaveGrades} className="h-11 px-6 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-all gap-2 font-medium">
+            <Button onClick={handleSaveGrades} className="h-11 px-6 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-all gap-2 font-bold">
               <Save size={18} /> Enregistrer
             </Button>
           )}
-          <Button onClick={() => setShowEvalDialog(true)} className="h-11 px-6 rounded-2xl bg-card text-foreground border-none shadow-sm hover:shadow-md transition-all gap-2 font-medium">
+          <Button onClick={() => setShowEvalDialog(true)} className="h-11 px-6 rounded-2xl bg-card text-foreground border-none shadow-sm hover:shadow-md transition-all gap-2 font-bold">
             <Plus size={18} /> Nouvelle Éval
           </Button>
         </div>

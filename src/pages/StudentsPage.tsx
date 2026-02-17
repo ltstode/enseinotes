@@ -249,6 +249,32 @@ const StudentsPage: React.FC = () => {
     toast.success('Élèves archivés');
   };
 
+  const handleExportExcel = () => {
+    if (!selectedClass) return;
+    
+    // Préparer les données pour l'export (seulement Nom et Prénom)
+    const data = [
+      ['Nom', 'Prénom'], // En-têtes
+      ...filteredStudents.map(student => [
+        student.lastName,
+        student.firstName
+      ])
+    ];
+
+    // Créer une nouvelle feuille
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    
+    // Créer un nouveau classeur
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Élèves');
+
+    // Générer le fichier avec un nom personnalisé
+    const fileName = `${selectedClass.name.replace(/\s+/g, '_')}_eleves_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    toast.success(`Liste de ${filteredStudents.length} élève(s) exportée`);
+  };
+
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student);
     setEditLastName(student.lastName);
@@ -302,11 +328,17 @@ const StudentsPage: React.FC = () => {
           <div className="flex gap-3">
              {selectedClass && (
                <>
-                  <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-medium hover:bg-secondary transition-all shadow-sm border-border">
+                  <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-bold hover:bg-secondary transition-all shadow-sm border-border">
                    <Upload size={18} />
                    Import massif
                  </Button>
-                  <Button onClick={() => setIsAddDialogOpen(true)} className="h-12 px-8 rounded-2xl gap-2 font-medium shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+                  {filteredStudents.length > 0 && (
+                    <Button onClick={handleExportExcel} variant="outline" className="h-12 px-6 rounded-2xl gap-2 font-bold hover:bg-soft-green hover:text-soft-green-foreground transition-all shadow-sm border-border">
+                      <Download size={18} />
+                      Export Excel
+                    </Button>
+                  )}
+                  <Button onClick={() => setIsAddDialogOpen(true)} className="h-12 px-8 rounded-2xl gap-2 font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
                    <Plus size={18} />
                    Ajouter un élève
                  </Button>

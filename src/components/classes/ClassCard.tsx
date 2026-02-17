@@ -152,7 +152,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
           <div className="mt-auto pt-4 flex gap-2">
             <Button 
               variant="default" 
-              className="flex-1 rounded-2xl h-11 font-medium shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-all gap-2"
+              className="flex-1 rounded-2xl h-11 font-bold shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-all gap-2"
               onClick={() => navigate(`/units?class=${classRoom.id}`)}
             >
               Gérer Unités
