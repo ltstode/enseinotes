@@ -549,7 +549,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
             </Button>
           </div>
 
-          <div className="p-4 scrollable-content overflow-x-auto">
+          <div className="p-4 scrollable-content overflow-x-auto max-h-[65vh] overflow-y-auto">
             {filteredEvaluations.length === 0 ? (
               <div className="py-20 text-center space-y-4">
                 <div className="w-16 h-16 bg-muted/20 mx-auto rounded-3xl flex items-center justify-center">
@@ -576,36 +576,36 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               </div>
             ) : (
               <table className="w-full border-separate border-spacing-x-0" style={{ borderSpacing: '0 var(--density-gap, 0.5rem)' }}>
-                <thead>
+                <thead className="sticky top-0 z-20 bg-card/95 backdrop-blur-md">
                   <tr className="text-left">
-                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Rang</th>
-                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 glass-card border-none z-10 w-48" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Étudiant</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center py-2">Rang</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 bg-card/95 backdrop-blur-md z-30 w-48 py-2">Étudiant</th>
                     {interros.map(e => (
-                      <th key={e.id} className="px-1 text-center" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>
+                      <th key={e.id} className="px-1 text-center py-2">
                         <div className="text-[10px] font-medium uppercase text-soft-blue-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 text-center text-[10px] font-medium text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Moy. Int</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl py-2">Moy. Int</th>
                     {devoirs.map(e => (
-                      <th key={e.id} className="px-1 text-center" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>
+                      <th key={e.id} className="px-1 text-center py-2">
                         <div className="text-[10px] font-medium uppercase text-soft-pink-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 text-center text-[10px] font-medium text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Moy. Dev</th>
-                    <th className="px-6 text-center text-[10px] font-medium uppercase text-primary" style={{ paddingTop: 'var(--density-cell-py, 0.5rem)', paddingBottom: 'var(--density-cell-py, 0.5rem)' }}>Moyenne Finale</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl py-2">Moy. Dev</th>
+                    <th className="px-6 text-center text-[10px] font-medium uppercase text-primary py-2">Moyenne Finale</th>
                   </tr>
                 </thead>
                 <tbody className="before:block before:h-2">
                   {students.map((student, studentIdx) => {
                     const moyInt = calculateTypeAverage(student.id, interros);
                     const moyDev = calculateTypeAverage(student.id, devoirs);
-                    const final = calculateFinalAverage(student.id);
+                    const final_ = calculateFinalAverage(student.id);
                     const rank = studentRankings[student.id];
 
                     return (
-                      <tr key={student.id} className="group hover:translate-x-1 transition-transform duration-300">
+                      <tr key={student.id} className="group hover:bg-muted/20 transition-colors duration-200">
                         <td className="text-center">
                           <div className={cn(
                             "w-8 h-8 mx-auto rounded-xl flex items-center justify-center text-[10px] font-semibold",
@@ -614,7 +614,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                             {rank ? `${rank.rank}${rank.isExAequo ? 'e' : ''}` : '-'}
                           </div>
                         </td>
-                        <td className="sticky left-0 glass-card border-none z-10 px-4 py-2 font-medium text-xs truncate">
+                        <td className="sticky left-0 bg-card/95 backdrop-blur-md z-10 px-4 py-2 font-medium text-xs truncate">
                           {student.lastName} <span className="text-muted-foreground font-medium">{student.firstName}</span>
                         </td>
                         {interros.map(e => renderGradeCell(student, e, studentIdx))}
@@ -624,9 +624,9 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                         <td className="px-6 text-center">
                           <div className={cn(
                              "inline-flex px-4 py-1 rounded-full text-xs font-semibold shadow-inner",
-                             final && final >= 10 ? "bg-soft-green text-soft-green-foreground" : final ? "bg-soft-pink text-soft-pink-foreground" : "bg-muted/10 text-muted-foreground"
+                             final_ && final_ >= 10 ? "bg-soft-green text-soft-green-foreground" : final_ ? "bg-soft-pink text-soft-pink-foreground" : "bg-muted/10 text-muted-foreground"
                           )}>
-                             {final?.toFixed(2) ?? '--'}
+                             {final_?.toFixed(2) ?? '--'}
                           </div>
                         </td>
                       </tr>

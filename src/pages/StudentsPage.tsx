@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 import { Student } from '@/types/enseinotes';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const StudentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -81,7 +82,8 @@ const StudentsPage: React.FC = () => {
   const [newLastName, setNewLastName] = useState('');
   const [newFirstName, setNewFirstName] = useState('');
   const [importText, setImportText] = useState('');
-
+  const [excelPreview, setExcelPreview] = useState<{ firstName: string; lastName: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const classes = activeYearId ? getClassesByYear(activeYearId) : [];
   const selectedClass = classRooms.find(c => c.id === selectedClassId);
   
@@ -129,29 +131,92 @@ const StudentsPage: React.FC = () => {
   };
 
   const handleImportStudents = () => {
-    if (!selectedClassId || !importText.trim()) return;
+    if (!selectedClassId) return;
     
-    const names = importText
-      .split('\n')
-      .map(n => n.trim())
-      .filter(n => n.length > 0);
+    // Use excelPreview if available (from Excel file), else parse text
+    let parsedStudents: { firstName: string; lastName: string }[] = [];
     
-    names.forEach(name => {
-      const parts = name.split(/\s+/);
-      const lastName = parts[0]?.toUpperCase() || '';
-      const firstName = formatFirstName(parts.slice(1).join(' '));
-      
-      addStudentToClass(selectedClassId, {
-        firstName,
-        lastName,
-        studentId: '',
-        status: 'active'
+    if (excelPreview.length > 0) {
+      parsedStudents = excelPreview;
+    } else if (importText.trim()) {
+      const names = importText.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+      parsedStudents = names.map(name => {
+        const parts = name.split(/\s+/);
+        return {
+          lastName: parts[0]?.toUpperCase() || '',
+          firstName: formatFirstName(parts.slice(1).join(' ')),
+        };
       });
+    }
+    
+    if (parsedStudents.length === 0) {
+      toast.error('Aucun élève à importer');
+      return;
+    }
+    
+    parsedStudents.forEach(({ firstName, lastName }) => {
+      if (lastName.trim()) {
+        addStudentToClass(selectedClassId, {
+          firstName,
+          lastName: lastName.toUpperCase(),
+          studentId: '',
+          status: 'active'
+        });
+      }
     });
     
     setImportText('');
+    setExcelPreview([]);
     setIsImportDialogOpen(false);
-    toast.success(`${names.length} élèves importés avec succès`);
+    toast.success(`${parsedStudents.length} élèves importés avec succès`);
+  };
+
+  const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+        
+        if (jsonData.length === 0) {
+          toast.error('Le fichier est vide ou mal formaté');
+          return;
+        }
+        
+        // Find the column that contains "nom" in its header (case-insensitive)
+        const headers = Object.keys(jsonData[0]);
+        const nameColumn = headers.find(h => h.toLowerCase().includes('nom'));
+        
+        if (!nameColumn) {
+          toast.error('Aucune colonne "Nom" trouvée dans le fichier. Assurez-vous qu\'une colonne contient "Nom" dans son titre.');
+          return;
+        }
+        
+        const students = jsonData
+          .map(row => {
+            const fullName = String(row[nameColumn] || '').trim();
+            if (!fullName) return null;
+            const parts = fullName.split(/\s+/);
+            const lastName = parts[0]?.toUpperCase() || '';
+            const firstName = formatFirstName(parts.slice(1).join(' '));
+            return { firstName, lastName };
+          })
+          .filter(Boolean) as { firstName: string; lastName: string }[];
+        
+        setExcelPreview(students);
+        toast.success(`${students.length} élèves détectés dans le fichier`);
+      } catch {
+        toast.error('Erreur lors de la lecture du fichier Excel');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    // Reset the input so the same file can be re-selected
+    e.target.value = '';
   };
 
   const handleArchiveStudent = (student: Student) => {
@@ -395,7 +460,7 @@ const StudentsPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6" style={{ paddingTop: 'var(--density-cell-py, 1rem)', paddingBottom: 'var(--density-cell-py, 1rem)' }}>
-                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center justify-center gap-1">
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
@@ -515,6 +580,93 @@ const StudentsPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Dialog with Excel support */}
+      <Dialog open={isImportDialogOpen} onOpenChange={(open) => { setIsImportDialogOpen(open); if (!open) { setExcelPreview([]); setImportText(''); } }}>
+        <DialogContent className="sm:max-w-[560px] rounded-3xl border border-border/60 shadow-2xl p-0 overflow-hidden bg-card">
+          <div className="h-1 w-full bg-success"></div>
+          <DialogHeader className="p-8 pb-4">
+            <DialogTitle className="text-2xl font-semibold flex items-center gap-3">
+              <Upload className="text-success" /> Import massif
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-8 py-4 space-y-6">
+            {/* Excel file upload */}
+            <div className="space-y-3">
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground ml-1">Importer depuis un fichier Excel</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleExcelFile}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-14 rounded-2xl border-dashed border-2 border-success/30 hover:bg-success/5 hover:border-success/50 font-medium gap-3 text-foreground transition-all"
+              >
+                <Download size={20} className="text-success" />
+                Choisir un fichier .xlsx ou .csv
+              </Button>
+              <p className="text-[10px] text-muted-foreground ml-1">
+                Le fichier doit contenir une colonne avec «&nbsp;Nom&nbsp;» dans son titre. Le premier mot sera le NOM, le reste les prénoms.
+              </p>
+            </div>
+
+            {/* Excel Preview */}
+            {excelPreview.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-widest text-success ml-1">
+                  {excelPreview.length} élèves détectés
+                </Label>
+                <div className="max-h-48 overflow-y-auto rounded-xl border border-border/40 divide-y divide-border/20">
+                  {excelPreview.map((s, i) => (
+                    <div key={i} className="px-4 py-2 flex items-center gap-3 text-xs">
+                      <span className="w-6 text-muted-foreground text-[10px] font-mono">{i + 1}</span>
+                      <span className="font-semibold text-foreground uppercase">{s.lastName}</span>
+                      <span className="text-muted-foreground font-medium">{s.firstName}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Separator */}
+            {excelPreview.length === 0 && (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border/40"></div>
+                  <span className="text-[10px] uppercase font-medium text-muted-foreground">ou copier-coller</span>
+                  <div className="flex-1 h-px bg-border/40"></div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground ml-1">Saisie manuelle (un nom par ligne)</Label>
+                  <Textarea
+                    placeholder={"DUPONT Jean Pierre\nMARTIN Marie\nDUBOIS Sophie Anne"}
+                    value={importText}
+                    onChange={e => setImportText(e.target.value)}
+                    className="min-h-[150px] rounded-2xl bg-secondary border border-border font-mono text-xs leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:bg-background focus:border-primary/40 transition-all"
+                  />
+                  <p className="text-[10px] text-muted-foreground ml-1">
+                    Format : Le premier mot = NOM (majuscule), le reste = Prénoms.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter className="p-8 pt-4 gap-3 bg-secondary/50">
+            <Button variant="ghost" onClick={() => setIsImportDialogOpen(false)} className="rounded-xl font-medium">Annuler</Button>
+            <Button 
+              onClick={handleImportStudents} 
+              disabled={excelPreview.length === 0 && !importText.trim()}
+              className="rounded-xl bg-success text-white px-10 font-medium shadow-lg shadow-success/20 hover:brightness-110"
+            >
+              Importer {excelPreview.length > 0 ? `(${excelPreview.length})` : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
