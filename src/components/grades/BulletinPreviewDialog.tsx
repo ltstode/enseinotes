@@ -28,7 +28,7 @@ interface BulletinPreviewDialogProps {
   teacherName: string;
   calculateTypeAverage: (studentId: string, evals: Evaluation[]) => number | null;
   calculateFinalAverage: (studentId: string) => number | null;
-  studentRankings: Record<string, number | null>;
+  studentRankings: Record<string, { rank: number; isExAequo: boolean } | null>;
 }
 
 // Helper to get default appreciation based on grade
@@ -70,7 +70,7 @@ const BulletinPreviewDialog: React.FC<BulletinPreviewDialogProps> = ({
       if (a.rank === null && b.rank === null) return 0;
       if (a.rank === null) return 1;
       if (b.rank === null) return -1;
-      return a.rank - b.rank;
+      return a.rank.rank - b.rank.rank;
     });
   }, [students, calculateFinalAverage, studentRankings]);
 
@@ -138,9 +138,9 @@ const BulletinPreviewDialog: React.FC<BulletinPreviewDialogProps> = ({
                       <div className="flex items-center gap-3 mb-2">
                         <div className={cn(
                           "w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-semibold",
-                          rank && rank <= 3 ? "bg-soft-orange text-soft-orange-foreground" : "bg-muted/30 text-muted-foreground"
+                          rank && rank.rank <= 3 ? "bg-soft-orange text-soft-orange-foreground" : "bg-muted/30 text-muted-foreground"
                         )}>
-                          {rank || '-'}
+                          {rank ? `${rank.rank}${rank.isExAequo ? 'e' : ''}` : '-'}
                         </div>
                         <span className="font-medium text-sm truncate">
                           {student.lastName} {student.firstName}

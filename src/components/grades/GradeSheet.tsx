@@ -176,17 +176,38 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   }, [calculateTypeAverage, interros, devoirs, unit.rules]);
 
   const studentRankings = useMemo(() => {
-    const studentsWithHighAverages = students.map(student => ({
-      studentId: student.id,
-      average: calculateFinalAverage(student.id)
-    }));
-    const sorted = [...studentsWithHighAverages].filter(s => s.average !== null).sort((a, b) => b.average! - a.average!);
-    const rankings: Record<string, number | null> = {};
-    sorted.forEach((student, index) => {
-      if (index > 0 && student.average === sorted[index - 1].average) rankings[student.studentId] = rankings[sorted[index - 1].studentId];
-      else rankings[student.studentId] = index + 1;
+    const studentsWithAverages = students
+      .map(student => ({
+        studentId: student.id,
+        lastName: student.lastName,
+        firstName: student.firstName,
+        average: calculateFinalAverage(student.id)
+      }))
+      .filter((s): s is typeof s & { average: number } => s.average !== null);
+
+    // Sort by average DESC, then alphabetically (lastName, firstName) for ties
+    const sorted = [...studentsWithAverages].sort((a, b) => {
+      if (b.average !== a.average) return b.average - a.average;
+      const lastCmp = a.lastName.localeCompare(b.lastName, 'fr');
+      if (lastCmp !== 0) return lastCmp;
+      return a.firstName.localeCompare(b.firstName, 'fr');
     });
-    students.forEach(student => { if (!(student.id in rankings)) rankings[student.id] = null; });
+
+    const rankings: Record<string, { rank: number; isExAequo: boolean } | null> = {};
+    sorted.forEach((student, index) => {
+      if (index > 0 && student.average === sorted[index - 1].average) {
+        // Ex-aequo: same rank as previous, mark both as ex-aequo
+        const prevRank = rankings[sorted[index - 1].studentId]!;
+        prevRank.isExAequo = true;
+        rankings[student.studentId] = { rank: prevRank.rank, isExAequo: true };
+      } else {
+        rankings[student.studentId] = { rank: index + 1, isExAequo: false };
+      }
+    });
+
+    students.forEach(student => {
+      if (!(student.id in rankings)) rankings[student.id] = null;
+    });
     return rankings;
   }, [students, calculateFinalAverage]);
 
@@ -347,9 +368,11 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     const evalIsNew = isNewEvaluation(evaluation.id);
     const canFreeEdit = !isSaved || evalIsNew;
     
-    const currentValue = localGrades[key] ?? (grade?.value?.toString() ?? '');
-    const numValue = parseFloat(currentValue);
-    const isInvalid = !isNaN(numValue) && (numValue < 0 || numValue > evaluation.maxScore);
+            // Use local draft if user typed something, otherwise show persisted grade
+            const hasLocalDraft = key in localGrades;
+            const currentValue = hasLocalDraft ? localGrades[key] : (grade?.value?.toString() ?? '');
+            const numValue = parseFloat(currentValue);
+            const isInvalid = currentValue !== '' && (isNaN(numValue) || numValue < 0 || numValue > evaluation.maxScore);
 
     return (
       <td key={evaluation.id} className="p-1 text-center">
@@ -364,8 +387,8 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               onChange={(e) => handleLocalGradeInput(student.id, evaluation.id, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, student.id, evaluation.id)}
               className={cn(
-                "w-14 h-9 mx-auto border-none text-center text-xs font-bold rounded-lg transition-all",
-                isInvalid ? "bg-soft-pink text-soft-pink-foreground" : "bg-secondary/30 focus:bg-card"
+                "w-14 h-9 mx-auto border-none text-center text-xs font-bold rounded-lg transition-all focus:ring-2 focus:ring-primary/30",
+                isInvalid ? "bg-destructive/15 text-destructive font-bold" : "bg-muted/40 text-foreground focus:bg-card"
               )}
             />
           ) : isEditing && !alreadyModified ? (
@@ -382,7 +405,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           ) : (
             <div className={cn(
               "w-14 h-9 mx-auto flex items-center justify-center text-xs font-bold rounded-lg border border-transparent",
-              alreadyModified ? "bg-soft-orange text-soft-orange-foreground border-soft-orange-foreground/20" : "bg-muted/30 text-muted-foreground"
+              alreadyModified ? "bg-soft-orange/20 text-foreground border-soft-orange/40" : "bg-muted/20 text-foreground"
             )}>
               {grade?.value ?? '-'}
             </div>
@@ -586,9 +609,9 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                         <td className="text-center">
                           <div className={cn(
                             "w-8 h-8 mx-auto rounded-xl flex items-center justify-center text-[10px] font-semibold",
-                            rank === 1 ? "bg-soft-orange text-soft-orange-foreground border border-soft-orange-foreground/20" : "bg-muted/10 text-muted-foreground"
+                            rank?.rank === 1 ? "bg-soft-orange text-soft-orange-foreground border border-soft-orange-foreground/20" : "bg-muted/10 text-muted-foreground"
                           )}>
-                            {rank || '-'}
+                            {rank ? `${rank.rank}${rank.isExAequo ? 'e' : ''}` : '-'}
                           </div>
                         </td>
                         <td className="sticky left-0 glass-card border-none z-10 px-4 py-2 font-medium text-xs truncate">
