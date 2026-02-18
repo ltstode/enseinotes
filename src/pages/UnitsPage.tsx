@@ -41,7 +41,7 @@ const UnitsPage: React.FC = () => {
             </p>
           </div>
           {activeYearId && classes.length > 0 && (
-            <Button onClick={() => setShowCreateDialog(true)} className="h-11 px-6 rounded-2xl gap-2 font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+            <Button onClick={() => setShowCreateDialog(true)} className="h-11 px-6 rounded-xl gap-2 font-medium shadow-lg shadow-primary/20 hover:scale-105 transition-all">
               <Plus size={18} />
               Nouvelle Unité
             </Button>
@@ -51,7 +51,7 @@ const UnitsPage: React.FC = () => {
         {/* Content */}
         {!activeYearId ? (
           <div className="apple-card p-20 text-center space-y-4">
-            <div className="w-16 h-16 bg-soft-orange mx-auto rounded-3xl flex items-center justify-center text-soft-orange-foreground">
+            <div className="w-16 h-16 bg-soft-orange mx-auto rounded-xl flex items-center justify-center text-soft-orange-foreground">
               <AlertCircle size={32} />
             </div>
             <h3 className="text-xl font-semibold">Année Scolaire Requise</h3>
@@ -59,7 +59,7 @@ const UnitsPage: React.FC = () => {
           </div>
         ) : classes.length === 0 ? (
           <div className="apple-card p-20 text-center space-y-4">
-            <div className="w-16 h-16 bg-soft-purple mx-auto rounded-3xl flex items-center justify-center text-soft-purple-foreground">
+            <div className="w-16 h-16 bg-soft-purple mx-auto rounded-xl flex items-center justify-center text-soft-purple-foreground">
               <Sparkles size={32} />
             </div>
             <h3 className="text-xl font-semibold">Classes Manquantes</h3>
@@ -67,14 +67,14 @@ const UnitsPage: React.FC = () => {
           </div>
         ) : filteredUnits.length === 0 ? (
           <div className="apple-card p-20 text-center space-y-6">
-            <div className="w-20 h-20 bg-soft-blue mx-auto rounded-3xl flex items-center justify-center text-primary">
+            <div className="w-20 h-20 bg-soft-blue mx-auto rounded-xl flex items-center justify-center text-primary">
               <BookOpen size={40} />
             </div>
             <div>
               <h3 className="text-2xl font-semibold">Lancez votre programme !</h3>
               <p className="text-muted-foreground mt-2">Créez votre première unité pédagogique (Français, Mathématiques...) pour commencer à suivre vos élèves.</p>
             </div>
-            <Button onClick={() => setShowCreateDialog(true)} className="rounded-2xl h-11 px-6 font-medium">
+            <Button onClick={() => setShowCreateDialog(true)} className="rounded-xl h-11 px-6 font-medium">
               <Plus size={18} className="mr-2" /> Créer une unité
             </Button>
           </div>

@@ -34,7 +34,7 @@
     --input: 220 15% 87%;
     --ring: 246 80% 60%;
 
-    --radius: 1.25rem;
+    --radius: 0.75rem;
 
     /* Apple-like soft palettes */
     --soft-pink: 350 80% 95%;
@@ -146,11 +146,11 @@
   }
 
   .apple-card {
-    @apply bg-card rounded-[2rem] border border-white/10 shadow-none transition-all duration-300;
+    @apply bg-card rounded-xl border border-white/10 shadow-none transition-all duration-300;
   }
 
   .btn-vibrant {
-    @apply rounded-2xl font-semibold transition-all duration-300 active:scale-95 shadow-none;
+    @apply rounded-lg font-semibold transition-all duration-300 active:scale-95 shadow-none;
   }
 
   .compact-scrollbar {

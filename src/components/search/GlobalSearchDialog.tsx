@@ -60,16 +60,16 @@ const GlobalSearchDialog: React.FC = () => {
   const results = useMemo<SearchResult[]>(() => {
     const items: SearchResult[] = [];
 
-    // Pages
+    // Pages — each with its own chic color
     items.push(
-      { id: 'nav-dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={16} />, category: 'Pages', action: () => go('/') },
-      { id: 'nav-years', label: 'Années scolaires', icon: <Calendar size={16} />, category: 'Pages', action: () => go('/years') },
-      { id: 'nav-classes', label: 'Classes', icon: <Users size={16} />, category: 'Pages', action: () => go('/classes') },
-      { id: 'nav-students', label: 'Élèves', icon: <UserCog size={16} />, category: 'Pages', action: () => go('/students') },
-      { id: 'nav-units', label: 'Unités pédagogiques', icon: <BookOpen size={16} />, category: 'Pages', action: () => go('/units') },
-      { id: 'nav-grades', label: 'Notes', icon: <ClipboardList size={16} />, category: 'Pages', action: () => go('/grades') },
-      { id: 'nav-calendar', label: 'Calendrier', icon: <Calendar size={16} />, category: 'Pages', action: () => go('/calendar') },
-      { id: 'nav-settings', label: 'Paramètres', icon: <Settings size={16} />, category: 'Pages', action: () => go('/settings') },
+      { id: 'nav-dashboard', label: 'Tableau de bord', icon: <LayoutDashboard size={15} className="text-white" />, category: 'Pages', action: () => go('/') },
+      { id: 'nav-years', label: 'Années scolaires', icon: <Calendar size={15} className="text-white" />, category: 'Pages', action: () => go('/years') },
+      { id: 'nav-classes', label: 'Classes', icon: <Users size={15} className="text-white" />, category: 'Pages', action: () => go('/classes') },
+      { id: 'nav-students', label: 'Élèves', icon: <UserCog size={15} className="text-white" />, category: 'Pages', action: () => go('/students') },
+      { id: 'nav-units', label: 'Unités pédagogiques', icon: <BookOpen size={15} className="text-white" />, category: 'Pages', action: () => go('/units') },
+      { id: 'nav-grades', label: 'Notes', icon: <ClipboardList size={15} className="text-white" />, category: 'Pages', action: () => go('/grades') },
+      { id: 'nav-calendar', label: 'Calendrier', icon: <Calendar size={15} className="text-white" />, category: 'Pages', action: () => go('/calendar') },
+      { id: 'nav-settings', label: 'Paramètres', icon: <Settings size={15} className="text-white" />, category: 'Pages', action: () => go('/settings') },
     );
 
     // School years
@@ -78,7 +78,7 @@ const GlobalSearchDialog: React.FC = () => {
         id: `year-${y.id}`,
         label: y.name,
         sublabel: y.mode === 'semester' ? 'Semestres' : 'Trimestres',
-        icon: <Calendar size={16} />,
+        icon: <Calendar size={15} className="text-white" />,
         category: 'Années scolaires',
         action: () => go('/years'),
       });
@@ -94,7 +94,7 @@ const GlobalSearchDialog: React.FC = () => {
         id: `class-${c.id}`,
         label: c.name,
         sublabel: `${c.students.length} élèves`,
-        icon: <Users size={16} />,
+        icon: <Users size={15} className="text-white" />,
         category: 'Classes',
         action: () => go('/classes'),
       });
@@ -105,7 +105,7 @@ const GlobalSearchDialog: React.FC = () => {
           id: `student-${s.id}`,
           label: `${s.lastName} ${s.firstName}`,
           sublabel: c.name,
-          icon: <UserCog size={16} />,
+          icon: <UserCog size={15} className="text-white" />,
           category: 'Élèves',
           action: () => go('/students'),
         });
@@ -123,7 +123,7 @@ const GlobalSearchDialog: React.FC = () => {
         id: `unit-${u.id}`,
         label: u.name,
         sublabel: cls?.name,
-        icon: <BookOpen size={16} />,
+        icon: <BookOpen size={15} className="text-white" />,
         category: 'Unités pédagogiques',
         action: () => go(`/grades?unit=${u.id}`),
       });
@@ -136,7 +136,7 @@ const GlobalSearchDialog: React.FC = () => {
         id: `eval-${ev.id}`,
         label: ev.name,
         sublabel: `${unit?.name ?? ''} · ${ev.type === 'devoir' ? 'Devoir' : 'Interrogation'}`,
-        icon: <ClipboardList size={16} />,
+        icon: <ClipboardList size={15} className="text-white" />,
         category: 'Évaluations',
         action: () => go(`/grades?unit=${ev.pedagogicalUnitId}`),
       });
@@ -144,6 +144,32 @@ const GlobalSearchDialog: React.FC = () => {
 
     return items;
   }, [schoolYears, classRooms, pedagogicalUnits, evaluations, activeYearId, go]);
+
+  // Per-page colors for the Pages category
+  const pageColor: Record<string, string> = {
+    'nav-dashboard': 'bg-violet-500',
+    'nav-years': 'bg-blue-500',
+    'nav-classes': 'bg-indigo-500',
+    'nav-students': 'bg-teal-500',
+    'nav-units': 'bg-amber-500',
+    'nav-grades': 'bg-rose-500',
+    'nav-calendar': 'bg-cyan-500',
+    'nav-settings': 'bg-slate-500',
+  };
+
+  // Category colors for dynamic results
+  const categoryColor: Record<string, string> = {
+    'Années scolaires': 'bg-blue-500',
+    'Classes': 'bg-indigo-500',
+    'Élèves': 'bg-teal-500',
+    'Unités pédagogiques': 'bg-amber-500',
+    'Évaluations': 'bg-rose-500',
+  };
+
+  const getIconBg = (item: SearchResult) => {
+    if (item.category === 'Pages') return pageColor[item.id] ?? 'bg-primary';
+    return categoryColor[item.category] ?? 'bg-primary';
+  };
 
   // Group results by category
   const grouped = useMemo(() => {
@@ -191,7 +217,10 @@ const GlobalSearchDialog: React.FC = () => {
                     onSelect={item.action}
                     className="flex items-center gap-3 py-2.5 px-3 cursor-pointer rounded-xl"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-muted-foreground">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110",
+                      getIconBg(item)
+                    )}>
                       {item.icon}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -21,6 +21,7 @@ import {
   Clock,
   CalendarClock,
   TrendingDown,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -208,7 +209,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className={cn(
-                  "w-full flex items-center gap-3 p-2 rounded-2xl bg-card/50 border border-border/20 hover:bg-card transition-all duration-300 shadow-sm",
+                  "w-full flex items-center gap-3 p-2 rounded-xl bg-card/50 border border-border/20 hover:bg-card transition-all duration-300 shadow-sm",
                   collapsedSidebar && "justify-center p-1.5"
                 )}>
                   <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
@@ -224,7 +225,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={collapsedSidebar ? "center" : "start"} side="top" className="w-[220px] rounded-2xl border-none shadow-2xl p-2">
+              <DropdownMenuContent align={collapsedSidebar ? "center" : "start"} side="top" className="w-[220px] rounded-xl border-none shadow-2xl p-2">
                 <DropdownMenuItem className="rounded-xl p-3 focus:bg-primary/5">
                   <div className="flex flex-col">
                     <span className="text-xs font-medium">{teacher?.firstName} {teacher?.lastName}</span>
@@ -251,7 +252,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
             <div className="flex items-center gap-4">
               {activeYear && (
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 border border-primary/10">
+                <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary/5 border border-primary/10">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></div>
                   <span className="text-xs font-medium text-foreground">{activeYear.name}</span>
                 </div>
@@ -260,20 +261,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               {syncLabel && (
                 <div
                   className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm bg-card',
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-card',
                     syncStatus.state === 'error' && 'border-destructive/30',
                     syncStatus.state !== 'error' && 'border-border/20',
                   )}
                   title={syncStatus.state === 'saved' && syncStatus.lastSavedAt ? `Dernière sauvegarde : ${syncStatus.lastSavedAt.toLocaleTimeString()}` : undefined}
                 >
-                  <div
-                    className={cn(
-                      'w-1.5 h-1.5 rounded-full',
-                      syncStatus.state === 'saving' && 'bg-muted-foreground animate-pulse',
-                      syncStatus.state === 'saved' && 'bg-success',
-                      syncStatus.state === 'error' && 'bg-destructive',
-                    )}
-                  />
+                  {syncStatus.state === 'saving' && (
+                    <div className='w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse' />
+                  )}
+                  {syncStatus.state === 'saved' && (
+                    <Check size={12} className="text-emerald-400" strokeWidth={2.5} />
+                  )}
+                  {syncStatus.state === 'error' && (
+                    <div className='w-1.5 h-1.5 rounded-full bg-destructive' />
+                  )}
                   <span className="text-xs font-medium text-foreground">{syncLabel}</span>
                 </div>
               )}

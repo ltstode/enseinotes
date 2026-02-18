@@ -56,7 +56,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
 
   return (
     <>
-      <div className="group rounded-[2rem] overflow-hidden flex flex-col h-full border border-white/10 bg-card/60 backdrop-blur-md shadow-none hover:border-white/20 transition-all duration-300">
+      <div className="group rounded-xl overflow-hidden flex flex-col h-full border border-white/10 bg-card/60 backdrop-blur-md shadow-none hover:border-white/20 transition-all duration-300">
         {/* Top Decorative Bar */}
         <div className="h-2 w-full bg-gradient-to-r from-soft-purple to-soft-blue"></div>
         
@@ -109,11 +109,11 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-6">
-             <div className="p-4 rounded-[1.5rem] bg-soft-purple/30 border border-soft-purple-foreground/10 flex flex-col justify-center">
+             <div className="p-4 rounded-xl bg-soft-purple/30 border border-soft-purple-foreground/10 flex flex-col justify-center">
                 <span className="text-[10px] font-medium uppercase tracking-wide text-soft-purple-foreground/70 mb-1">Élèves</span>
                 <p className="text-2xl font-semibold text-soft-purple-foreground">{classRoom.students.length}</p>
              </div>
-             <div className="p-4 rounded-[1.5rem] bg-soft-blue/30 border border-soft-blue-foreground/10 flex flex-col justify-center">
+             <div className="p-4 rounded-xl bg-soft-blue/30 border border-soft-blue-foreground/10 flex flex-col justify-center">
                 <span className="text-[10px] font-medium uppercase tracking-wide text-soft-blue-foreground/70 mb-1">Unités</span>
                 <p className="text-2xl font-semibold text-soft-blue-foreground">{units.length}</p>
              </div>
@@ -142,7 +142,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
               </div>
             </div>
           ) : (
-             <div className="mb-6 flex-1 flex flex-col items-center justify-center border-2 border-dashed border-muted/20 rounded-2xl py-4 group/add cursor-pointer hover:border-primary/50 transition-colors"
+             <div className="mb-6 flex-1 flex flex-col items-center justify-center border-2 border-dashed border-muted/20 rounded-xl py-4 group/add cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => navigate(`/students?class=${classRoom.id}`)}>
                 <UserPlus size={20} className="text-muted-foreground group-hover/add:text-primary transition-colors mb-2" />
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Ajouter des élèves</span>
@@ -152,7 +152,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
           <div className="mt-auto pt-4 flex gap-2">
             <Button 
               variant="default" 
-              className="flex-1 rounded-2xl h-11 font-bold shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-all gap-2"
+              className="flex-1 rounded-xl h-11 font-bold shadow-lg shadow-primary/10 group-hover:shadow-primary/20 transition-all gap-2"
               onClick={() => navigate(`/units?class=${classRoom.id}`)}
             >
               Gérer Unités
@@ -161,7 +161,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
             <Button 
               variant="outline" 
               size="icon"
-              className="w-11 h-11 rounded-2xl border-dashed hover:bg-white hover:text-primary transition-all shadow-sm"
+              className="w-11 h-11 rounded-xl border-dashed hover:bg-white hover:text-primary transition-all shadow-sm"
               onClick={() => navigate(`/students?class=${classRoom.id}`)}
               title="Voir les élèves"
             >
@@ -172,7 +172,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
       </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="rounded-[2.5rem] border-none shadow-2xl">
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-semibold text-soft-pink-foreground">Détruire cette classe ?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground py-2 leading-relaxed">

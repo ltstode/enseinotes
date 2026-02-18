@@ -31,9 +31,9 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
 
   return (
     <div className={cn(
-      "rounded-[2.5rem] p-6 border transition-all duration-300 flex flex-col justify-between h-full",
+      "rounded-xl p-6 border transition-all duration-300 flex flex-col justify-between h-full",
       isActive 
-        ? "border-primary/60 bg-card ring-4 ring-primary/5 shadow-none" 
+        ? "border-primary/60 bg-card ring-2 ring-primary/10 shadow-none" 
         : "border-white/10 bg-card/60 backdrop-blur-md shadow-none hover:border-white/20"
     )}>
       <div>

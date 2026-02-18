@@ -32,12 +32,12 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
         <p className="text-xs font-medium uppercase tracking-wide opacity-70">{title}</p>
         <p className="text-3xl font-semibold">{value}</p>
       </div>
-      <div className="p-3 rounded-2xl bg-card/50 border border-border/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+      <div className="p-3 rounded-xl bg-card/50 border border-border/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
         <Icon size={24} />
       </div>
     </div>
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-card/40 text-[10px] font-medium">
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card/40 text-[10px] font-medium">
         <TrendingUp size={10} />
         <span>{subValue}</span>
       </div>
@@ -48,9 +48,9 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
 const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
   <Link to={to} className="group">
     <div className={cn(
-      "p-5 rounded-[2rem] border border-border/60 bg-card backdrop-blur-md flex items-center gap-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
+      "p-5 rounded-xl border border-border/60 bg-card backdrop-blur-md flex items-center gap-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-500 group-active:scale-95",
     )}>
-      <div className={cn("p-4 rounded-2xl shadow-lg", colorClass)}>
+      <div className={cn("p-4 rounded-xl shadow-lg", colorClass)}>
         <Icon size={24} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
