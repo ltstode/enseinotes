@@ -138,19 +138,19 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:border-border/40 dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+    @apply bg-card/60 backdrop-blur-md border border-white/10 shadow-none;
   }
   
   .glass-sidebar {
-    @apply bg-card/60 backdrop-blur-2xl border-r border-border/40 dark:bg-card/40 dark:border-border/20;
+    @apply bg-card/60 backdrop-blur-2xl border-r border-white/5;
   }
 
   .apple-card {
-    @apply bg-card rounded-[2rem] shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.4)] transition-all duration-500;
+    @apply bg-card rounded-[2rem] border border-white/10 shadow-none transition-all duration-300;
   }
 
   .btn-vibrant {
-    @apply rounded-2xl font-semibold transition-all duration-300 active:scale-95 shadow-md hover:shadow-lg;
+    @apply rounded-2xl font-semibold transition-all duration-300 active:scale-95 shadow-none;
   }
 
   .compact-scrollbar {

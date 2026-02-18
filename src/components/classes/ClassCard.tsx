@@ -56,14 +56,14 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
 
   return (
     <>
-      <div className="group rounded-2xl overflow-hidden flex flex-col h-full border border-white/25 bg-card/70 backdrop-blur-md shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)] hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.3),0_4px_8px_0_rgba(9,9,11,0.08),0_8px_16px_0_rgba(9,9,11,0.14),inset_0_1px_20px_0_rgba(255,255,255,0.18)] hover:-translate-y-1.5 transition-all duration-500">
+      <div className="group rounded-[2rem] overflow-hidden flex flex-col h-full border border-white/10 bg-card/60 backdrop-blur-md shadow-none hover:border-white/20 transition-all duration-300">
         {/* Top Decorative Bar */}
         <div className="h-2 w-full bg-gradient-to-r from-soft-purple to-soft-blue"></div>
         
         <div className="p-6 flex flex-col flex-1">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4 flex-1">
-              <div className="p-3.5 rounded-2xl bg-soft-purple shadow-inner text-soft-purple-foreground">
+              <div className="p-3.5 rounded-2xl bg-soft-purple shadow-none text-soft-purple-foreground">
                 <Users size={24} />
               </div>
               <div className="flex-1 min-w-0">

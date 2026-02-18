@@ -31,10 +31,10 @@ const YearCard: React.FC<YearCardProps> = ({ year }) => {
 
   return (
     <div className={cn(
-      "rounded-2xl p-6 border transition-all duration-500 hover:-translate-y-1.5 flex flex-col justify-between h-full",
+      "rounded-[2.5rem] p-6 border transition-all duration-300 flex flex-col justify-between h-full",
       isActive 
-        ? "border-white/25 bg-card ring-4 ring-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.4),0_2px_4px_0_rgba(9,9,11,0.08),0_4px_8px_0_rgba(9,9,11,0.12),inset_0_1px_20px_0_rgba(255,255,255,0.16)]" 
-        : "border-white/25 bg-card/70 backdrop-blur-md shadow-[0_0_0_1px_hsl(var(--border)),0_1px_2px_0_rgba(9,9,11,0.06),0_2px_4px_0_rgba(9,9,11,0.1),inset_0_1px_20px_0_rgba(255,255,255,0.12)] hover:shadow-[0_0_0_1px_hsl(var(--border)),0_4px_8px_0_rgba(9,9,11,0.08),0_8px_16px_0_rgba(9,9,11,0.14),inset_0_1px_20px_0_rgba(255,255,255,0.18)]"
+        ? "border-primary/60 bg-card ring-4 ring-primary/5 shadow-none" 
+        : "border-white/10 bg-card/60 backdrop-blur-md shadow-none hover:border-white/20"
     )}>
       <div>
         <div className="flex items-start justify-between mb-6">
