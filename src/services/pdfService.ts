@@ -226,10 +226,11 @@ export const generateStudentBulletin = (
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text(`Émis le ${format(new Date(), 'dd MMMM yyyy', { locale: fr })}`, margin, y);
-  doc.text(`Enseignant: ${context.teacherName}`, pageWidth - margin, y, { align: 'right' });
+  const footerSignature = `${context.teacherName}, Prof de ${context.unit.name}, ${context.classroom.name}`;
+  doc.text(footerSignature, pageWidth - margin, y, { align: 'right' });
   
   doc.setFontSize(7);
-  doc.text('EnseiNotes - Système de gestion des notes', pageWidth / 2, y + 6, { align: 'center' });
+  doc.text('EnseiNotes — Système de gestion des notes', pageWidth / 2, y + 6, { align: 'center' });
 
   return doc;
 };
@@ -469,10 +470,11 @@ const generateBulletinPage = (
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text(`Émis le ${format(new Date(), 'dd MMMM yyyy', { locale: fr })}`, margin, y);
-  doc.text(`Enseignant: ${context.teacherName}`, pageWidth - margin, y, { align: 'right' });
+  const footerSig = `${context.teacherName}, Prof de ${context.unit.name}, ${context.classroom.name}`;
+  doc.text(footerSig, pageWidth - margin, y, { align: 'right' });
   
   doc.setFontSize(7);
-  doc.text('EnseiNotes - Système de gestion des notes', pageWidth / 2, y + 6, { align: 'center' });
+  doc.text('EnseiNotes — Système de gestion des notes', pageWidth / 2, y + 6, { align: 'center' });
 };
 
 // Generate a quick report for sharing
@@ -587,10 +589,13 @@ export const generateQuickReport = (
   
   y = 142;
   // Small Footer
-  doc.setTextColor(150, 150, 150);
+  doc.setTextColor(100, 100, 100);
   doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
-  doc.text(`généré par EnseiNotes · ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth / 2, y, { align: 'center' });
+  const qrSig = `${context.teacherName}, Prof de ${context.unit.name}, ${context.classroom.name}`;
+  doc.text(qrSig, pageWidth / 2, y, { align: 'center' });
+  doc.setTextColor(150, 150, 150);
+  doc.text(`EnseiNotes · ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth / 2, y + 4, { align: 'center' });
 
   return doc;
 };

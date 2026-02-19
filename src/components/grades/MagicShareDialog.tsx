@@ -19,25 +19,22 @@ import {
   BookOpen
 } from 'lucide-react';
 import { Student, PedagogicalUnit, Period, SchoolYear, ClassRoom } from '@/types/enseinotes';
-import { generateQuickReport } from '@/services/pdfService';
+import { generateStudentBulletin } from '@/services/pdfService';
 import { toast } from 'sonner';
+import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MagicShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   student: Student;
-  /** Unité active par défaut (celle depuis laquelle on a ouvert le dialog) */
   unit: PedagogicalUnit;
-  /** Toutes les unités disponibles pour la classe */
   availableUnits: PedagogicalUnit[];
-  /** Toutes les périodes (pour toutes les unités) */
   allPeriods: Period[];
   classroom: Pick<ClassRoom, 'name'> | undefined;
   schoolYear: SchoolYear | undefined;
   teacherName: string;
-  /** Fonction de calcul de moyenne (studentId, unitId) => number | null */
   calculateAverage: (studentId: string, unitId: string) => number | null;
-  /** Tous les élèves actifs de la classe (pour calculer le rang) */
   classStudents: Student[];
 }
 
@@ -50,47 +47,109 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
   allPeriods,
   classroom,
   schoolYear,
-  teacherName,
   calculateAverage,
   classStudents,
 }) => {
   const [copiedType, setCopiedType] = useState<'whatsapp' | 'email' | null>(null);
-  // Unité sélectionnée dans le sélecteur (par défaut : l'unité courante)
   const [selectedUnitId, setSelectedUnitId] = useState<string>(unit.id);
+
+  const { evaluations: allEvaluations, grades: allGrades } = useApp();
+  const { teacher } = useAuth();
+
+  const teacherFirstName = teacher?.firstName ?? '';
+  const teacherLastName = teacher?.lastName ?? '';
+  const classroomName = classroom?.name ?? 'Classe';
 
   const selectedUnit = useMemo(
     () => availableUnits.find(u => u.id === selectedUnitId) ?? unit,
     [selectedUnitId, availableUnits, unit]
   );
 
-  // Période active pour l'unité sélectionnée
   const activePeriod = useMemo(() => {
     const unitPeriods = allPeriods.filter(p => p.pedagogicalUnitId === selectedUnitId);
     return unitPeriods.find(p => p.status === 'active') ?? unitPeriods[0];
   }, [allPeriods, selectedUnitId]);
 
-  // Moyenne de l'élève pour l'unité sélectionnée
+  // ── Evaluations & grades for the selected unit/period ──
+  const unitEvaluations = useMemo(() => {
+    if (!activePeriod) return [];
+    return allEvaluations.filter(
+      e => e.pedagogicalUnitId === selectedUnitId && e.periodId === activePeriod.id
+    );
+  }, [allEvaluations, selectedUnitId, activePeriod]);
+
+  const interros = useMemo(() => unitEvaluations.filter(e => e.type === 'interro'), [unitEvaluations]);
+  const devoirs = useMemo(() => unitEvaluations.filter(e => e.type === 'devoir'), [unitEvaluations]);
+
+  const interroGrades = useMemo(() => interros.map(e => ({
+    evaluation: e,
+    value: allGrades.find(g => g.studentId === student.id && g.evaluationId === e.id)?.value ?? null,
+  })), [interros, allGrades, student.id]);
+
+  const devoirGrades = useMemo(() => devoirs.map(e => ({
+    evaluation: e,
+    value: allGrades.find(g => g.studentId === student.id && g.evaluationId === e.id)?.value ?? null,
+  })), [devoirs, allGrades, student.id]);
+
+  // ── Averages ──
+  const calcTypeAvg = (gradesList: typeof interroGrades) => {
+    const valid = gradesList.filter(g => g.value !== null);
+    if (valid.length === 0) return null;
+    let totalW = 0, totalC = 0;
+    valid.forEach(({ evaluation, value }) => {
+      totalW += (value! / evaluation.maxScore) * 20 * evaluation.coefficient;
+      totalC += evaluation.coefficient;
+    });
+    return totalC > 0 ? Math.round((totalW / totalC) * 100) / 100 : null;
+  };
+
+  const moyInterros = useMemo(() => calcTypeAvg(interroGrades), [interroGrades]);
+  const moyDevoirs = useMemo(() => calcTypeAvg(devoirGrades), [devoirGrades]);
+
   const moyFinale = useMemo(
     () => calculateAverage(student.id, selectedUnitId),
     [calculateAverage, student.id, selectedUnitId]
   );
 
-  // Rang de l'élève dans la classe pour l'unité sélectionnée
+  // Class average
+  const classAverage = useMemo(() => {
+    const activeStudents = classStudents.filter(s => s.status === 'active');
+    const avgs = activeStudents.map(s => calculateAverage(s.id, selectedUnitId)).filter((a): a is number => a !== null);
+    return avgs.length > 0 ? Math.round((avgs.reduce((a, b) => a + b, 0) / avgs.length) * 100) / 100 : null;
+  }, [classStudents, calculateAverage, selectedUnitId]);
+
+  // ── Rank ──
   const rankInfo = useMemo(() => {
     const activeStudents = classStudents.filter(s => s.status === 'active');
     const withAvg = activeStudents
-      .map(s => ({ id: s.id, avg: calculateAverage(s.id, selectedUnitId) ?? -1 }))
+      .map(s => ({ id: s.id, lastName: s.lastName, firstName: s.firstName, avg: calculateAverage(s.id, selectedUnitId) ?? -1 }))
       .filter(s => s.avg >= 0)
-      .sort((a, b) => b.avg - a.avg);
+      .sort((a, b) => {
+        if (b.avg !== a.avg) return b.avg - a.avg;
+        const lc = a.lastName.localeCompare(b.lastName, 'fr');
+        return lc !== 0 ? lc : a.firstName.localeCompare(b.firstName, 'fr');
+      });
 
-    const idx = withAvg.findIndex(s => s.id === student.id);
-    if (idx === -1) return null;
+    const rankings: Record<string, { rank: number; isExAequo: boolean }> = {};
+    withAvg.forEach((s, i) => {
+      if (i > 0 && s.avg === withAvg[i - 1].avg) {
+        const prevRank = rankings[withAvg[i - 1].id];
+        prevRank.isExAequo = true;
+        rankings[s.id] = { rank: prevRank.rank, isExAequo: true };
+      } else {
+        rankings[s.id] = { rank: i + 1, isExAequo: false };
+      }
+    });
 
-    const myAvg = withAvg[idx].avg;
-    const isExAequo = withAvg.filter(s => s.avg === myAvg).length > 1;
-    return { rank: idx + 1, isExAequo, total: withAvg.length };
+    const mine = rankings[student.id];
+    if (!mine) return null;
+    return { rank: mine.rank, isExAequo: mine.isExAequo, total: withAvg.length };
   }, [calculateAverage, student.id, selectedUnitId, classStudents]);
 
+  // ── Signature ──
+  const signature = `${teacherFirstName} ${teacherLastName}, Prof de ${selectedUnit.name}, ${classroomName}`;
+
+  // ── PDF Download (full bulletin) ──
   const handleDownloadPDF = () => {
     if (!activePeriod || !schoolYear) {
       toast.error('Aucune période disponible pour cette matière.');
@@ -100,13 +159,13 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
     const reportData = {
       student,
       rank: rankInfo ? { rank: rankInfo.rank, isExAequo: rankInfo.isExAequo } : null,
-      totalStudents: rankInfo?.total ?? classStudents.length,
-      interroGrades: [],
-      devoirGrades: [],
-      moyInterros: null,
-      moyDevoirs: null,
+      totalStudents: rankInfo?.total ?? classStudents.filter(s => s.status === 'active').length,
+      interroGrades,
+      devoirGrades,
+      moyInterros,
+      moyDevoirs,
       moyFinale,
-      classAverage: null,
+      classAverage,
     };
 
     const context = {
@@ -114,25 +173,50 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
       classroom: classroom ?? { name: 'Classe' },
       schoolYear,
       period: activePeriod,
-      teacherName,
+      teacherName: `${teacherFirstName} ${teacherLastName}`,
     };
 
-    const doc = generateQuickReport(reportData, context);
-    doc.save(`Rapport_${student.lastName}_${selectedUnit.name}.pdf`);
-    toast.success('Rapport PDF généré !');
+    const doc = generateStudentBulletin(reportData, context);
+    doc.save(`Bulletin_${student.lastName}_${selectedUnit.name}.pdf`);
+    toast.success('Bulletin complet généré !');
   };
 
+  // ── WhatsApp message ──
   const getWhatsAppMessage = () => {
     const periodName = activePeriod?.name ?? 'la période';
     const moyenne = moyFinale !== null ? moyFinale.toFixed(2) : '-';
-    const rang = rankInfo ? ` (${rankInfo.rank}${rankInfo.isExAequo ? 'e ex æquo' : 'e'} sur ${rankInfo.total})` : '';
-    return `Bonjour, voici le bilan de *${student.firstName} ${student.lastName}* en *${selectedUnit.name}* pour ${periodName} :\n📊 Moyenne : *${moyenne}/20*${rang}.\nBonne réception. — ${teacherName}`;
+    const rang = rankInfo
+      ? ` — Rang : ${rankInfo.rank}${rankInfo.isExAequo ? 'e ex æquo' : 'e'} sur ${rankInfo.total}`
+      : '';
+
+    const interroLines = interroGrades.length > 0
+      ? `\n📝 Interrogations :\n${interroGrades.map(g => `  • ${g.evaluation.name} : ${g.value !== null ? g.value : '-'}/${g.evaluation.maxScore}`).join('\n')}\n  ➜ Moy. Interros : *${moyInterros !== null ? moyInterros.toFixed(2) : '-'}/20*`
+      : '';
+
+    const devoirLines = devoirGrades.length > 0
+      ? `\n📝 Devoirs :\n${devoirGrades.map(g => `  • ${g.evaluation.name} : ${g.value !== null ? g.value : '-'}/${g.evaluation.maxScore}`).join('\n')}\n  ➜ Moy. Devoirs : *${moyDevoirs !== null ? moyDevoirs.toFixed(2) : '-'}/20*`
+      : '';
+
+    return `Bonjour,\n\nVoici le bilan de *${student.firstName} ${student.lastName}* en *${selectedUnit.name}* pour *${periodName}* :${interroLines}${devoirLines}\n\n📊 *Moyenne Générale : ${moyenne}/20*${rang}${classAverage !== null ? `\n📈 Moyenne de classe : ${classAverage.toFixed(2)}/20` : ''}\n\nBonne réception.\n— ${signature}`;
   };
 
+  // ── Email message ──
   const getEmailMessage = () => {
     const periodName = activePeriod?.name ?? 'la période';
     const moyenne = moyFinale !== null ? moyFinale.toFixed(2) : '-';
-    return `Bonjour,\n\nVeuillez trouver ci-dessous le bilan de ${student.firstName} ${student.lastName} pour ${selectedUnit.name} (${periodName}) :\nMoyenne générale : ${moyenne}/20.\n\nCordialement,\n${teacherName}`;
+    const rang = rankInfo
+      ? `\nClassement : ${rankInfo.rank}${rankInfo.isExAequo ? 'e ex æquo' : 'e'} sur ${rankInfo.total} élèves`
+      : '';
+
+    const interroSection = interroGrades.length > 0
+      ? `\nInterrogations :\n${interroGrades.map(g => `  - ${g.evaluation.name} : ${g.value !== null ? g.value : 'Non noté'}/${g.evaluation.maxScore}`).join('\n')}\n  Moyenne Interrogations : ${moyInterros !== null ? moyInterros.toFixed(2) : '-'}/20`
+      : '';
+
+    const devoirSection = devoirGrades.length > 0
+      ? `\nDevoirs :\n${devoirGrades.map(g => `  - ${g.evaluation.name} : ${g.value !== null ? g.value : 'Non noté'}/${g.evaluation.maxScore}`).join('\n')}\n  Moyenne Devoirs : ${moyDevoirs !== null ? moyDevoirs.toFixed(2) : '-'}/20`
+      : '';
+
+    return `Bonjour,\n\nVeuillez trouver ci-dessous le bilan scolaire de ${student.firstName} ${student.lastName} pour la matière ${selectedUnit.name} (${periodName}) :\n${interroSection}${devoirSection}\n\nMoyenne Générale : ${moyenne}/20${rang}${classAverage !== null ? `\nMoyenne de la classe : ${classAverage.toFixed(2)}/20` : ''}\n\nCordialement,\n${signature}`;
   };
 
   const handleCopy = (type: 'whatsapp' | 'email') => {
@@ -143,7 +227,6 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
     setTimeout(() => setCopiedType(null), 2000);
   };
 
-  // Couleur de la moyenne
   const avgColor = moyFinale === null
     ? 'text-muted-foreground'
     : moyFinale >= 10
@@ -161,7 +244,7 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
           </div>
           <DialogTitle className="text-xl font-semibold tracking-tight">Magic Share</DialogTitle>
           <DialogDescription className="mt-1.5 text-muted-foreground text-sm">
-            Partagez instantanément le bilan de{' '}
+            Partagez le bilan complet de{' '}
             <span className="font-semibold text-foreground">
               {student.lastName} {student.firstName}
             </span>
@@ -241,8 +324,8 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
                 <FileText size={18} />
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold">Télécharger le Rapport Express</p>
-                <p className="text-[10px] text-muted-foreground">Format PDF optimisé mobile</p>
+                <p className="text-sm font-semibold">Télécharger le Bulletin Complet</p>
+                <p className="text-[10px] text-muted-foreground">PDF avec toutes les notes détaillées</p>
               </div>
               <Download size={16} className="ml-auto text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
             </Button>
@@ -257,7 +340,7 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Copier message WhatsApp</p>
-                <p className="text-[10px] text-muted-foreground">Formaté avec gras et emojis</p>
+                <p className="text-[10px] text-muted-foreground">Bilan complet avec notes et signature</p>
               </div>
               {copiedType === 'whatsapp'
                 ? <Check size={16} className="ml-auto text-emerald-500 shrink-0" />
@@ -274,7 +357,7 @@ const MagicShareDialog: React.FC<MagicShareDialogProps> = ({
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Copier message E-mail</p>
-                <p className="text-[10px] text-muted-foreground">Texte clair et professionnel</p>
+                <p className="text-[10px] text-muted-foreground">Bilan professionnel avec signature</p>
               </div>
               {copiedType === 'email'
                 ? <Check size={16} className="ml-auto text-blue-500 shrink-0" />
