@@ -54,49 +54,49 @@
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 20% 98%;
+    --background: 224 50% 6%;
+    --foreground: 210 20% 95%;
 
-    --card: 224 71% 6%;
-    --card-foreground: 210 20% 98%;
+    --card: 224 45% 10%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 224 71% 6%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 224 45% 10%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 246 80% 65%;
-    --primary-foreground: 224 71% 4%;
+    --primary: 246 75% 68%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 220 25% 16%;
+    --secondary-foreground: 210 20% 92%;
 
-    --muted: 215 28% 17%;
-    --muted-foreground: 217 10% 64%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 218 12% 62%;
 
-    --accent: 246 80% 65%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 246 75% 68%;
+    --accent-foreground: 210 20% 95%;
 
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 246 80% 65%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 246 75% 68%;
 
-    /* Soft palettes - dark mode */
-    --soft-pink: 350 50% 15%;
-    --soft-pink-foreground: 350 80% 70%;
+    /* Soft palettes - dark mode (boosted saturation & luminosity) */
+    --soft-pink: 350 45% 18%;
+    --soft-pink-foreground: 350 85% 72%;
     
-    --soft-blue: 210 50% 15%;
-    --soft-blue-foreground: 210 80% 65%;
+    --soft-blue: 210 45% 18%;
+    --soft-blue-foreground: 210 85% 68%;
     
-    --soft-purple: 270 50% 15%;
-    --soft-purple-foreground: 270 70% 70%;
+    --soft-purple: 270 45% 18%;
+    --soft-purple-foreground: 270 75% 72%;
     
-    --soft-green: 150 50% 12%;
-    --soft-green-foreground: 150 70% 55%;
+    --soft-green: 150 40% 15%;
+    --soft-green-foreground: 150 75% 58%;
 
-    --soft-orange: 25 50% 15%;
-    --soft-orange-foreground: 25 90% 65%;
+    --soft-orange: 25 45% 17%;
+    --soft-orange-foreground: 25 90% 68%;
   }
 
   * {

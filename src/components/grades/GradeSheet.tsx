@@ -619,7 +619,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               onKeyDown={(e) => handleKeyDown(e, student.id, evaluation.id)}
               className={cn(
                 "w-14 h-9 mx-auto border-none text-center text-xs font-bold rounded-lg transition-all focus:ring-2 focus:ring-primary/30",
-                isInvalid ? "bg-destructive/15 text-destructive font-bold" : "bg-muted/40 text-foreground focus:bg-card"
+                isInvalid ? "bg-destructive/15 text-destructive font-bold" : "bg-muted/30 dark:bg-muted/50 text-foreground focus:bg-card"
               )}
             />
           ) : isEditing && !alreadyModified ? (
@@ -636,7 +636,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           ) : (
             <div className={cn(
               "w-14 h-9 mx-auto flex items-center justify-center text-xs font-bold rounded-lg border border-transparent",
-              alreadyModified ? "bg-soft-orange/20 text-foreground border-soft-orange/40" : "bg-muted/20 text-foreground"
+              alreadyModified ? "bg-soft-orange/30 dark:bg-soft-orange text-foreground border-soft-orange-foreground/30" : "bg-muted/15 dark:bg-muted/30 text-foreground"
             )}>
               {grade?.value ?? '-'}
             </div>
@@ -788,7 +788,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
             </Button>
           </div>
 
-          <div className="scrollable-content overflow-x-auto max-h-[65vh] overflow-y-auto relative rounded-3xl bg-white/30 dark:bg-card/30 backdrop-blur-3xl border border-white/20 shadow-xl ml-4 mr-4 mb-4">
+          <div className="scrollable-content overflow-x-auto max-h-[65vh] overflow-y-auto relative rounded-3xl bg-white/30 dark:bg-card/50 backdrop-blur-3xl border border-white/20 dark:border-border/40 shadow-xl dark:shadow-black/30 ml-4 mr-4 mb-4">
             {filteredEvaluations.length === 0 ? (
               <div className="py-20 text-center space-y-4">
                 <div className="w-16 h-16 bg-muted/20 mx-auto rounded-3xl flex items-center justify-center">
@@ -815,25 +815,25 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               </div>
             ) : (
               <table className="w-full border-separate border-spacing-x-0" style={{ borderSpacing: '0 var(--density-gap, 0.5rem)' }}>
-                <thead className="sticky top-0 z-30 bg-white/60 dark:bg-card/60 backdrop-blur-xl border-b border-white/10 shadow-sm transition-all">
+                <thead className="sticky top-0 z-30 bg-white/80 dark:bg-[hsl(224,45%,12%)]/95 backdrop-blur-xl border-b border-white/10 dark:border-border/50 shadow-sm transition-all">
                   <tr className="text-left">
                     <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center py-4">Rang</th>
-                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 bg-white/50 dark:bg-card/50 backdrop-blur-xl z-40 w-48 py-4 text-left border-r border-white/5">Étudiant</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 bg-white/80 dark:bg-[hsl(224,45%,12%)] backdrop-blur-xl z-40 w-48 py-4 text-left border-r border-white/5 dark:border-border/30">Étudiant</th>
                     {interros.map(e => (
                       <th key={e.id} className="px-1 text-center py-4">
                         <div className="text-[10px] font-medium uppercase text-soft-blue-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 text-center text-[10px] font-medium text-soft-orange-foreground uppercase bg-orange-50/80 dark:bg-orange-950/30 rounded-t-xl py-4">MI</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-soft-orange-foreground uppercase bg-orange-50/80 dark:bg-soft-orange rounded-t-xl py-4">MI</th>
                     {devoirs.map(e => (
                       <th key={e.id} className="px-1 text-center py-4">
                         <div className="text-[10px] font-medium uppercase text-soft-pink-foreground">{e.name}</div>
-                        <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
+                        <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-60">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 text-center text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/30 rounded-t-xl py-4">MS</th>
-                    <th className="px-4 text-center text-[10px] font-medium uppercase text-primary bg-primary/10 rounded-t-xl py-4">MC</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-blue-600 dark:text-soft-blue-foreground uppercase bg-blue-50/80 dark:bg-soft-blue rounded-t-xl py-4">MS</th>
+                    <th className="px-4 text-center text-[10px] font-medium uppercase text-primary bg-primary/10 dark:bg-primary/15 rounded-t-xl py-4">MC</th>
                     <th className="w-20 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground py-4 flex items-center justify-center gap-1">
                       <Share2 size={10} className="text-primary" />
                       <span className="text-primary font-semibold">Magic Shell</span>
@@ -849,33 +849,33 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                     const rank    = studentRankings[student.id];
 
                     return (
-                      <tr key={student.id} className="group hover:bg-white/40 dark:hover:bg-card/40 transition-colors duration-200 bg-white/20 dark:bg-card/20 backdrop-blur-sm">
+                      <tr key={student.id} className="group hover:bg-white/40 dark:hover:bg-white/[0.04] transition-colors duration-200 bg-white/20 dark:bg-white/[0.02] backdrop-blur-sm">
                         <td className="text-center">
                           <div className={cn(
                             "w-8 h-8 mx-auto rounded-xl flex items-center justify-center text-[10px] font-semibold",
-                            rank?.rank === 1 ? "bg-soft-orange text-soft-orange-foreground border border-soft-orange-foreground/20" : "bg-muted/10 text-muted-foreground"
+                            rank?.rank === 1 ? "bg-soft-orange text-soft-orange-foreground border border-soft-orange-foreground/20" : "bg-muted/20 dark:bg-muted/30 text-muted-foreground"
                           )}>
                             {rank ? `${rank.rank}${rank.isExAequo ? 'e' : ''}` : '-'}
                           </div>
                         </td>
-                        <td className="sticky left-0 bg-white/60 dark:bg-card/60 backdrop-blur-xl z-20 px-4 py-3 font-medium text-xs truncate border-r border-white/5 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.05)]">
-                          {student.lastName} <span className="text-muted-foreground font-medium">{student.firstName}</span>
+                        <td className="sticky left-0 bg-white/80 dark:bg-[hsl(224,45%,11%)] backdrop-blur-xl z-20 px-4 py-3 font-medium text-xs truncate border-r border-white/5 dark:border-border/30 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.05)] dark:shadow-[2px_0_10px_-4px_rgba(0,0,0,0.3)]">
+                          <span className="text-foreground">{student.lastName}</span> <span className="text-muted-foreground font-medium">{student.firstName}</span>
                         </td>
                         {interros.map(e => renderGradeCell(student, e, studentIdx))}
-                        {/* MI : fond orange très clair */}
-                        <td className="bg-orange-50/70 dark:bg-orange-950/20 px-2 text-center font-semibold text-xs text-orange-700 dark:text-orange-300 border-x border-orange-100/50 dark:border-orange-900/30">
+                        {/* MI */}
+                        <td className="bg-orange-50/70 dark:bg-soft-orange px-2 text-center font-semibold text-xs text-orange-700 dark:text-soft-orange-foreground border-x border-orange-100/50 dark:border-soft-orange-foreground/15">
                           {moyInt?.toFixed(1) ?? '-'}
                         </td>
                         {devoirs.map(e => renderGradeCell(student, e, studentIdx))}
-                        {/* MS : fond bleu clair */}
-                        <td className="bg-blue-50/70 dark:bg-blue-950/20 px-2 text-center font-semibold text-xs text-blue-700 dark:text-blue-300 border-x border-blue-100/50 dark:border-blue-900/30">
+                        {/* MS */}
+                        <td className="bg-blue-50/70 dark:bg-soft-blue px-2 text-center font-semibold text-xs text-blue-700 dark:text-soft-blue-foreground border-x border-blue-100/50 dark:border-soft-blue-foreground/15">
                           {moyDev?.toFixed(1) ?? '-'}
                         </td>
-                        {/* MC : fond bleu plus saturé */}
-                        <td className="bg-primary/8 px-4 text-center">
+                        {/* MC */}
+                        <td className="bg-primary/8 dark:bg-primary/10 px-4 text-center">
                           <div className={cn(
-                             "inline-flex px-4 py-1 rounded-full text-xs font-semibold shadow-inner",
-                             final_ && final_ >= 10 ? "bg-soft-green text-soft-green-foreground" : final_ ? "bg-soft-pink text-soft-pink-foreground" : "bg-muted/10 text-muted-foreground"
+                             "inline-flex px-4 py-1 rounded-full text-xs font-semibold",
+                             final_ && final_ >= 10 ? "bg-soft-green text-soft-green-foreground" : final_ ? "bg-soft-pink text-soft-pink-foreground" : "bg-muted/20 dark:bg-muted/30 text-muted-foreground"
                           )}>
                              {final_?.toFixed(2) ?? '--'}
                           </div>
