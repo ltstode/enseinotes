@@ -54,9 +54,11 @@ import {
 import { Student, PedagogicalUnit } from '@/types/enseinotes';
 import { toast } from 'sonner';
 import MagicShareDialog from '@/components/grades/MagicShareDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 const StudentsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { teacher } = useAuth();
   const { 
     classRooms, 
     activeYearId, 
@@ -521,7 +523,7 @@ const StudentsPage: React.FC = () => {
                                 <Button 
                                   size="icon" 
                                   variant="ghost" 
-                                  className="h-9 w-9 rounded-xl hover:bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-all"
+                                  className="h-9 w-9 rounded-xl hover:bg-primary/10 text-primary transition-all"
                                   onClick={() => {
                                     setSelectedStudentForShare(student);
                                     // By default, if there are units, pick the first one
@@ -737,7 +739,7 @@ const StudentsPage: React.FC = () => {
           allPeriods={periods}
           classroom={classRooms.find(c => c.id === selectedClassId)}
           schoolYear={schoolYears.find(y => y.id === activeYearId!)}
-          teacherName="Enseignant"
+          teacherName={teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Enseignant'}
           calculateAverage={calculateAverage}
           classStudents={classRooms.find(c => c.id === selectedClassId)?.students ?? []}
         />
