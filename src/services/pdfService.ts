@@ -19,7 +19,7 @@ interface StudentReportData {
 
 interface ReportContext {
   unit: PedagogicalUnit;
-  classroom: ClassRoom;
+  classroom: Pick<ClassRoom, 'name'>;
   schoolYear: SchoolYear;
   period: Period;
   teacherName: string;
@@ -473,4 +473,124 @@ const generateBulletinPage = (
   
   doc.setFontSize(7);
   doc.text('EnseiNotes - Système de gestion des notes', pageWidth / 2, y + 6, { align: 'center' });
+};
+
+// Generate a quick report for sharing
+export const generateQuickReport = (
+  data: StudentReportData,
+  context: ReportContext
+): jsPDF => {
+  const doc = new jsPDF('p', 'mm', [100, 150]); // Smaller format for mobile sharing
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 8;
+  let y = margin;
+
+  // Header background
+  doc.setFillColor(99, 179, 237);
+  doc.rect(0, 0, pageWidth, 25, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RAPPORT EXPRESS', pageWidth / 2, 12, { align: 'center' });
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${context.period.name}`, pageWidth / 2, 18, { align: 'center' });
+  
+  y = 32;
+
+  // Student Info
+  doc.setTextColor(31, 31, 31);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${data.student.lastName} ${data.student.firstName}`, margin, y);
+  
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text(`${context.classroom.name} · ${context.unit.name}`, margin, y + 5);
+  
+  // Ranking badge (mini)
+  if (data.rank) {
+    const rankX = pageWidth - margin - 15;
+    doc.setFillColor(data.rank.rank <= 3 ? 251 : 237, data.rank.rank <= 3 ? 211 : 242, data.rank.rank <= 3 ? 141 : 255);
+    doc.roundedRect(rankX, y - 4, 15, 15, 1.5, 1.5, 'F');
+    doc.setTextColor(31, 31, 31);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${data.rank.rank}${data.rank.isExAequo ? 'e' : ''}`, rankX + 7.5, y + 3, { align: 'center' });
+    doc.setFontSize(5);
+    doc.text(`SUR ${data.totalStudents}`, rankX + 7.5, y + 8, { align: 'center' });
+  }
+  
+  y += 18;
+
+  // Averages summary
+  doc.setDrawColor(230, 230, 230);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 6;
+
+  const rows = [
+    ['Moy. Interros', data.moyInterros !== null ? data.moyInterros.toFixed(2) : '-'],
+    ['Moy. Devoirs', data.moyDevoirs !== null ? data.moyDevoirs.toFixed(2) : '-'],
+  ];
+
+  rows.forEach(([label, val]) => {
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(8);
+    doc.text(label, margin, y);
+    doc.setTextColor(31, 31, 31);
+    doc.setFont('helvetica', 'bold');
+    doc.text(val, pageWidth - margin, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 6;
+  });
+
+  y += 2;
+  // Final score box
+  doc.setFillColor(56, 161, 105);
+  doc.roundedRect(margin, y, pageWidth - 2 * margin, 18, 2, 2, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MOYENNE GÉNÉRALE', margin + 5, y + 11);
+  
+  doc.setFontSize(13);
+  doc.text(
+    data.moyFinale !== null ? `${data.moyFinale.toFixed(2)}` : '-',
+    pageWidth - margin - 5,
+    y + 11,
+    { align: 'right' }
+  );
+  
+  y += 26;
+
+  // Appreciation
+  doc.setTextColor(31, 31, 31);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('APPRÉCIATION', margin, y);
+  y += 5;
+  
+  doc.setFillColor(247, 250, 252);
+  doc.roundedRect(margin, y, pageWidth - 2 * margin, 15, 1.5, 1.5, 'F');
+  
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7.5);
+  doc.setTextColor(60, 60, 60);
+  const appreciation = data.appreciation || getAppreciation(data.moyFinale);
+  // Split text if too long
+  const lines = doc.splitTextToSize(appreciation, pageWidth - 2 * margin - 10);
+  doc.text(lines, margin + 5, y + 7);
+  
+  y = 142;
+  // Small Footer
+  doc.setTextColor(150, 150, 150);
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`généré par EnseiNotes · ${format(new Date(), 'dd/MM/yyyy')}`, pageWidth / 2, y, { align: 'center' });
+
+  return doc;
 };

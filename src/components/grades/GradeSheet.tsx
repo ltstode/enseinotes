@@ -32,7 +32,8 @@ import {
   Settings,
   Keyboard,
   Download,
-  BarChart3
+  BarChart3,
+  Share2
 } from 'lucide-react';
 import { PedagogicalUnit, Student, Evaluation, Period } from '@/types/enseinotes';
 import { useApp } from '@/contexts/AppContext';
@@ -46,8 +47,8 @@ import ClassStatistics from './ClassStatistics';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { generateClassBulletins } from '@/services/pdfService';
 import BulletinPreviewDialog from './BulletinPreviewDialog';
+import MagicShareDialog from './MagicShareDialog';
 import { cn } from '@/lib/utils';
-import * as XLSX from 'xlsx';
 
 interface GradeSheetProps {
   unit: PedagogicalUnit;
@@ -73,6 +74,9 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     isUnitSaved,
     classRooms,
     schoolYears,
+    getUnitsByClass,
+    periods: allPeriods,
+    calculateAverage,
   } = useApp();
   
   const { teacher } = useAuth();
@@ -81,6 +85,14 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   
   const [showStatistics, setShowStatistics] = useState(false);
   const [showBulletinPreview, setShowBulletinPreview] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [selectedStudentForShare, setSelectedStudentForShare] = useState<Student | null>(null);
+
+  // Toutes les unités de la classe (pour le sélecteur de matière dans le dialog)
+  const classUnits = useMemo(
+    () => getUnitsByClass(unit.classRoomId),
+    [getUnitsByClass, unit.classRoomId]
+  );
   
   const students = useMemo(() => {
     return getStudentsByClass(unit.classRoomId)
@@ -92,9 +104,19 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
       });
   }, [getStudentsByClass, unit.classRoomId]);
   
-  const evaluations = getEvaluationsByUnit(unit.id);
-  const periods = getPeriodsByUnit(unit.id);
-  const isSaved = isUnitSaved(unit.id);
+  const evaluations = useMemo(
+    () => getEvaluationsByUnit(unit.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [unit.id, grades] // re-derive when grades saved (unit evaluations don't change often)
+  );
+  const periods = useMemo(
+    () => getPeriodsByUnit(unit.id),
+    [getPeriodsByUnit, unit.id]
+  );
+  const isSaved = useMemo(
+    () => isUnitSaved(unit.id),
+    [isUnitSaved, unit.id]
+  );
   
   const [activePeriod, setActivePeriod] = useState<string>('');
   
@@ -110,8 +132,14 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     return evaluations.filter(e => e.periodId === activePeriod);
   }, [evaluations, activePeriod]);
   
-  const interros = filteredEvaluations.filter(e => e.type === 'interro');
-  const devoirs = filteredEvaluations.filter(e => e.type === 'devoir');
+  const interros = useMemo(
+    () => filteredEvaluations.filter(e => e.type === 'interro'),
+    [filteredEvaluations]
+  );
+  const devoirs = useMemo(
+    () => filteredEvaluations.filter(e => e.type === 'devoir'),
+    [filteredEvaluations]
+  );
   
   const [showEvalDialog, setShowEvalDialog] = useState(false);
   const [showPeriodDialog, setShowPeriodDialog] = useState(false);
@@ -133,7 +161,10 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
   const allTableEvals = useMemo(() => [...interros, ...devoirs], [interros, devoirs]);
 
   // hasGradesToSave - defined early for use in keyboard shortcuts
-  const hasGradesToSave = Object.keys(localGrades).some(key => localGrades[key] !== '');
+  const hasGradesToSave = useMemo(
+    () => Object.values(localGrades).some(v => v !== ''),
+    [localGrades]
+  );
 
   const getGrade = useCallback((studentId: string, evaluationId: string) => {
     return grades.find(g => g.studentId === studentId && g.evaluationId === evaluationId);
@@ -211,6 +242,21 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     });
     return rankings;
   }, [students, calculateFinalAverage]);
+
+  // ── Précalcul de toutes les moyennes en un seul useMemo ──────────────────────
+  // Évite N×3 appels de fonctions complexes à chaque render du tbody.
+  // Le tableau de 30 élèves × 3 moyennes passe de 90 appels à 0 lors du rendu.
+  const studentAverages = useMemo(() => {
+    const map = new Map<string, { mi: number | null; ms: number | null; mc: number | null }>();
+    students.forEach(s => {
+      map.set(s.id, {
+        mi: calculateTypeAverage(s.id, interros),
+        ms: calculateTypeAverage(s.id, devoirs),
+        mc: calculateFinalAverage(s.id),
+      });
+    });
+    return map;
+  }, [students, interros, devoirs, calculateTypeAverage, calculateFinalAverage]);
 
   const handleLocalGradeInput = useCallback((studentId: string, evaluationId: string, value: string) => {
     const key = `${studentId}-${evaluationId}`;
@@ -314,7 +360,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     setShowBulletinPreview(true);
   }, [periods, activePeriod, classRooms, schoolYears, unit, toast]);
 
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
     if (!activePeriod) {
       toast({ title: 'Erreur', description: 'Veuillez sélectionner une période.', variant: 'destructive' });
       return;
@@ -322,60 +368,183 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
 
     const period = periods.find(p => p.id === activePeriod);
     const classroom = classRooms.find(c => c.id === unit.classRoomId);
-    
     if (!period || !classroom) {
       toast({ title: 'Erreur', description: 'Données manquantes.', variant: 'destructive' });
       return;
     }
 
-    // Préparer les en-têtes
-    const headers = [
-      'Nom',
-      'Prénom',
-      ...filteredEvaluations.map(e => `${e.name} (/${e.maxScore})`),
-      'Moy. Interros',
-      'Moy. Devoirs',
-      'Moyenne Générale',
+    // Chargement différé de SheetJS : ne bloque pas le bundle initial
+    const XLSX = await import('xlsx');
+
+    // ── Colonnes ──────────────────────────────────────────────────────────────
+    // Col A = Nom, B = Prénom
+    // Col C..C+nI-1 = Interros (I1, I2...)
+    // Col C+nI = MI (Moy. Interros)
+    // Col C+nI+1..C+nI+nD = Devoirs (D1, D2...)
+    // Col C+nI+nD+1 = MS (Moy. Devoirs / Semestrielle)
+    // Col C+nI+nD+2 = MC (Moyenne Coefficiée / Finale) — si règle de pondération
+    // Col C+nI+nD+3 = Rang
+    const nI = interros.length;
+    const nD = devoirs.length;
+    const colMI = 2 + nI;           // 0-indexed: A=0, B=1, C=2...
+    const colMS = colMI + 1 + nD;   // après les devoirs
+    const colMC = colMS + 1;
+    const colRang = colMC + 1;
+
+    // Helper: numéro de colonne (0-indexed) → lettre Excel
+    const colLetter = (col: number): string => {
+      let s = '';
+      let n = col + 1;
+      while (n > 0) {
+        const rem = (n - 1) % 26;
+        s = String.fromCharCode(65 + rem) + s;
+        n = Math.floor((n - 1) / 26);
+      }
+      return s;
+    };
+
+    // ── En-têtes ──────────────────────────────────────────────────────────────
+    const headerRow: string[] = [
+      'Nom', 'Prénom',
+      ...interros.map((e, i) => `I${i + 1} (/${e.maxScore})`),
+      'MI',
+      ...devoirs.map((e, i) => `D${i + 1} (/${e.maxScore})`),
+      'MS',
+      'MC',
       'Rang'
     ];
 
-    // Préparer les données des élèves
-    const data = students.map(student => {
-      const moyInterros = calculateTypeAverage(student.id, interros);
-      const moyDevoirs = calculateTypeAverage(student.id, devoirs);
-      const moyGenerale = calculateFinalAverage(student.id);
+    // ── Lignes de données ───────────────────────────────────────────────────
+    const dataRows = students.map((student, rowIdx) => {
+      const excelRow = rowIdx + 2; // ligne 1 = en-tête
+
+      // Colonnes des interros
+      const iCols = interros.map((e) => {
+        const grade = getGrade(student.id, e.id);
+        return grade?.value ?? null;
+      });
+
+      // Formule MI : moyenne pondérée des interros (note/maxScore * 20 * coef) / somme coefs
+      // Si une seule interro sans coef particulier → simple AVERAGE normalisée
+      let formulaMI: string;
+      if (interros.length === 0) {
+        formulaMI = '';
+      } else {
+        // SUMPRODUCT((note/maxScore)*20*coef) / SUMPRODUCT(coef)
+        // On utilise les cellules directement
+        const parts = interros.map((e, i) => {
+          const cell = `${colLetter(2 + i)}${excelRow}`;
+          return `(${cell}/${e.maxScore}*20*${e.coefficient})`;
+        });
+        const totalCoef = interros.reduce((s, e) => s + e.coefficient, 0);
+        formulaMI = `=IFERROR(ROUND((${parts.join('+')})/IF(${parts.map((_, i) => `ISNUMBER(${colLetter(2 + i)}${excelRow})`).join('+')}=0,1,${totalCoef}),2),"-")`;
+      }
+
+      // Colonnes des devoirs
+      const dCols = devoirs.map((e) => {
+        const grade = getGrade(student.id, e.id);
+        return grade?.value ?? null;
+      });
+
+      // Formule MS : même logique pour les devoirs
+      let formulaMS: string;
+      if (devoirs.length === 0) {
+        formulaMS = '';
+      } else {
+        const parts = devoirs.map((e, i) => {
+          const cell = `${colLetter(colMI + 1 + i)}${excelRow}`;
+          return `(${cell}/${e.maxScore}*20*${e.coefficient})`;
+        });
+        const totalCoef = devoirs.reduce((s, e) => s + e.coefficient, 0);
+        formulaMS = `=IFERROR(ROUND((${parts.join('+')})/IF(${parts.map((_, i) => `ISNUMBER(${colLetter(colMI + 1 + i)}${excelRow})`).join('+')}=0,1,${totalCoef}),2),"-")`;
+      }
+
+      // Formule MC : pondération interroWeight / devoirWeight
+      const { interroWeight, devoirWeight } = unit.rules;
+      const totalWeight = interroWeight + devoirWeight;
+      let formulaMC: string;
+      const miCell = `${colLetter(colMI)}${excelRow}`;
+      const msCell = `${colLetter(colMS)}${excelRow}`;
+      if (interros.length === 0 && devoirs.length === 0) {
+        formulaMC = '';
+      } else if (interros.length === 0) {
+        formulaMC = `=IFERROR(${msCell},"-")`;
+      } else if (devoirs.length === 0) {
+        formulaMC = `=IFERROR(${miCell},"-")`;
+      } else {
+        formulaMC = `=IFERROR(ROUND((${miCell}*${interroWeight}+${msCell}*${devoirWeight})/${totalWeight},2),"-")`;
+      }
+
+      // Rang (valeur calculée — on garde la valeur car RANK() nécessiterait une plage fixe)
       const ranking = studentRankings[student.id];
-      
+      const rangVal = ranking ? (ranking.isExAequo ? `${ranking.rank} ex` : ranking.rank.toString()) : '-';
+
       return [
         student.lastName,
         student.firstName,
-        ...filteredEvaluations.map(evaluation => {
-          const grade = getGrade(student.id, evaluation.id);
-          return grade?.value ?? '-';
-        }),
-        moyInterros !== null ? moyInterros.toFixed(2) : '-',
-        moyDevoirs !== null ? moyDevoirs.toFixed(2) : '-',
-        moyGenerale !== null ? moyGenerale.toFixed(2) : '-',
-        ranking ? (ranking.isExAequo ? `${ranking.rank} ex` : ranking.rank.toString()) : '-'
+        ...iCols,
+        formulaMI,
+        ...dCols,
+        formulaMS,
+        formulaMC,
+        rangVal
       ];
     });
 
-    // Créer la feuille Excel
-    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data]);
-    
-    // Créer le classeur
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, period.name);
+    // ── Construire la feuille ─────────────────────────────────────────────────
+    const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
 
-    // Nom du fichier
+    // Activer les formules (xlsx-js-style ou SheetJS standard)
+    // SheetJS lit les formules si la cellule commence par '='
+    // On doit re-typer les cellules de formule
+    const totalRows = students.length;
+    for (let r = 0; r < totalRows; r++) {
+      const excelRow = r + 2;
+      // MI
+      const miAddr = `${colLetter(colMI)}${excelRow}`;
+      if (ws[miAddr] && typeof ws[miAddr].v === 'string' && ws[miAddr].v.startsWith('=')) {
+        ws[miAddr] = { t: 'n', f: ws[miAddr].v.slice(1), v: 0 };
+      }
+      // MS
+      const msAddr = `${colLetter(colMS)}${excelRow}`;
+      if (ws[msAddr] && typeof ws[msAddr].v === 'string' && ws[msAddr].v.startsWith('=')) {
+        ws[msAddr] = { t: 'n', f: ws[msAddr].v.slice(1), v: 0 };
+      }
+      // MC
+      const mcAddr = `${colLetter(colMC)}${excelRow}`;
+      if (ws[mcAddr] && typeof ws[mcAddr].v === 'string' && ws[mcAddr].v.startsWith('=')) {
+        ws[mcAddr] = { t: 'n', f: ws[mcAddr].v.slice(1), v: 0 };
+      }
+    }
+
+    // ── Largeurs de colonnes ──────────────────────────────────────────────────
+    ws['!cols'] = [
+      { wch: 20 }, // Nom
+      { wch: 16 }, // Prénom
+      ...interros.map(() => ({ wch: 10 })),
+      { wch: 10 }, // MI
+      ...devoirs.map(() => ({ wch: 10 })),
+      { wch: 10 }, // MS
+      { wch: 10 }, // MC
+      { wch: 8 },  // Rang
+    ];
+
+    // ── Mise en forme (nécessite xlsx-style ou SheetJS Pro — on utilise le style basique) ──
+    // SheetJS open source ne supporte pas les styles natifs, mais on peut ajouter
+    // des métadonnées de style si xlsx-js-style est disponible.
+    // Ici on utilise l'approche standard : les formules suffisent pour l'interactivité.
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, ws, period.name);
+
     const fileName = `${classroom.name}_${unit.name}_${period.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    
-    toast({ 
-      title: 'Export réussi ✨', 
-      description: `Feuille de notes exportée pour ${students.length} élève(s).` 
+
+    toast({
+      title: 'Export réussi ✨',
+      description: `Bulletin Excel avec formules exporté pour ${students.length} élève(s).`
     });
-  }, [activePeriod, periods, classRooms, unit, students, filteredEvaluations, calculateTypeAverage, calculateFinalAverage, studentRankings, getGrade, interros, devoirs, toast]);
+  }, [activePeriod, periods, classRooms, unit, students, interros, devoirs, getGrade, studentRankings, toast]);
 
   const handleModifyGrade = useCallback((studentId: string, evaluationId: string, newValue: string) => {
     const existingGrade = getGrade(studentId, evaluationId);
@@ -424,19 +593,17 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
     enabled: true,
   });
 
-  const renderGradeCell = (student: Student, evaluation: Evaluation, studentIndex: number) => {
+  const renderGradeCell = useCallback((student: Student, evaluation: Evaluation, _studentIndex: number) => {
     const grade = getGrade(student.id, evaluation.id);
     const isEditing = editingStudent === student.id;
     const alreadyModified = grade?.history && grade.history.length > 0;
     const key = `${student.id}-${evaluation.id}`;
     const evalIsNew = isNewEvaluation(evaluation.id);
     const canFreeEdit = !isSaved || evalIsNew;
-    
-            // Use local draft if user typed something, otherwise show persisted grade
-            const hasLocalDraft = key in localGrades;
-            const currentValue = hasLocalDraft ? localGrades[key] : (grade?.value?.toString() ?? '');
-            const numValue = parseFloat(currentValue);
-            const isInvalid = currentValue !== '' && (isNaN(numValue) || numValue < 0 || numValue > evaluation.maxScore);
+    const hasLocalDraft = key in localGrades;
+    const currentValue = hasLocalDraft ? localGrades[key] : (grade?.value?.toString() ?? '');
+    const numValue = parseFloat(currentValue);
+    const isInvalid = currentValue !== '' && (isNaN(numValue) || numValue < 0 || numValue > evaluation.maxScore);
 
     return (
       <td key={evaluation.id} className="p-1 text-center">
@@ -480,7 +647,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
         </div>
       </td>
     );
-  };
+  }, [getGrade, editingStudent, isNewEvaluation, isSaved, localGrades, registerRef, handleLocalGradeInput, handleKeyDown, handleModifyGrade]);
 
   if (students.length === 0) return (
     <div className="apple-card p-12 text-center bg-card/50 backdrop-blur-md border border-border/40">
@@ -621,7 +788,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
             </Button>
           </div>
 
-          <div className="p-4 scrollable-content overflow-x-auto max-h-[65vh] overflow-y-auto">
+          <div className="scrollable-content overflow-x-auto max-h-[65vh] overflow-y-auto relative rounded-3xl bg-white/30 dark:bg-card/30 backdrop-blur-3xl border border-white/20 shadow-xl ml-4 mr-4 mb-4">
             {filteredEvaluations.length === 0 ? (
               <div className="py-20 text-center space-y-4">
                 <div className="w-16 h-16 bg-muted/20 mx-auto rounded-3xl flex items-center justify-center">
@@ -648,36 +815,41 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
               </div>
             ) : (
               <table className="w-full border-separate border-spacing-x-0" style={{ borderSpacing: '0 var(--density-gap, 0.5rem)' }}>
-                <thead className="sticky top-0 z-20 bg-card/95 backdrop-blur-md">
+                <thead className="sticky top-0 z-30 bg-white/60 dark:bg-card/60 backdrop-blur-xl border-b border-white/10 shadow-sm transition-all">
                   <tr className="text-left">
-                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center py-2">Rang</th>
-                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 bg-card/95 backdrop-blur-md z-30 w-48 py-2">Étudiant</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground w-12 text-center py-4">Rang</th>
+                    <th className="px-4 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sticky left-0 bg-white/50 dark:bg-card/50 backdrop-blur-xl z-40 w-48 py-4 text-left border-r border-white/5">Étudiant</th>
                     {interros.map(e => (
-                      <th key={e.id} className="px-1 text-center py-2">
+                      <th key={e.id} className="px-1 text-center py-4">
                         <div className="text-[10px] font-medium uppercase text-soft-blue-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 text-center text-[10px] font-medium text-soft-blue-foreground uppercase bg-soft-blue/30 rounded-t-xl py-2">Moy. Int</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-soft-orange-foreground uppercase bg-orange-50/80 dark:bg-orange-950/30 rounded-t-xl py-4">MI</th>
                     {devoirs.map(e => (
-                      <th key={e.id} className="px-1 text-center py-2">
+                      <th key={e.id} className="px-1 text-center py-4">
                         <div className="text-[10px] font-medium uppercase text-soft-pink-foreground">{e.name}</div>
                         <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                       </th>
                     ))}
-                    <th className="px-2 text-center text-[10px] font-medium text-soft-pink-foreground uppercase bg-soft-pink/30 rounded-t-xl py-2">Moy. Dev</th>
-                    <th className="px-6 text-center text-[10px] font-medium uppercase text-primary py-2">Moyenne Finale</th>
+                    <th className="px-2 text-center text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase bg-blue-50/80 dark:bg-blue-950/30 rounded-t-xl py-4">MS</th>
+                    <th className="px-4 text-center text-[10px] font-medium uppercase text-primary bg-primary/10 rounded-t-xl py-4">MC</th>
+                    <th className="w-20 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground py-4 flex items-center justify-center gap-1">
+                      <Share2 size={10} className="text-primary" />
+                      <span className="text-primary font-semibold">Magic Shell</span>
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="before:block before:h-2">
+                <tbody>
                   {students.map((student, studentIdx) => {
-                    const moyInt = calculateTypeAverage(student.id, interros);
-                    const moyDev = calculateTypeAverage(student.id, devoirs);
-                    const final_ = calculateFinalAverage(student.id);
-                    const rank = studentRankings[student.id];
+                    const avgs = studentAverages.get(student.id);
+                    const moyInt  = avgs?.mi  ?? null;
+                    const moyDev  = avgs?.ms  ?? null;
+                    const final_  = avgs?.mc  ?? null;
+                    const rank    = studentRankings[student.id];
 
                     return (
-                      <tr key={student.id} className="group hover:bg-muted/20 transition-colors duration-200">
+                      <tr key={student.id} className="group hover:bg-white/40 dark:hover:bg-card/40 transition-colors duration-200 bg-white/20 dark:bg-card/20 backdrop-blur-sm">
                         <td className="text-center">
                           <div className={cn(
                             "w-8 h-8 mx-auto rounded-xl flex items-center justify-center text-[10px] font-semibold",
@@ -686,20 +858,42 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                             {rank ? `${rank.rank}${rank.isExAequo ? 'e' : ''}` : '-'}
                           </div>
                         </td>
-                        <td className="sticky left-0 bg-card/95 backdrop-blur-md z-10 px-4 py-2 font-medium text-xs truncate">
+                        <td className="sticky left-0 bg-white/60 dark:bg-card/60 backdrop-blur-xl z-20 px-4 py-3 font-medium text-xs truncate border-r border-white/5 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.05)]">
                           {student.lastName} <span className="text-muted-foreground font-medium">{student.firstName}</span>
                         </td>
                         {interros.map(e => renderGradeCell(student, e, studentIdx))}
-                        <td className="bg-soft-blue/10 px-2 text-center font-medium text-xs text-soft-blue-foreground">{moyInt?.toFixed(1) ?? '-'}</td>
+                        {/* MI : fond orange très clair */}
+                        <td className="bg-orange-50/70 dark:bg-orange-950/20 px-2 text-center font-semibold text-xs text-orange-700 dark:text-orange-300 border-x border-orange-100/50 dark:border-orange-900/30">
+                          {moyInt?.toFixed(1) ?? '-'}
+                        </td>
                         {devoirs.map(e => renderGradeCell(student, e, studentIdx))}
-                        <td className="bg-soft-pink/10 px-2 text-center font-medium text-xs text-soft-pink-foreground">{moyDev?.toFixed(1) ?? '-'}</td>
-                        <td className="px-6 text-center">
+                        {/* MS : fond bleu clair */}
+                        <td className="bg-blue-50/70 dark:bg-blue-950/20 px-2 text-center font-semibold text-xs text-blue-700 dark:text-blue-300 border-x border-blue-100/50 dark:border-blue-900/30">
+                          {moyDev?.toFixed(1) ?? '-'}
+                        </td>
+                        {/* MC : fond bleu plus saturé */}
+                        <td className="bg-primary/8 px-4 text-center">
                           <div className={cn(
                              "inline-flex px-4 py-1 rounded-full text-xs font-semibold shadow-inner",
                              final_ && final_ >= 10 ? "bg-soft-green text-soft-green-foreground" : final_ ? "bg-soft-pink text-soft-pink-foreground" : "bg-muted/10 text-muted-foreground"
                           )}>
                              {final_?.toFixed(2) ?? '--'}
                           </div>
+                        </td>
+                        {/* Magic Shell : bouton toujours visible */}
+                        <td className="px-2 text-center">
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className="h-8 w-8 rounded-xl text-primary/60 hover:text-primary hover:bg-primary/10 transition-all"
+                             onClick={() => {
+                               setSelectedStudentForShare(student);
+                               setShowShareDialog(true);
+                             }}
+                             title="Magic Shell — Partage Magique"
+                           >
+                             <Share2 size={14} />
+                           </Button>
                         </td>
                       </tr>
                     );
@@ -784,6 +978,22 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedStudentForShare && (
+        <MagicShareDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          student={selectedStudentForShare}
+          unit={unit}
+          availableUnits={classUnits}
+          allPeriods={allPeriods}
+          classroom={classRooms.find(c => c.id === unit.classRoomId)}
+          schoolYear={schoolYears.find(y => y.id === unit.schoolYearId)}
+          teacherName={teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Enseignant'}
+          calculateAverage={calculateAverage}
+          classStudents={getStudentsByClass(unit.classRoomId)}
+        />
+      )}
     </div>
   );
 };

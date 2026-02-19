@@ -48,21 +48,26 @@ import {
   GraduationCap,
   Plus,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  Share2
 } from 'lucide-react';
-import { Student } from '@/types/enseinotes';
+import { Student, PedagogicalUnit } from '@/types/enseinotes';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import MagicShareDialog from '@/components/grades/MagicShareDialog';
 
 const StudentsPage: React.FC = () => {
   const navigate = useNavigate();
   const { 
     classRooms, 
     activeYearId, 
+    schoolYears,
+    pedagogicalUnits,
+    periods,
     getClassesByYear, 
     addStudentToClass,
     updateStudentInClass,
-    deleteStudentFromClass
+    deleteStudentFromClass,
+    calculateAverage
   } = useApp();
   
   const [selectedClassId, setSelectedClassId] = useState<string>('');
@@ -77,6 +82,11 @@ const StudentsPage: React.FC = () => {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editLastName, setEditLastName] = useState('');
   const [editFirstName, setEditFirstName] = useState('');
+  
+  // Share states
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [selectedStudentForShare, setSelectedStudentForShare] = useState<Student | null>(null);
+  const [selectedUnitForShare, setSelectedUnitForShare] = useState<PedagogicalUnit | null>(null);
   
   // Form states
   const [newLastName, setNewLastName] = useState('');
@@ -171,10 +181,13 @@ const StudentsPage: React.FC = () => {
     toast.success(`${parsedStudents.length} élèves importés avec succès`);
   };
 
-  const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExcelFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
+    // Chargement différé : xlsx n'est téléchargé que quand un fichier est sélectionné
+    const XLSX = await import('xlsx');
+
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -182,21 +195,20 @@ const StudentsPage: React.FC = () => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
-        
+
         if (jsonData.length === 0) {
           toast.error('Le fichier est vide ou mal formaté');
           return;
         }
-        
-        // Find the column that contains "nom" in its header (case-insensitive)
+
         const headers = Object.keys(jsonData[0]);
         const nameColumn = headers.find(h => h.toLowerCase().includes('nom'));
-        
+
         if (!nameColumn) {
           toast.error('Aucune colonne "Nom" trouvée dans le fichier. Assurez-vous qu\'une colonne contient "Nom" dans son titre.');
           return;
         }
-        
+
         const students = jsonData
           .map(row => {
             const fullName = String(row[nameColumn] || '').trim();
@@ -207,7 +219,7 @@ const StudentsPage: React.FC = () => {
             return { firstName, lastName };
           })
           .filter(Boolean) as { firstName: string; lastName: string }[];
-        
+
         setExcelPreview(students);
         toast.success(`${students.length} élèves détectés dans le fichier`);
       } catch {
@@ -215,7 +227,6 @@ const StudentsPage: React.FC = () => {
       }
     };
     reader.readAsArrayBuffer(file);
-    // Reset the input so the same file can be re-selected
     e.target.value = '';
   };
 
@@ -249,29 +260,24 @@ const StudentsPage: React.FC = () => {
     toast.success('Élèves archivés');
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!selectedClass) return;
-    
-    // Préparer les données pour l'export (seulement Nom et Prénom)
+
+    // Chargement différé : xlsx n'est téléchargé que quand l'utilisateur exporte
+    const XLSX = await import('xlsx');
+
     const data = [
-      ['Nom', 'Prénom'], // En-têtes
-      ...filteredStudents.map(student => [
-        student.lastName,
-        student.firstName
-      ])
+      ['Nom', 'Prénom'],
+      ...filteredStudents.map(student => [student.lastName, student.firstName])
     ];
 
-    // Créer une nouvelle feuille
     const worksheet = XLSX.utils.aoa_to_sheet(data);
-    
-    // Créer un nouveau classeur
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Élèves');
 
-    // Générer le fichier avec un nom personnalisé
     const fileName = `${selectedClass.name.replace(/\s+/g, '_')}_eleves_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    
+
     toast.success(`Liste de ${filteredStudents.length} élève(s) exportée`);
   };
 
@@ -512,16 +518,37 @@ const StudentsPage: React.FC = () => {
                               >
                                 {student.status === 'active' ? <Archive size={16} /> : <ArchiveRestore size={16} />}
                               </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                className="h-9 w-9 rounded-xl hover:bg-soft-pink text-soft-pink-foreground"
-                                onClick={() => setStudentToDelete(student)}
-                              >
-                                <Trash2 size={16} />
-                              </Button>
-                            </div>
-                          </td>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  className="h-9 w-9 rounded-xl hover:bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-all"
+                                  onClick={() => {
+                                    setSelectedStudentForShare(student);
+                                    // By default, if there are units, pick the first one
+                                    const classUnits = classRooms.find(c => c.id === selectedClassId) 
+                                      ? pedagogicalUnits.filter(u => u.classRoomId === selectedClassId)
+                                      : [];
+                                    if (classUnits.length > 0) {
+                                      setSelectedUnitForShare(classUnits[0]);
+                                      setIsShareDialogOpen(true);
+                                    } else {
+                                      toast.error("Aucune unité pédagogique trouvée pour cette classe.");
+                                    }
+                                  }}
+                                  title="Partage Magique"
+                                >
+                                  <Share2 size={16} />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  className="h-9 w-9 rounded-xl hover:bg-soft-pink text-soft-pink-foreground"
+                                  onClick={() => setStudentToDelete(student)}
+                                >
+                                  <Trash2 size={16} />
+                                </Button>
+                              </div>
+                            </td>
                         </tr>
                       ))}
                     </tbody>
@@ -699,6 +726,22 @@ const StudentsPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedStudentForShare && (
+        <MagicShareDialog
+          open={isShareDialogOpen}
+          onOpenChange={setIsShareDialogOpen}
+          student={selectedStudentForShare}
+          unit={selectedUnitForShare ?? pedagogicalUnits.filter(u => u.classRoomId === selectedClassId)[0]}
+          availableUnits={pedagogicalUnits.filter(u => u.classRoomId === selectedClassId)}
+          allPeriods={periods}
+          classroom={classRooms.find(c => c.id === selectedClassId)}
+          schoolYear={schoolYears.find(y => y.id === activeYearId!)}
+          teacherName="Enseignant"
+          calculateAverage={calculateAverage}
+          classStudents={classRooms.find(c => c.id === selectedClassId)?.students ?? []}
+        />
+      )}
     </AppLayout>
   );
 };
