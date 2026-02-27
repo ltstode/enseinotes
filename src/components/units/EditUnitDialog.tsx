@@ -44,8 +44,12 @@ const EditUnitDialog: React.FC<EditUnitDialogProps> = ({
   const [devoirWeight, setDevoirWeight] = useState(unit.rules.devoirWeight.toString());
   const [coefficient, setCoefficient] = useState(unit.rules.coefficient.toString());
   
-  const { updatePedagogicalUnit, deletePedagogicalUnit } = useApp();
+  const { updatePedagogicalUnit, deletePedagogicalUnit, getEvaluationsByUnit, classRooms } = useApp();
   const { toast } = useToast();
+
+  const evaluations = getEvaluationsByUnit(unit.id);
+  const classroom = classRooms.find(c => c.id === unit.classRoomId);
+  const totalGrades = evaluations.reduce((acc, e) => acc + (classroom?.students.filter(s => s.status === 'active').length ?? 0), 0);
 
   useEffect(() => {
     if (open) {
@@ -197,8 +201,19 @@ const EditUnitDialog: React.FC<EditUnitDialogProps> = ({
                     Suppression Définitive
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Êtes-vous absolument sûr ? Cette action supprimera <b>{unit.name}</b>, ainsi que toutes les évaluations et notes associées. Cette opération est irréversible.
+                    L'unité <b>{unit.name}</b> sera supprimée avec toutes ses données :
                   </AlertDialogDescription>
+                  {/* Impact cascade */}
+                  <div className="mt-3 rounded-xl bg-destructive/5 border border-destructive/15 divide-y divide-destructive/10 text-sm font-medium overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-muted-foreground">Évaluations</span>
+                      <span className="font-semibold text-foreground">{evaluations.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-muted-foreground">Notes enregistrées</span>
+                      <span className="font-semibold text-foreground">{totalGrades}</span>
+                    </div>
+                  </div>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>

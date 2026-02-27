@@ -10,3 +10,14 @@ Lancement de la fonctionnalité de partage rapide des rapports étudiants.
 - **GradeSheet.tsx** : Bouton de partage intégré sur chaque ligne élève (visible au survol). Type `shareStats` explicitement défini (plus de `any`).
 - **StudentsPage.tsx** : Bouton de partage ajouté dans la gestion des élèves. Calcul du rang et de la moyenne en temps réel via `calculateAverage`.
 - **Nettoyage** : Suppression de tous les imports inutilisés (`cn`, `grades`, `Evaluation`, `Grade`, `DialogFooter`). Vérification TypeScript complète sans erreur (`tsc --noEmit`).
+
+## 27 Février 2026 - Robustesse des données & Refactoring technique
+Amélioration de la sécurité des données et finalisation du typage strict.
+
+- **[Sécurité] Suppressions avec Analyse d'Impact** : Ajout de dialogues de confirmation détaillés pour toutes les entités (Années, Classes, Unités, Élèves, Évaluations) montrant le nombre de données liées qui seront supprimées.
+- **[Robustesse] LocalStorage V2** : Implémentation du versionnage des données et d'un moteur de migration pour garantir la compatibilité ascendante.
+- **[Design] Danger Zone** : Nouvelle section dans les paramètres pour la réinitialisation complète des données.
+- **[Technique] Clés de Notes "::"** : Passage à un séparateur robuste `::` pour les clés composites de notes, évitant les collisions d'IDs.
+- **[Typage] Zéro "any"** : Refactorisation de `pdfService.ts` et `Index.tsx` pour éliminer les dernières assertions `any`. Typage strict des tableaux `jspdf-autotable`.
+- **[UX] Édition Périodes** : Amélioration de `CreatePeriodDialog.tsx` pour permettre la modification complète des quotas de devoirs/interros des périodes existantes.
+- **[UX] Transitions** : Activation des animations de transition fluides entre les pages dans `App.tsx`.

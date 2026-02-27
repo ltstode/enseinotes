@@ -49,7 +49,8 @@ import {
   Plus,
   Archive,
   ArchiveRestore,
-  Share2
+  Share2,
+  AlertTriangle
 } from 'lucide-react';
 import { Student, PedagogicalUnit } from '@/types/enseinotes';
 import { toast } from 'sonner';
@@ -67,7 +68,8 @@ const StudentsPage: React.FC = () => {
     addStudentToClass,
     updateStudentInClass,
     deleteStudentFromClass,
-    calculateAverage
+    calculateAverage,
+    grades
   } = useApp();
   
   const [selectedClassId, setSelectedClassId] = useState<string>('');
@@ -621,12 +623,26 @@ const StudentsPage: React.FC = () => {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!studentToDelete} onOpenChange={() => setStudentToDelete(null)}>
-          <AlertDialogContent className="rounded-[2.5rem] border border-border/60 shadow-2xl bg-card">
+        <AlertDialogContent className="rounded-[2.5rem] border border-border/60 shadow-2xl bg-card">
           <AlertDialogHeader>
-              <AlertDialogTitle className="text-2xl font-semibold text-soft-pink-foreground">Supprimer définitivement ?</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-semibold text-soft-pink-foreground flex items-center gap-2">
+              <AlertTriangle className="text-soft-pink-foreground" />
+              Supprimer définitivement ?
+            </AlertDialogTitle>
             <AlertDialogDescription className="font-medium text-muted-foreground py-2">
-              L'élève <b>{studentToDelete?.lastName} {studentToDelete?.firstName}</b> ainsi que toutes ses notes seront effacés de manière irréversible.
+              L'élève <b>{studentToDelete?.lastName} {studentToDelete?.firstName}</b> sera effacé de manière irréversible.
             </AlertDialogDescription>
+            {studentToDelete && (
+              <div className="mt-2 p-4 rounded-2xl bg-destructive/5 border border-destructive/10 space-y-2">
+                <p className="text-[10px] uppercase font-bold text-destructive/60 tracking-wider">Analyse d'impact</p>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Notes à supprimer</span>
+                  <span className="font-bold text-destructive">
+                    {grades.filter(g => g.studentId === studentToDelete.id).length}
+                  </span>
+                </div>
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel className="rounded-xl border-none bg-secondary hover:bg-secondary/70">Annuler</AlertDialogCancel>

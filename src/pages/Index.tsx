@@ -19,7 +19,18 @@ import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { differenceInDays } from 'date-fns';
 
-const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }: any) => (
+import { LucideIcon } from 'lucide-react';
+
+interface StatCardProps {
+  title: string;
+  value: number;
+  subValue: string;
+  icon: LucideIcon;
+  colorClass: string;
+  delay?: number;
+}
+
+const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }: StatCardProps) => (
   <div 
     className={cn(
       "apple-card p-6 flex flex-col justify-between group cursor-default animate-fade-in",
@@ -45,7 +56,15 @@ const StatCard = ({ title, value, subValue, icon: Icon, colorClass, delay = 0 }:
   </div>
 );
 
-const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: any) => (
+interface QuickActionProps {
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+  to: string;
+  colorClass: string;
+}
+
+const QuickAction = ({ title, desc, icon: Icon, to, colorClass }: QuickActionProps) => (
   <Link to={to} className="group">
     <div className={cn(
       "p-5 rounded-xl border border-border/60 bg-card backdrop-blur-md flex items-center gap-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-500 group-active:scale-95",

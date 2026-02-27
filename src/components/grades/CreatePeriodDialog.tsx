@@ -13,8 +13,20 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, BookOpen, GraduationCap, Layers, Sparkles, Check, Trash2, Play, Lock } from 'lucide-react';
-import { PeriodType } from '@/types/enseinotes';
+import { PeriodType, Period } from '@/types/enseinotes';
 import { cn } from '@/lib/utils';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Pencil } from 'lucide-react';
 
 interface CreatePeriodDialogProps {
   open: boolean;
@@ -32,8 +44,9 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
   const [name, setName] = useState('');
   const [expectedDevoirs, setExpectedDevoirs] = useState('2');
   const [expectedInterros, setExpectedInterros] = useState('3');
+  const [editingPeriod, setEditingPeriod] = useState<Period | null>(null);
   
-  const { addPeriod, getPeriodsByUnit, activatePeriod, deletePeriod } = useApp();
+  const { addPeriod, updatePeriod, getPeriodsByUnit, activatePeriod, deletePeriod, evaluations } = useApp();
   const { toast } = useToast();
 
   const existingPeriods = getPeriodsByUnit(unitId);
@@ -41,34 +54,49 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) {
-      toast({ title: 'Erreur', description: 'Veuillez saisir un nom pour la période', variant: 'destructive' });
-      return;
+    if (editingPeriod) {
+      updatePeriod(editingPeriod.id, {
+        name: name.trim(),
+        expectedDevoirs: parseInt(expectedDevoirs) || 2,
+        expectedInterros: parseInt(expectedInterros) || 3,
+      });
+      toast({ title: 'Période mise à jour ✨', description: `La période "${name}" a été modifiée.` });
+    } else {
+      const periodType: PeriodType = periodSystem === 'semester' ? 'semester' : 
+                                     periodSystem === 'trimester' ? 'trimester' : 'custom';
+      const status = existingPeriods.length === 0 ? 'active' : 'locked';
+
+      addPeriod({
+        name: name.trim(),
+        pedagogicalUnitId: unitId,
+        periodType,
+        status,
+        order: existingPeriods.length + 1,
+        expectedDevoirs: parseInt(expectedDevoirs) || 2,
+        expectedInterros: parseInt(expectedInterros) || 3,
+      });
+      toast({ title: 'Période créée ✨', description: `Période "${name}" ajoutée.` });
     }
 
-    const periodType: PeriodType = periodSystem === 'semester' ? 'semester' : 
-                                   periodSystem === 'trimester' ? 'trimester' : 'custom';
-
-    // The first period added to a unit should be "active"
-    const status = existingPeriods.length === 0 ? 'active' : 'locked';
-
-    addPeriod({
-      name: name.trim(),
-      pedagogicalUnitId: unitId,
-      periodType,
-      status,
-      order: existingPeriods.length + 1,
-      expectedDevoirs: parseInt(expectedDevoirs) || 2,
-      expectedInterros: parseInt(expectedInterros) || 3,
-    });
-
-    toast({
-      title: 'Période créée ✨',
-      description: `Période "${name}" ajoutée (${status === 'active' ? 'Activée' : 'En attente'})`,
-    });
-
     setName('');
+    setExpectedDevoirs('2');
+    setExpectedInterros('3');
+    setEditingPeriod(null);
     onOpenChange(false);
+  };
+
+  const handleEdit = (p: Period) => {
+    setEditingPeriod(p);
+    setName(p.name);
+    setExpectedDevoirs(p.expectedDevoirs.toString());
+    setExpectedInterros(p.expectedInterros.toString());
+  };
+
+  const cancelEdit = () => {
+    setEditingPeriod(null);
+    setName('');
+    setExpectedDevoirs('2');
+    setExpectedInterros('3');
   };
 
   const handleQuickAdd = (periodName: string) => {
@@ -173,6 +201,15 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
                       <span className="text-[10px] text-muted-foreground uppercase">{p.status}</span>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        onClick={() => handleEdit(p)}
+                      >
+                        <Pencil size={14} />
+                      </Button>
                       {p.status !== 'active' && (
                         <Button 
                           type="button"
@@ -184,15 +221,41 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
                           <Play size={14} />
                         </Button>
                       )}
-                      <Button 
-                        type="button"
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => deletePeriod(p.id)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-3xl border-none">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer la période ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              La période <b>{p.name}</b> sera supprimée. Les évaluations liées ne seront pas supprimées mais deviendront "orphelines" de période.
+                            </AlertDialogDescription>
+                            <div className="mt-3 p-4 rounded-xl bg-destructive/5 border border-destructive/10">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">Évaluations impactées</span>
+                                <span className="font-bold text-destructive">
+                                  {evaluations.filter(e => e.periodId === p.id).length}
+                                </span>
+                              </div>
+                            </div>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deletePeriod(p.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 ))}
@@ -206,7 +269,7 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-4 text-muted-foreground font-medium tracking-widest">
-                ou sur mesure
+                {editingPeriod ? 'Modifier la période' : 'Ou sur mesure'}
               </span>
             </div>
           </div>
@@ -223,20 +286,7 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
               />
             </div>
 
-            {periodSystem === 'semester' ? (
-              <div className="p-4 rounded-2xl bg-info/5 border border-info/10 flex gap-4 items-start">
-                <div className="p-2 rounded-xl bg-info/10">
-                  <BookOpen size={20} className="text-info" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-small font-semibold text-info">Règles du système semestriel</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Ce système impose <strong>2 devoirs</strong> par semestre. 
-                    Les moyennes seront calculées automatiquement selon la pondération de l'unité.
-                  </p>
-                </div>
-              </div>
-            ) : periodSystem === 'trimester' ? (
+            {(periodSystem === 'semester' || editingPeriod || periodSystem === 'trimester') && (
                <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="expectedDevoirs">Devoirs prévus</Label>
@@ -261,15 +311,20 @@ const CreatePeriodDialog: React.FC<CreatePeriodDialogProps> = ({
                   />
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
 
           <DialogFooter className="gap-3 sm:gap-0 pt-2">
-            <Button type="button" variant="ghost" className="rounded-xl px-6" onClick={() => onOpenChange(false)}>
-              Fermer
+            <Button 
+              type="button" 
+              variant="ghost" 
+              className="rounded-xl px-6" 
+              onClick={editingPeriod ? cancelEdit : () => onOpenChange(false)}
+            >
+              {editingPeriod ? 'Annuler l\'édition' : 'Fermer'}
             </Button>
             <Button type="submit" disabled={!name.trim()} className="rounded-xl px-10 shadow-lg shadow-primary/20">
-              Créer la période
+              {editingPeriod ? 'Mettre à jour' : 'Créer la période'}
             </Button>
           </DialogFooter>
         </form>

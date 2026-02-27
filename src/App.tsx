@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
@@ -74,92 +74,100 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 // Routes component - separated to ensure it's rendered inside AuthProvider
-const AppRoutes = () => (
-  // Suspense enveloppe toutes les routes — le fallback s'affiche pendant le
-  // chargement du chunk JS de la page demandée.
-  <Suspense fallback={<PageLoader />}>
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Index />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/years"
-        element={
-          <ProtectedRoute>
-            <YearsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/classes"
-        element={
-          <ProtectedRoute>
-            <ClassesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/units"
-        element={
-          <ProtectedRoute>
-            <UnitsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/grades"
-        element={
-          <ProtectedRoute>
-            <GradesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/students"
-        element={
-          <ProtectedRoute>
-            <StudentsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/calendar"
-        element={
-          <ProtectedRoute>
-            <CalendarPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </Suspense>
-);
+const AppRoutes = () => {
+  const location = useLocation();
+
+  return (
+    // Suspense enveloppe toutes les routes — le fallback s'affiche pendant le
+    // chargement du chunk JS de la page demandée.
+    <Suspense fallback={<PageLoader />}>
+      {/* La key sur le div force un re-mount à chaque changement de route,
+          déclenchant l'animation CSS page-enter-active définie dans index.css */}
+      <div key={location.pathname} className="page-enter-active" style={{ minHeight: '100%' }}>
+        <Routes location={location}>
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/years"
+            element={
+              <ProtectedRoute>
+                <YearsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classes"
+            element={
+              <ProtectedRoute>
+                <ClassesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/units"
+            element={
+              <ProtectedRoute>
+                <UnitsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grades"
+            element={
+              <ProtectedRoute>
+                <GradesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/students"
+            element={
+              <ProtectedRoute>
+                <StudentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </Suspense>
+  );
+};
 
 // Inner app component that uses auth context
 const AppWithAuth = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppRoutes />
     </BrowserRouter>
   );

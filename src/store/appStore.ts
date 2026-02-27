@@ -4,6 +4,38 @@ import {
   SchoolYear, ClassRoom, PedagogicalUnit,
   Evaluation, Grade, Student, TeacherData, Period, CustomCalendarEvent,
 } from '@/types/enseinotes';
+import { toast } from 'sonner';
+
+// ── Version de schéma ─────────────────────────────────────────────────────────
+// Incrémentez cette valeur à chaque changement de structure de TeacherData.
+// La migration ci-dessous complète les champs manquants pour les données plus
+// anciennes, garantissant une compatibilité ascendante.
+const CURRENT_DATA_VERSION = 2;
+
+// ── Migration logic ──────────────────────────────────────────────────────────
+const migrateData = (data: any): TeacherData => {
+  const v = data.version || 1;
+  let migrated = { ...data };
+
+  // Migration de v1 -> v2 (si nécessaire)
+  if (v < 2) {
+    // Exemple : ajout de champs manquants par défaut
+    migrated.pedagogicalUnits = (migrated.pedagogicalUnits || []).map((u: any) => ({
+      ...u,
+      periodSystem: u.periodSystem || 'semester'
+    }));
+    migrated.periods = (migrated.periods || []).map((p: any) => ({
+      ...p,
+      periodType: p.periodType || 'custom',
+      expectedDevoirs: p.expectedDevoirs ?? 2,
+      expectedInterros: p.expectedInterros ?? 3
+    }));
+  }
+
+  // Mise à jour de la version
+  migrated.version = CURRENT_DATA_VERSION;
+  return migrated;
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const generateId = () => `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -33,41 +65,42 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
   try {
     const raw = localStorage.getItem(getStorageKey(teacherId));
     if (!raw) return null;
-    const p = JSON.parse(raw);
-    return {
+    
+    let p = JSON.parse(raw);
+    
+    // 1. Migration
+    p = migrateData(p);
+
+    // 2. Hydratation (conversion strings -> Dates)
+    const parsed: TeacherData = {
       ...p,
-      schoolYears:      p.schoolYears.map((y: SchoolYear) => ({ ...y, createdAt: new Date(y.createdAt) })),
-      classRooms:       p.classRooms.map((c: ClassRoom) => ({ ...c, createdAt: new Date(c.createdAt) })),
-      pedagogicalUnits: p.pedagogicalUnits.map((u: PedagogicalUnit) => ({
-        ...u, createdAt: new Date(u.createdAt), periodSystem: u.periodSystem || 'semester',
-      })),
-      periods: (p.periods || []).map((per: Period) => ({
+      schoolYears:      p.schoolYears.map((y: any) => ({ ...y, createdAt: new Date(y.createdAt) })),
+      classRooms:       p.classRooms.map((c: any) => ({ ...c, createdAt: new Date(c.createdAt) })),
+      pedagogicalUnits: p.pedagogicalUnits.map((u: any) => ({ ...u, createdAt: new Date(u.createdAt) })),
+      periods: p.periods.map((per: any) => ({
         ...per,
         createdAt: new Date(per.createdAt),
         startDate: per.startDate ? new Date(per.startDate) : undefined,
         endDate:   per.endDate   ? new Date(per.endDate)   : undefined,
-        periodType: per.periodType || 'custom',
-        status: per.status || 'active',
-        expectedDevoirs:  per.expectedDevoirs  ?? 2,
-        expectedInterros: per.expectedInterros ?? 3,
       })),
-      evaluations: p.evaluations.map((e: Evaluation) => ({ ...e, date: new Date(e.date) })),
-      grades: p.grades.map((g: Grade) => ({
+      evaluations: p.evaluations.map((e: any) => ({ ...e, date: new Date(e.date) })),
+      grades: p.grades.map((g: any) => ({
         ...g,
         createdAt:  new Date(g.createdAt),
         modifiedAt: g.modifiedAt ? new Date(g.modifiedAt) : undefined,
-        history: g.history.map((h: { value: number; modifiedAt: string | Date; reason: string }) => ({
-          ...h, modifiedAt: new Date(h.modifiedAt),
-        })),
+        history: g.history.map((h: any) => ({ ...h, modifiedAt: new Date(h.modifiedAt) })),
       })),
-      customEvents: (p.customEvents || []).map((ev: CustomCalendarEvent) => ({
+      customEvents: p.customEvents.map((ev: any) => ({
         ...ev,
         date:      new Date(ev.date),
         endDate:   ev.endDate ? new Date(ev.endDate) : undefined,
         createdAt: new Date(ev.createdAt),
       })),
     };
-  } catch {
+
+    return parsed;
+  } catch (err) {
+    console.error('Failed to load teacher data:', err);
     return null;
   }
 };
@@ -111,7 +144,9 @@ interface AppStore extends AppData {
 
   // ── SchoolYears ──────────────────────────────────────────────────────────
   addSchoolYear: (year: Omit<SchoolYear, 'id' | 'createdAt'>) => void;
+  deleteSchoolYear: (yearId: string) => void;
   setActiveYear: (yearId: string | null) => void;
+  clearAllData: () => void;
 
   // ── ClassRooms ───────────────────────────────────────────────────────────
   addClassRoom:    (classRoom: Omit<ClassRoom, 'id' | 'createdAt'>) => void;
@@ -130,13 +165,14 @@ interface AppStore extends AppData {
 
   // ── Periods ──────────────────────────────────────────────────────────────
   addPeriod:     (period: Omit<Period, 'id' | 'createdAt'>) => void;
-  updatePeriod:  (periodId: string, updates: Partial<Pick<Period, 'name' | 'order' | 'status'>>) => void;
+  updatePeriod:  (periodId: string, updates: Partial<Period>) => void;
   deletePeriod:  (periodId: string) => void;
   completePeriod:(periodId: string) => void;
   activatePeriod:(periodId: string) => void;
 
   // ── Evaluations ──────────────────────────────────────────────────────────
   addEvaluation: (evaluation: Omit<Evaluation, 'id'>) => void;
+  deleteEvaluation: (evaluationId: string) => void;
 
   // ── Grades ────────────────────────────────────────────────────────────────
   addGrade:        (grade: Omit<Grade, 'id' | 'createdAt' | 'history' | 'isLocked'>) => void;
@@ -204,17 +240,30 @@ export const useAppStore = create<AppStore>()(
       set({ ...emptyData, savedUnits: new Set(), isInitialized: false, _teacherId: null, _saveTimer: null });
     },
 
+    clearAllData: () => {
+      const { _teacherId } = get();
+      if (!_teacherId) return;
+      localStorage.removeItem(getStorageKey(_teacherId));
+      set({ ...emptyData, savedUnits: new Set() });
+      toast.success('Toutes les données de l\'application ont été réinitialisées.');
+    },
+
     // ── Persistence ──────────────────────────────────────────────────────────
     _persistNow: () => {
       const s = get();
       if (!s._teacherId || !s.isInitialized) return;
       try {
         saveTeacherData(s._teacherId, {
-          schoolYears: s.schoolYears, classRooms: s.classRooms,
-          pedagogicalUnits: s.pedagogicalUnits, periods: s.periods,
-          evaluations: s.evaluations, grades: s.grades,
-          customEvents: s.customEvents, activeYearId: s.activeYearId,
-          savedUnits: Array.from(s.savedUnits),
+          version:          CURRENT_DATA_VERSION,
+          schoolYears:      s.schoolYears,
+          classRooms:       s.classRooms,
+          pedagogicalUnits: s.pedagogicalUnits,
+          periods:          s.periods,
+          evaluations:      s.evaluations,
+          grades:           s.grades,
+          customEvents:     s.customEvents,
+          activeYearId:     s.activeYearId,
+          savedUnits:       Array.from(s.savedUnits),
         });
         set({ syncStatus: { state: 'saved', lastSavedAt: new Date() } });
       } catch (e) {
@@ -239,6 +288,24 @@ export const useAppStore = create<AppStore>()(
 
     setActiveYear: (yearId) => {
       set(s => ({ ...s, activeYearId: yearId }));
+      get()._scheduleSave();
+    },
+
+    deleteSchoolYear: (yearId) => {
+      set(s => {
+        const classIds = s.classRooms.filter(c => c.schoolYearId === yearId).map(c => c.id);
+        const unitIds = s.pedagogicalUnits.filter(u => classIds.includes(u.classRoomId)).map(u => u.id);
+        const evalIds = s.evaluations.filter(e => unitIds.includes(e.pedagogicalUnitId)).map(e => e.id);
+        return {
+          schoolYears:      s.schoolYears.filter(y => y.id !== yearId),
+          activeYearId:     s.activeYearId === yearId ? null : s.activeYearId,
+          classRooms:       s.classRooms.filter(c => c.schoolYearId !== yearId),
+          pedagogicalUnits: s.pedagogicalUnits.filter(u => !classIds.includes(u.classRoomId)),
+          evaluations:      s.evaluations.filter(e => !unitIds.includes(e.pedagogicalUnitId)),
+          periods:          s.periods.filter(p => !unitIds.includes(p.pedagogicalUnitId)),
+          grades:           s.grades.filter(g => !evalIds.includes(g.evaluationId)),
+        };
+      });
       get()._scheduleSave();
     },
 
@@ -405,6 +472,14 @@ export const useAppStore = create<AppStore>()(
     addEvaluation: (evaluation) => {
       const newEval: Evaluation = { ...evaluation, id: generateId() };
       set(s => ({ evaluations: [...s.evaluations, newEval] }));
+      get()._scheduleSave();
+    },
+
+    deleteEvaluation: (evaluationId) => {
+      set(s => ({
+        evaluations: s.evaluations.filter(e => e.id !== evaluationId),
+        grades:      s.grades.filter(g => g.evaluationId !== evaluationId),
+      }));
       get()._scheduleSave();
     },
 

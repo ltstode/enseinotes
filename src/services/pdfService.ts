@@ -4,6 +4,16 @@ import { Student, Evaluation, Grade, Period, PedagogicalUnit, ClassRoom, SchoolY
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+// Extend jsPDF type to include autoTable properties
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
+// Type for autoTable rows which can contain strings or cell objects
+type TableRow = (string | { content: string; styles?: any })[];
+
 interface StudentReportData {
   student: Student;
   rank: { rank: number; isExAequo: boolean } | null;
@@ -101,7 +111,7 @@ export const generateStudentBulletin = (
     doc.text('INTERROGATIONS', margin, y);
     y += 5;
 
-    const interroData = data.interroGrades.map(ig => [
+    const interroData: TableRow[] = data.interroGrades.map(ig => [
       ig.evaluation.name,
       ig.value !== null ? `${ig.value}` : '-',
       `/ ${ig.evaluation.maxScore}`,
@@ -113,7 +123,7 @@ export const generateStudentBulletin = (
       { content: data.moyInterros !== null ? data.moyInterros.toFixed(2) : '-', styles: { fontStyle: 'bold' } },
       '/ 20',
       ''
-    ] as any);
+    ]);
 
     autoTable(doc, {
       startY: y,
@@ -131,7 +141,7 @@ export const generateStudentBulletin = (
       margin: { left: margin, right: margin }
     });
     
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 10;
   }
 
   // Grades Table - Devoirs
@@ -142,7 +152,7 @@ export const generateStudentBulletin = (
     doc.text('DEVOIRS', margin, y);
     y += 5;
 
-    const devoirData = data.devoirGrades.map(dg => [
+    const devoirData: TableRow[] = data.devoirGrades.map(dg => [
       dg.evaluation.name,
       dg.value !== null ? `${dg.value}` : '-',
       `/ ${dg.evaluation.maxScore}`,
@@ -154,7 +164,7 @@ export const generateStudentBulletin = (
       { content: data.moyDevoirs !== null ? data.moyDevoirs.toFixed(2) : '-', styles: { fontStyle: 'bold' } },
       '/ 20',
       ''
-    ] as any);
+    ]);
 
     autoTable(doc, {
       startY: y,
@@ -172,7 +182,7 @@ export const generateStudentBulletin = (
       margin: { left: margin, right: margin }
     });
     
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 10;
   }
 
   // Final Average Box
@@ -279,11 +289,7 @@ export const generateClassBulletins = (
       appreciation: customAppreciations?.[student.id]
     };
 
-    // Copy content from single bulletin to multi-page doc
-    const singleDoc = generateStudentBulletin(studentData, context);
-    const pageData = singleDoc.output('arraybuffer');
-    
-    // For multi-page, we regenerate inline
+    // Generate each student report on its own page
     generateBulletinPage(doc, studentData, context);
   });
 
@@ -356,7 +362,7 @@ const generateBulletinPage = (
     doc.text('INTERROGATIONS', margin, y);
     y += 5;
 
-    const interroData = data.interroGrades.map(ig => [
+    const interroData: TableRow[] = data.interroGrades.map(ig => [
       ig.evaluation.name,
       ig.value !== null ? `${ig.value}` : '-',
       `/ ${ig.evaluation.maxScore}`,
@@ -364,8 +370,8 @@ const generateBulletinPage = (
     ]);
     
     interroData.push([
-      'Moyenne Interrogations',
-      data.moyInterros !== null ? data.moyInterros.toFixed(2) : '-',
+      { content: 'Moyenne Interrogations', styles: { fontStyle: 'bold' } },
+      { content: data.moyInterros !== null ? data.moyInterros.toFixed(2) : '-', styles: { fontStyle: 'bold' } },
       '/ 20',
       ''
     ]);
@@ -380,7 +386,7 @@ const generateBulletinPage = (
       margin: { left: margin, right: margin }
     });
     
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 10;
   }
 
   // Devoirs Table
@@ -391,7 +397,7 @@ const generateBulletinPage = (
     doc.text('DEVOIRS', margin, y);
     y += 5;
 
-    const devoirData = data.devoirGrades.map(dg => [
+    const devoirData: TableRow[] = data.devoirGrades.map(dg => [
       dg.evaluation.name,
       dg.value !== null ? `${dg.value}` : '-',
       `/ ${dg.evaluation.maxScore}`,
@@ -399,8 +405,8 @@ const generateBulletinPage = (
     ]);
     
     devoirData.push([
-      'Moyenne Devoirs',
-      data.moyDevoirs !== null ? data.moyDevoirs.toFixed(2) : '-',
+      { content: 'Moyenne Devoirs', styles: { fontStyle: 'bold' } },
+      { content: data.moyDevoirs !== null ? data.moyDevoirs.toFixed(2) : '-', styles: { fontStyle: 'bold' } },
       '/ 20',
       ''
     ]);
@@ -415,7 +421,7 @@ const generateBulletinPage = (
       margin: { left: margin, right: margin }
     });
     
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 10;
   }
 
   // Final Average

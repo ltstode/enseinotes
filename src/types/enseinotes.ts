@@ -124,6 +124,7 @@ export interface DashboardStats {
 
 // Data structure stored per teacher
 export interface TeacherData {
+  version?: number; // Utilisé pour les migrations de données entre versions
   schoolYears: SchoolYear[];
   classRooms: ClassRoom[];
   pedagogicalUnits: PedagogicalUnit[];

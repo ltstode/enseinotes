@@ -7,15 +7,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor, Zap, Minimize2, Maximize2, PanelLeftClose } from 'lucide-react';
+import { User, Download, Upload, Shield, Save, Palette, Sun, Moon, Monitor, Zap, Minimize2, Maximize2, PanelLeftClose, Trash2, AlertTriangle } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { teacher, updateProfile, updatePassword } = useAuth();
-  const { exportData, importData } = useApp();
+  const { exportData, importData, clearAllData } = useApp();
   const { reducedMotion, setReducedMotion, uiDensity, setUIDensity, collapsedSidebar, setCollapsedSidebar } = useUserPreferences();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
@@ -425,6 +436,56 @@ const SettingsPage: React.FC = () => {
             <p className="text-xs text-muted-foreground">
               ⚠️ L'import remplacera toutes vos données actuelles. Assurez-vous de faire une sauvegarde avant.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle size={20} />
+              Zone de danger
+            </CardTitle>
+            <CardDescription>
+              Actions irréversibles sur vos données
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-xl bg-background">
+              <div className="space-y-1">
+                <h4 className="font-bold text-destructive">Réinitialiser l'application</h4>
+                <p className="text-xs text-muted-foreground">
+                  Supprime TOUTES vos données locales (classes, élèves, notes) définitivement.
+                </p>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2">
+                    <Trash2 size={16} />
+                    Réinitialiser
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl border-none">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle size={24} />
+                      Confirmation de réinitialisation
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cette action supprimera l'intégralité de vos données locales. 
+                      Cette opération est <b>irréversible</b>.
+                      Voulez-vous vraiment continuer ?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={clearAllData} className="bg-destructive text-white hover:bg-destructive/90 rounded-xl">
+                      Oui, tout supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </CardContent>
         </Card>
       </div>

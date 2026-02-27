@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -35,6 +35,16 @@
     --ring: 246 80% 60%;
 
     --radius: 0.75rem;
+
+    /* Sémantique — état */
+    --success: 150 65% 38%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 35 90% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 210 80% 55%;
+    --info-foreground: 0 0% 100%;
 
     /* Apple-like soft palettes */
     --soft-pink: 350 80% 95%;
@@ -82,6 +92,16 @@
     --input: 215 28% 17%;
     --ring: 246 80% 65%;
 
+    /* Sémantique — état (dark) */
+    --success: 150 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 35 85% 58%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 210 70% 62%;
+    --info-foreground: 0 0% 100%;
+
     /* Soft palettes - dark mode */
     --soft-pink: 350 50% 15%;
     --soft-pink-foreground: 350 80% 70%;
@@ -111,7 +131,7 @@
     @apply font-display font-semibold tracking-tight;
   }
 
-  /* Reduced motion override */
+  /* Reduced motion — classe JS + media query native */
   .reduce-motion *,
   .reduce-motion *::before,
   .reduce-motion *::after {
@@ -119,6 +139,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* UI Density - Comfortable (default) */
@@ -133,6 +162,20 @@
     --density-padding: 0.75rem;
     --density-gap: 0.75rem;
     --density-cell-py: 0.5rem;
+  }
+
+  /* Fluid Typography & Spacing System */
+  :root {
+    /* Fluid font sizes: clamp(min, preferred, max) - Reduced for Chariow-style elegance */
+    --font-fluid-h1: clamp(1.5rem, 4vw, 2.5rem);
+    --font-fluid-h2: clamp(1.25rem, 3vw, 1.875rem);
+    --font-fluid-h3: clamp(1.125rem, 2.5vw, 1.5rem);
+    --font-fluid-body: clamp(0.75rem, 1.2vw, 0.9375rem);
+    
+    /* Fluid spacing */
+    --space-fluid-large: clamp(2rem, 8vh, 6rem);
+    --space-fluid-med: clamp(1.5rem, 5vh, 4rem);
+    --space-fluid-small: clamp(1rem, 3vh, 2.5rem);
   }
 }
 
@@ -202,3 +245,9 @@
   gap: 1.5rem;
   padding: 0.5rem;
 }
+/* Fluid classes */
+.text-fluid-h1 { font-size: var(--font-fluid-h1); }
+.text-fluid-h2 { font-size: var(--font-fluid-h2); }
+.text-fluid-body { font-size: var(--font-fluid-body); }
+.py-fluid-lg { padding-top: var(--space-fluid-large); padding-bottom: var(--space-fluid-large); }
+.gap-fluid-small { gap: var(--space-fluid-small); }

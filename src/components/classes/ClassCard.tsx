@@ -24,10 +24,11 @@ interface ClassCardProps {
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
-  const { getUnitsByClass, updateClassRoom, deleteClassRoom } = useApp();
+  const { getUnitsByClass, getEvaluationsByUnit, updateClassRoom, deleteClassRoom } = useApp();
   const navigate = useNavigate();
   const { toast } = useToast();
   const units = getUnitsByClass(classRoom.id);
+  const totalEvals = units.reduce((acc, u) => acc + getEvaluationsByUnit(u.id).length, 0);
   
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(classRoom.name);
@@ -176,9 +177,23 @@ const ClassCard: React.FC<ClassCardProps> = ({ classRoom }) => {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-semibold text-soft-pink-foreground">Détruire cette classe ?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground py-2 leading-relaxed">
-              La classe <b>{classRoom.name}</b> sera effacée avec ses <b>{units.length} unités</b> et toutes les notes. 
-              Cette action est irréversible.
+              La classe <b>{classRoom.name}</b> sera effacée définitivement avec toutes ses données :
             </AlertDialogDescription>
+            {/* Impact cascade */}
+            <div className="mt-3 rounded-xl bg-soft-pink/40 border border-soft-pink-foreground/15 divide-y divide-soft-pink-foreground/10 text-sm font-medium overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-muted-foreground">Élèves supprimés</span>
+                <span className="font-semibold text-foreground">{classRoom.students.length}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-muted-foreground">Unités pédagogiques</span>
+                <span className="font-semibold text-foreground">{units.length}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-muted-foreground">Évaluations et notes</span>
+                <span className="font-semibold text-foreground">{totalEvals}</span>
+              </div>
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel className="rounded-xl border-none bg-secondary hover:bg-secondary/70">Oublier</AlertDialogCancel>

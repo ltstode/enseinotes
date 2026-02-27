@@ -42,7 +42,7 @@ interface AppContextType {
   updatePedagogicalUnit:(unitId: string, updates: Partial<PedagogicalUnit>) => void;
   deletePedagogicalUnit:(unitId: string) => void;
   addPeriod:            (period: Omit<Period, 'id' | 'createdAt'>) => void;
-  updatePeriod:         (periodId: string, updates: Partial<Pick<Period, 'name' | 'order' | 'status'>>) => void;
+  updatePeriod:         (periodId: string, updates: Partial<Period>) => void;
   deletePeriod:         (periodId: string) => void;
   completePeriod:       (periodId: string) => void;
   activatePeriod:       (periodId: string) => void;
@@ -58,10 +58,13 @@ interface AppContextType {
   getStudentsByClass:   (classId: string) => Student[];
   getEvaluationsByUnit: (unitId: string) => Evaluation[];
   getEvaluationsByPeriod:(periodId: string) => Evaluation[];
+  deleteEvaluation:     (evaluationId: string) => void;
+  deleteSchoolYear:     (yearId: string) => void;
   calculateAverage:     (studentId: string, unitId: string) => number | null;
   isUnitSaved:          (unitId: string) => boolean;
   exportData:           () => string;
   importData:           (jsonData: string) => { success: boolean; error?: string };
+  clearAllData:         () => void;
   addCustomEvent:       (event: Omit<CustomCalendarEvent, 'id' | 'createdAt'>) => void;
   deleteCustomEvent:    (eventId: string) => void;
 }
@@ -134,10 +137,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     getStudentsByClass:    store.getStudentsByClass,
     getEvaluationsByUnit:  store.getEvaluationsByUnit,
     getEvaluationsByPeriod:store.getEvaluationsByPeriod,
+    deleteEvaluation:      store.deleteEvaluation,
+    deleteSchoolYear:      store.deleteSchoolYear,
     calculateAverage:      store.calculateAverage,
     isUnitSaved:           store.isUnitSaved,
     exportData:            store.exportData,
     importData:            store.importData,
+    clearAllData:          store.clearAllData,
     addCustomEvent:        store.addCustomEvent,
     deleteCustomEvent:     store.deleteCustomEvent,
   };
