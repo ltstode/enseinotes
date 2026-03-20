@@ -15,13 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { 
   ClipboardList, 
   FileText, 
   HelpCircle, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Lock, 
   ChevronRight, 
   ChevronLeft,
@@ -51,13 +55,36 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
   const [coefficient, setCoefficient] = useState('1');
   const [maxScore, setMaxScore] = useState('20');
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
+  const [evalDate, setEvalDate] = useState<Date>(new Date());
   
-  const { addEvaluation, getPeriodsByUnit, getEvaluationsByPeriod } = useApp();
+  const { addEvaluation, getPeriodsByUnit, getEvaluationsByPeriod, schoolYears, pedagogicalUnits } = useApp();
   const { toast } = useToast();
 
   const periods = getPeriodsByUnit(unitId);
   const activePeriods = periods.filter(p => p.status === 'active');
   const selectedPeriod = periods.find(p => p.id === selectedPeriodId);
+
+  // Compute school year date range from year name (e.g. "2024-2025" → Sept 2024 – Jul 2025)
+  const yearRange = useMemo(() => {
+    const currentUnit = pedagogicalUnits.find(u => u.id === unitId);
+    const year = schoolYears.find(y => y.id === currentUnit?.schoolYearId);
+    if (!year) return { from: undefined, to: undefined };
+
+    // If explicit dates exist, use them
+    if (year.startDate && year.endDate) {
+      return { from: new Date(year.startDate), to: new Date(year.endDate) };
+    }
+
+    // Otherwise parse from name "YYYY-YYYY"
+    const match = year.name.match(/(\d{4})\s*[-–]\s*(\d{4})/);
+    if (match) {
+      return {
+        from: new Date(parseInt(match[1]), 8, 1),  // 1er septembre
+        to: new Date(parseInt(match[2]), 6, 31),    // 31 juillet
+      };
+    }
+    return { from: undefined, to: undefined };
+  }, [unitId, pedagogicalUnits, schoolYears]);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -68,6 +95,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
     setType('interro');
     setCoefficient('1');
     setMaxScore('20');
+    setEvalDate(new Date());
 
     const initialPeriod = 
       (preselectedPeriodId && activePeriods.find(p => p.id === preselectedPeriodId)) ||
@@ -75,7 +103,6 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
 
     setSelectedPeriodId(initialPeriod?.id || '');
 
-    // Auto-focus on first input when dialog opens
     setTimeout(() => {
       const firstInput = document.querySelector('[data-first-focus]') as HTMLElement;
       if (firstInput) firstInput.focus();
@@ -102,7 +129,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
       type,
       coefficient: parseFloat(coefficient) || 1,
       maxScore: parseFloat(maxScore) || 20,
-      date: new Date(),
+      date: evalDate,
     });
 
     toast({
@@ -267,6 +294,43 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
           {/* Step 3: Parameters */}
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {/* Date Picker */}
+              <div className="space-y-3">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground ml-1">Date de l'évaluation</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-14 rounded-2xl bg-secondary/10 border-none shadow-inner justify-start text-left font-medium gap-3 px-5",
+                        !evalDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon size={18} className="text-primary" />
+                      {evalDate ? format(evalDate, "d MMMM yyyy", { locale: fr }) : "Choisir une date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-2xl" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={evalDate}
+                      onSelect={(d) => d && setEvalDate(d)}
+                      initialFocus
+                      locale={fr}
+                      fromDate={yearRange.from}
+                      toDate={yearRange.to}
+                      defaultMonth={evalDate}
+                      className="p-3 pointer-events-auto"
+                    />
+                    {yearRange.from && yearRange.to && (
+                      <div className="px-4 pb-3 text-[10px] text-muted-foreground text-center font-medium">
+                        {format(yearRange.from, "MMM yyyy", { locale: fr })} — {format(yearRange.to, "MMM yyyy", { locale: fr })}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground ml-1">Note Max</Label>
@@ -302,7 +366,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                  <div className="space-y-1">
                     <p className="text-xs font-medium text-primary">Récapitulatif</p>
                     <p className="text-[10px] text-muted-foreground leading-relaxed">
-                       Cette évaluation de type <b>{type}</b> sera notée sur <b>{maxScore}</b> avec un coefficient de <b>{coefficient}</b>. Elle impactera la moyenne du <b>{selectedPeriod?.name}</b>.
+                       Cette évaluation de type <b>{type}</b> prévue le <b>{format(evalDate, "d MMMM yyyy", { locale: fr })}</b> sera notée sur <b>{maxScore}</b> avec un coefficient de <b>{coefficient}</b>. Elle impactera la moyenne du <b>{selectedPeriod?.name}</b>.
                     </p>
                  </div>
               </div>

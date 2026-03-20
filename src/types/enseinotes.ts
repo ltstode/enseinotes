@@ -21,6 +21,8 @@ export interface SchoolYear {
   mode: SchoolYearMode;
   createdAt: Date;
   isActive: boolean;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface Student {
