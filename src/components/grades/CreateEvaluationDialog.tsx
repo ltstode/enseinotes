@@ -15,13 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { 
   ClipboardList, 
   FileText, 
   HelpCircle, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Lock, 
   ChevronRight, 
   ChevronLeft,
