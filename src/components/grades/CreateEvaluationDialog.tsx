@@ -64,6 +64,28 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
   const activePeriods = periods.filter(p => p.status === 'active');
   const selectedPeriod = periods.find(p => p.id === selectedPeriodId);
 
+  // Compute school year date range from year name (e.g. "2024-2025" → Sept 2024 – Jul 2025)
+  const yearRange = useMemo(() => {
+    const currentUnit = pedagogicalUnits.find(u => u.id === unitId);
+    const year = schoolYears.find(y => y.id === currentUnit?.schoolYearId);
+    if (!year) return { from: undefined, to: undefined };
+
+    // If explicit dates exist, use them
+    if (year.startDate && year.endDate) {
+      return { from: new Date(year.startDate), to: new Date(year.endDate) };
+    }
+
+    // Otherwise parse from name "YYYY-YYYY"
+    const match = year.name.match(/(\d{4})\s*[-–]\s*(\d{4})/);
+    if (match) {
+      return {
+        from: new Date(parseInt(match[1]), 8, 1),  // 1er septembre
+        to: new Date(parseInt(match[2]), 6, 31),    // 31 juillet
+      };
+    }
+    return { from: undefined, to: undefined };
+  }, [unitId, pedagogicalUnits, schoolYears]);
+
   // Reset form when dialog opens
   useEffect(() => {
     if (!open) return;
@@ -73,6 +95,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
     setType('interro');
     setCoefficient('1');
     setMaxScore('20');
+    setEvalDate(new Date());
 
     const initialPeriod = 
       (preselectedPeriodId && activePeriods.find(p => p.id === preselectedPeriodId)) ||
@@ -80,7 +103,6 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
 
     setSelectedPeriodId(initialPeriod?.id || '');
 
-    // Auto-focus on first input when dialog opens
     setTimeout(() => {
       const firstInput = document.querySelector('[data-first-focus]') as HTMLElement;
       if (firstInput) firstInput.focus();
