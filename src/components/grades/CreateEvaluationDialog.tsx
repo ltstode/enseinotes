@@ -55,8 +55,9 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
   const [coefficient, setCoefficient] = useState('1');
   const [maxScore, setMaxScore] = useState('20');
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
+  const [evalDate, setEvalDate] = useState<Date>(new Date());
   
-  const { addEvaluation, getPeriodsByUnit, getEvaluationsByPeriod } = useApp();
+  const { addEvaluation, getPeriodsByUnit, getEvaluationsByPeriod, schoolYears, pedagogicalUnits } = useApp();
   const { toast } = useToast();
 
   const periods = getPeriodsByUnit(unitId);
