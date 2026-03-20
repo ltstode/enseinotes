@@ -129,7 +129,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
       type,
       coefficient: parseFloat(coefficient) || 1,
       maxScore: parseFloat(maxScore) || 20,
-      date: new Date(),
+      date: evalDate,
     });
 
     toast({
