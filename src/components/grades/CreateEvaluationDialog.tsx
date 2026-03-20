@@ -294,6 +294,43 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
           {/* Step 3: Parameters */}
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {/* Date Picker */}
+              <div className="space-y-3">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground ml-1">Date de l'évaluation</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-14 rounded-2xl bg-secondary/10 border-none shadow-inner justify-start text-left font-medium gap-3 px-5",
+                        !evalDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon size={18} className="text-primary" />
+                      {evalDate ? format(evalDate, "d MMMM yyyy", { locale: fr }) : "Choisir une date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-2xl" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={evalDate}
+                      onSelect={(d) => d && setEvalDate(d)}
+                      initialFocus
+                      locale={fr}
+                      fromDate={yearRange.from}
+                      toDate={yearRange.to}
+                      defaultMonth={evalDate}
+                      className="p-3 pointer-events-auto"
+                    />
+                    {yearRange.from && yearRange.to && (
+                      <div className="px-4 pb-3 text-[10px] text-muted-foreground text-center font-medium">
+                        {format(yearRange.from, "MMM yyyy", { locale: fr })} — {format(yearRange.to, "MMM yyyy", { locale: fr })}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground ml-1">Note Max</Label>
