@@ -74,7 +74,12 @@ const loadTeacherData = (teacherId: string): TeacherData | null => {
     // 2. Hydratation (conversion strings -> Dates)
     const parsed: TeacherData = {
       ...p,
-      schoolYears:      p.schoolYears.map((y: any) => ({ ...y, createdAt: new Date(y.createdAt) })),
+      schoolYears:      p.schoolYears.map((y: any) => ({
+        ...y,
+        createdAt: new Date(y.createdAt),
+        startDate: y.startDate ? new Date(y.startDate) : undefined,
+        endDate:   y.endDate   ? new Date(y.endDate)   : undefined,
+      })),
       classRooms:       p.classRooms.map((c: any) => ({ ...c, createdAt: new Date(c.createdAt) })),
       pedagogicalUnits: p.pedagogicalUnits.map((u: any) => ({ ...u, createdAt: new Date(u.createdAt) })),
       periods: p.periods.map((per: any) => ({

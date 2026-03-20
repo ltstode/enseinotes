@@ -78,12 +78,12 @@ export const useGradeSheet = (unit: PedagogicalUnit) => {
   }, [evaluations, activePeriod]);
   
   const interros = useMemo(
-    () => filteredEvaluations.filter(e => e.type === 'interro'),
+    () => filteredEvaluations.filter(e => e.type === 'interro').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [filteredEvaluations]
   );
 
   const devoirs = useMemo(
-    () => filteredEvaluations.filter(e => e.type === 'devoir'),
+    () => filteredEvaluations.filter(e => e.type === 'devoir').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [filteredEvaluations]
   );
 
