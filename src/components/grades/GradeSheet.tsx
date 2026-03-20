@@ -517,6 +517,7 @@ const GradeSheet: React.FC<GradeSheetProps> = ({ unit }) => {
                               <Trash2 size={10} />
                             </button>
                           </div>
+                          <div className="text-[9px] font-medium text-muted-foreground/60 mt-0.5">{format(new Date(e.date), 'dd/MM')}</div>
                           <div className="text-[8px] font-medium text-muted-foreground mt-0.5 opacity-50">/{e.maxScore}</div>
                         </div>
                       </th>

@@ -366,7 +366,7 @@ const CreateEvaluationDialog: React.FC<CreateEvaluationDialogProps> = ({
                  <div className="space-y-1">
                     <p className="text-xs font-medium text-primary">Récapitulatif</p>
                     <p className="text-[10px] text-muted-foreground leading-relaxed">
-                       Cette évaluation de type <b>{type}</b> sera notée sur <b>{maxScore}</b> avec un coefficient de <b>{coefficient}</b>. Elle impactera la moyenne du <b>{selectedPeriod?.name}</b>.
+                       Cette évaluation de type <b>{type}</b> prévue le <b>{format(evalDate, "d MMMM yyyy", { locale: fr })}</b> sera notée sur <b>{maxScore}</b> avec un coefficient de <b>{coefficient}</b>. Elle impactera la moyenne du <b>{selectedPeriod?.name}</b>.
                     </p>
                  </div>
               </div>
